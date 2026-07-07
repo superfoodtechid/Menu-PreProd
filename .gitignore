@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+**/venv/
+**/.venv/
+
+# Databases and CSV cache
+*.db
+*.sqlite*
+**/*.db
+**/*.sqlite*
+master_merchants_cache.csv
+
+# Session and credentials files (recursive)
+.env
+**/.env
+session*.json
+**/session*.json
+credentials.json
+**/credentials.json
+bank_acc.json
+**/bank_acc.json
+shopee/data/session.json
+shopee/credentials.json
+
+# Local Browser data, user profiles & chrome sessions (recursive)
+**/chrome_profile*/
+**/chrome-profile*/
+**/browser_data/
+**/browser-data/
+**/portal_f_user_test/
+
+# Logs, Screenshots, and Downloads (recursive)
+**/logs/
+**/screenshots/
+**/downloads/
+*.log
+backend.log
+**/*.log
+**/*.png
+**/*.jpg
+**/*.jpeg
+
+# Reports and temporary data (recursive)
+**/laporan*/
+**/reports/
+**/exports/
+**/outlets/
+shopee/data_to_get/
+outlet\ -info/data/
+**/data/
+
+# Node/Frontend
+web/node_modules/
+web/.next/
+web/out/
+web/build/
+**/node_modules/

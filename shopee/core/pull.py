@@ -7,8 +7,10 @@ import pandas as pd
 from pathlib import Path
 from shopee.core.client import ShopeeClient, ShopeeModifyClient
 
-MENU_DIR = Path("/home/akbarhann/project/FoodMaster/menu-prod/shopee")
-WORKSPACE_DIR = Path("/home/akbarhann/project/FoodMaster/menu-prod")
+# Dynamic paths based on current file location
+FILE_DIR = Path(__file__).resolve().parent
+WORKSPACE_DIR = FILE_DIR.parent.parent
+MENU_DIR = WORKSPACE_DIR / "shopee"
 AUTOMATION_DIR = WORKSPACE_DIR / "src" / "shopee-omzet-automation"
 if str(AUTOMATION_DIR) not in sys.path:
     sys.path.insert(0, str(AUTOMATION_DIR))
@@ -298,10 +300,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
         excel_path = os.path.join(output_dir, excel_filename)
         
         # Write to O. C5 Template Excel
-        template_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "O. C5 Template.xlsx")
-        if not os.path.exists(template_path):
-            template_path = "/home/akbarhann/project/FoodMaster/menu-prod/shopee/O. C5 Template.xlsx"
-
+        template_path = str(WORKSPACE_DIR / "O. C5 Template.xlsx")
         import openpyxl
         try:
             wb = openpyxl.load_workbook(template_path)

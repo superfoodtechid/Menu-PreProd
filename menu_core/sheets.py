@@ -87,6 +87,18 @@ def get_outlets_for_applicator(applicator_choice: str):
         if app_lower == 'gofood' and not emails:
             continue
             
+        def get_valid(c1, c2):
+            v = str(row.get(c1, '')).strip()
+            if v and v != '-' and v != 'nan':
+                return v
+            v = str(row.get(c2, '')).strip()
+            if v and v != '-' and v != 'nan':
+                return v
+            return ''
+            
+        username = get_valid('Nama Pengguna', 'Nama Pengguna.1')
+        password = get_valid('Kata Sandi', 'Kata Sandi.1')
+            
         outlets.append({
             'store_id': store_id,
             'nama_resto_final': str(row.get('Nama Resto Final', '')).strip(),
@@ -97,7 +109,9 @@ def get_outlets_for_applicator(applicator_choice: str):
             'brand': str(row.get('Brand', '')).strip(),
             'email': emails[0] if emails else '',
             'emails': emails,
-            'phone': phone.strip() if phone and phone != 'nan' else ''
+            'phone': phone.strip() if phone and phone != 'nan' else '',
+            'username': username,
+            'password': password
         })
         
     outlets = sorted(outlets, key=lambda x: x['nama_resto_final'] or x['nama_outlet'])

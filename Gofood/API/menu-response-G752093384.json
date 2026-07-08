@@ -182,9 +182,10 @@
                     "image_cover": {
                         "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/690e5f73-a438-4d9b-8c5c-ebd68b319fc0_menu-item-image_1781063334764.jpg"
                     },
-                    "in_stock": true,
+                    "in_stock": false,
                     "stock": null,
                     "stock_limit": null,
+                    "restock_at": "2026-07-09T00:00:00+07:00",
                     "master_menu_item_id": "",
                     "menu_id": "77ca4405-4875-4547-a3f2-3f62be6a9bc0",
                     "name": "Sate Kambing (10 Tusuk)",
@@ -209,9 +210,10 @@
                     "image_cover": {
                         "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/339d815c-c84d-4da3-b393-fc1a71c45f9a_menu-item-image_1781063386693.jpg"
                     },
-                    "in_stock": true,
+                    "in_stock": false,
                     "stock": null,
                     "stock_limit": null,
+                    "restock_at": "2026-07-09T00:00:00+07:00",
                     "master_menu_item_id": "",
                     "menu_id": "77ca4405-4875-4547-a3f2-3f62be6a9bc0",
                     "name": "Sate Kambing (15 Tusuk)",
@@ -236,9 +238,10 @@
                     "image_cover": {
                         "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/76db85dc-1c44-4e95-bb6c-7bc53204a3ea_menu-item-image_1781063691484.jpg"
                     },
-                    "in_stock": true,
+                    "in_stock": false,
                     "stock": null,
                     "stock_limit": null,
+                    "restock_at": "2026-07-09T00:00:00+07:00",
                     "master_menu_item_id": "",
                     "menu_id": "77ca4405-4875-4547-a3f2-3f62be6a9bc0",
                     "name": "Sate Kambing Tanpa Lemak (10 Tusuk)",
@@ -263,9 +266,10 @@
                     "image_cover": {
                         "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/578b7f81-a3f4-4686-a74a-1f0d193264a8_menu-item-image_1781063864419.jpg"
                     },
-                    "in_stock": true,
+                    "in_stock": false,
                     "stock": null,
                     "stock_limit": null,
+                    "restock_at": "2026-07-09T00:00:00+07:00",
                     "master_menu_item_id": "",
                     "menu_id": "77ca4405-4875-4547-a3f2-3f62be6a9bc0",
                     "name": "Sate Kambing Tanpa Lemak (15 Tusuk)",
@@ -861,9 +865,10 @@
                     "image_cover": {
                         "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/5274edc6-1828-474e-862d-485706ce1671_menu-item-image_1781066490602.jpg"
                     },
-                    "in_stock": true,
+                    "in_stock": false,
                     "stock": null,
                     "stock_limit": null,
+                    "restock_at": "2026-07-09T00:00:00+07:00",
                     "master_menu_item_id": "",
                     "menu_id": "1f74f79f-1ede-408d-ac65-7afb85ccacef",
                     "name": "Kerupuk Puli",

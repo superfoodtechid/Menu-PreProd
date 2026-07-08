@@ -20,7 +20,65 @@ from shopee.core.pull import extract_shopee_menu
 from menu_core.grab import extract_grab_menu
 from menu_core.gofood import extract_gofood_menu
 
-def check_outlet_processed(applicator, o, exports_dir="/home/akbarhann/project/FoodMaster/menu-prod/data/exports"):
+import openpyxl
+import pandas as pd
+from upload_drive import upload_combined_to_drive
+
+FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+EXPORTS_DIR = os.path.join(FILE_DIR, "data", "exports")
+
+def combine_c5(excel_paths, output_path):
+    all_items = []
+    all_mods = []
+    for f in excel_paths:
+        if os.path.exists(f):
+            try:
+                df_item = pd.read_excel(f, sheet_name='Item')
+                df_mod = pd.read_excel(f, sheet_name='Modifier')
+                all_items.append(df_item)
+                all_mods.append(df_mod)
+            except Exception as e:
+                print(f"  \033[91mError reading {f} for combine: {e}\033[0m")
+                
+    if not all_items:
+        return False
+        
+    df_combined_items = pd.concat(all_items, ignore_index=True)
+    df_combined_mods = pd.concat(all_mods, ignore_index=True)
+    
+    template_path = os.path.join(FILE_DIR, "O. C5 Template.xlsx")
+    try:
+        wb = openpyxl.load_workbook(template_path)
+        sheet_item = wb['Item']
+        if sheet_item.max_row > 1:
+            sheet_item.delete_rows(2, sheet_item.max_row - 1)
+            
+        headers_item = {cell.value: cell.column for cell in sheet_item[1]}
+        for r_idx, row in df_combined_items.iterrows():
+            for col_name, val in row.items():
+                if col_name in headers_item:
+                    sheet_item.cell(row=r_idx + 2, column=headers_item[col_name], value=val)
+                    
+        sheet_mod = wb['Modifier']
+        if sheet_mod.max_row > 1:
+            sheet_mod.delete_rows(2, sheet_mod.max_row - 1)
+            
+        headers_mod = {cell.value: cell.column for cell in sheet_mod[1]}
+        for r_idx, row in df_combined_mods.iterrows():
+            for col_name, val in row.items():
+                if col_name in headers_mod:
+                    sheet_mod.cell(row=r_idx + 2, column=headers_mod[col_name], value=val)
+                    
+        wb.save(output_path)
+        return True
+    except Exception as e:
+        print(f"  \033[91mFailed to write combined C5 to template: {e}\033[0m")
+        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+            df_combined_items.to_excel(writer, sheet_name='Item', index=False)
+            df_combined_mods.to_excel(writer, sheet_name='Modifier', index=False)
+        return True
+
+def check_outlet_processed(applicator, o, exports_dir=EXPORTS_DIR):
     raw_outlet = o.get('nama_outlet') or o.get('nama_resto_final') or o.get('merchant_name') or 'unknown'
     raw_brand = o.get('brand') or ''
     
@@ -70,11 +128,12 @@ def interactive_menu():
             print(f"    {MAGENTA}[1]{RESET} ShopeeFood")
             print(f"    {GREEN}[2]{RESET} GrabFood")
             print(f"    {CYAN}[3]{RESET} GoFood")
-            print(f"    {YELLOW}[4]{RESET} Keluar")
+            print(f"    {YELLOW}[4]{RESET} Semua (Jadikan 1 C5)")
+            print(f"    {RED}[5]{RESET} Keluar")
             print()
             
-            choice = input(f"  {BOLD}Pilihan (1/2/3/4):{RESET} ").strip()
-            if choice == "4":
+            choice = input(f"  {BOLD}Pilihan (1/2/3/4/5):{RESET} ").strip()
+            if choice == "5":
                 print("  Keluar.")
                 sys.exit(0)
             elif choice == "1":
@@ -86,6 +145,9 @@ def interactive_menu():
             elif choice == "3":
                 applicator = "gofood"
                 state = "load_outlets"
+            elif choice == "4":
+                applicator = "all"
+                state = "load_outlets"
             else:
                 print(f"  {RED}Pilihan tidak valid.{RESET}")
                 time.sleep(1)
@@ -93,9 +155,27 @@ def interactive_menu():
         elif state == "load_outlets":
             print(f"\n  [*] Mengunduh & memuat daftar outlet untuk {applicator.upper()}...")
             try:
-                outlets = get_outlets_for_applicator(applicator)
+                if applicator == "all":
+                    outlets_shopee = get_outlets_for_applicator("shopee")
+                    outlets_grab = get_outlets_for_applicator("grab")
+                    outlets_gofood = get_outlets_for_applicator("gofood")
+                    
+                    seen = set()
+                    outlets = []
+                    for o_list in [outlets_shopee, outlets_grab, outlets_gofood]:
+                        for o in o_list:
+                            ident = o.get('nama_outlet') or o.get('nama_resto_final') or o.get('merchant_name')
+                            if ident and ident not in seen:
+                                seen.add(ident)
+                                outlets.append(o)
+                                
+                    # Store mapping for later use
+                    # To keep it simple, we just return the master list of outlets, and inside main() we will fetch again or match
+                else:
+                    outlets = get_outlets_for_applicator(applicator)
+                    
                 if not outlets:
-                    print(f"  {RED}[ERROR] Tidak ada outlet live yang ditemukan untuk {applicator.upper()}.{RESET}")
+                    print(f"  {RED}[ERROR] Tidak ada outlet live yang ditemukan.{RESET}")
                     time.sleep(2)
                     state = "applicator"
                 else:
@@ -298,24 +378,105 @@ def main():
         
     import re
     
-    if isinstance(outlet, list):
-        total_outlets = len(outlet)
-        print(f"\n{CYAN}=== MEMULAI PENARIKAN MENU MASSAL ({total_outlets} OUTLET) ==={RESET}")
-        print(f"[*] Waktu mulai: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    outlets_to_process = outlet if isinstance(outlet, list) else [outlet]
+    total_outlets = len(outlets_to_process)
+    
+    print(f"\n{CYAN}=== MEMULAI PENARIKAN MENU ({total_outlets} OUTLET) ==={RESET}")
+    print(f"[*] Waktu mulai: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    success_count = 0
+    fail_count = 0
+    
+    all_shopee = []
+    all_grab = []
+    all_gofood = []
+    if applicator == "all":
+        all_shopee = get_outlets_for_applicator("shopee")
+        all_grab = get_outlets_for_applicator("grab")
+        all_gofood = get_outlets_for_applicator("gofood")
         
-        success_count = 0
-        fail_count = 0
+    for idx, o in enumerate(outlets_to_process):
+        raw_outlet = o.get('nama_outlet') or o.get('nama_resto_final') or o.get('merchant_name') or 'unknown'
+        clean_outlet = "".join(c for c in raw_outlet if c.isalnum() or c in (' ', '_', '-')).strip()
+        clean_outlet = re.sub(r'\s+', ' ', clean_outlet).lower()
         
-        for idx, o in enumerate(outlet):
-            raw_outlet = o.get('nama_outlet') or o.get('nama_resto_final') or o.get('merchant_name') or 'unknown'
-            clean_outlet = "".join(c for c in raw_outlet if c.isalnum() or c in (' ', '_', '-')).strip()
-            clean_outlet = re.sub(r'\s+', ' ', clean_outlet).lower()
+        name_to_show = o['brand'] or o['nama_resto_final'] or o['nama_outlet']
+        print(f"\n{BOLD}[{idx + 1}/{total_outlets}] Memproses: {name_to_show}{RESET}")
+        
+        if applicator == "all":
+            excel_paths = []
             
-            output_dir = f"/home/akbarhann/project/FoodMaster/menu-prod/data/exports/{applicator}/{clean_outlet}"
+            def find_o(olist):
+                for ro in olist:
+                    r_ident = ro.get('nama_outlet') or ro.get('nama_resto_final') or ro.get('merchant_name')
+                    if r_ident == raw_outlet:
+                        return ro
+                return None
+                
+            o_s = find_o(all_shopee)
+            o_g = find_o(all_grab)
+            o_gf = find_o(all_gofood)
+            
+            if o_gf:
+                output_dir_gf = os.path.join(EXPORTS_DIR, "gofood", clean_outlet)
+                os.makedirs(output_dir_gf, exist_ok=True)
+                print(f"  [*] Menjalankan GoFood...")
+                try:
+                    s, r = extract_gofood_menu(o_gf, output_dir_gf)
+                    if s and isinstance(r, dict): excel_paths.append(r['excel'])
+                except Exception as e:
+                    print(f"  {RED}Error GoFood: {e}{RESET}")
+                    
+            if o_g:
+                output_dir_g = os.path.join(EXPORTS_DIR, "grab", clean_outlet)
+                os.makedirs(output_dir_g, exist_ok=True)
+                print(f"  [*] Menjalankan Grab...")
+                try:
+                    s, r = extract_grab_menu(o_g, output_dir_g)
+                    if s and isinstance(r, dict): excel_paths.append(r['excel'])
+                except Exception as e:
+                    print(f"  {RED}Error Grab: {e}{RESET}")
+                    
+            if o_s:
+                output_dir_s = os.path.join(EXPORTS_DIR, "shopee", clean_outlet)
+                os.makedirs(output_dir_s, exist_ok=True)
+                print(f"  [*] Menjalankan Shopee...")
+                try:
+                    s, r = extract_shopee_menu(o_s, output_dir_s)
+                    if s and isinstance(r, dict): excel_paths.append(r['excel'])
+                except Exception as e:
+                    print(f"  {RED}Error Shopee: {e}{RESET}")
+                
+            if excel_paths:
+                combined_dir = os.path.join(EXPORTS_DIR, "combined", clean_outlet)
+                os.makedirs(combined_dir, exist_ok=True)
+                
+                raw_brand = o.get('brand') or ''
+                clean_brand = "".join(c for c in raw_brand if c.isalnum() or c in (' ', '_', '-')).strip()
+                clean_outlet_filename = "".join(c for c in raw_outlet if c.isalnum() or c in (' ', '_', '-')).strip()
+                if clean_brand and clean_brand.lower() != clean_outlet_filename.lower():
+                    excel_filename = f"O.C5 {clean_outlet_filename} - {clean_brand}.xlsx"
+                else:
+                    excel_filename = f"O.C5 {clean_outlet_filename}.xlsx"
+                    
+                combined_path = os.path.join(combined_dir, excel_filename)
+                print(f"  [*] Menggabungkan {len(excel_paths)} file C5 ke {combined_path}...")
+                if combine_c5(excel_paths, combined_path):
+                    success_count += 1
+                    print(f"  {GREEN}✔ Berhasil menggabungkan semua platform!{RESET}")
+                    
+                    # Upload ke Google Drive
+                    upload_combined_to_drive(combined_path, clean_outlet_filename)
+                else:
+                    fail_count += 1
+                    print(f"  {RED}✘ Gagal menggabungkan C5.{RESET}")
+            else:
+                fail_count += 1
+                print(f"  {RED}✘ Tidak ada platform yang berhasil ditarik.{RESET}")
+
+        else:
+            output_dir = os.path.join(EXPORTS_DIR, applicator, clean_outlet)
             os.makedirs(output_dir, exist_ok=True)
-            
-            name_to_show = o['brand'] or o['nama_resto_final'] or o['nama_outlet']
-            print(f"\n{BOLD}[{idx + 1}/{total_outlets}] Memproses: {name_to_show} (ID: {o['store_id']}){RESET}")
             
             success = False
             result_data = None
@@ -334,56 +495,22 @@ def main():
             if success and isinstance(result_data, dict):
                 success_count += 1
                 print(f"  {GREEN}✔ Berhasil! {result_data.get('items_count', 0)} item, {result_data.get('mods_count', 0)} modifier.{RESET}")
+                print(f"  Hasil disimpan di: {output_dir}")
             else:
                 fail_count += 1
                 print(f"  {RED}✘ Gagal: {result_data}{RESET}")
                 
-            # Delay logic: 1 minute pause after every 10 outlets
-            if (idx + 1) < total_outlets and (idx + 1) % 10 == 0:
-                print(f"\n{YELLOW}[BATCH] Selesai memproses 10 outlet. Menunggu jeda 1 menit sebelum batch berikutnya...{RESET}")
-                for remaining in range(60, 0, -1):
-                    sys.stdout.write(f"\rMenunggu... {remaining} detik")
-                    sys.stdout.flush()
-                    time.sleep(1)
-                print(f"\r{GREEN}[BATCH] Jeda selesai. Melanjutkan penarikan...{RESET}\n")
-                
-        print(f"\n{CYAN}=== PENARIKAN MENU MASSAL SELESAI ==={RESET}")
-        print(f"  - Sukses : {GREEN}{success_count}{RESET}")
-        print(f"  - Gagal  : {RED}{fail_count}{RESET}")
-        
-    else:
-        print(f"\n{CYAN}=== MEMULAI PENARIKAN MENU ==={RESET}")
-        print(f"[*] Waktu mulai: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        
-        raw_outlet = outlet.get('nama_outlet') or outlet.get('nama_resto_final') or outlet.get('merchant_name') or 'unknown'
-        clean_outlet = "".join(c for c in raw_outlet if c.isalnum() or c in (' ', '_', '-')).strip()
-        clean_outlet = re.sub(r'\s+', ' ', clean_outlet).lower()
-        
-        output_dir = f"/home/akbarhann/project/FoodMaster/menu-prod/data/exports/{applicator}/{clean_outlet}"
-        os.makedirs(output_dir, exist_ok=True)
-        
-        success = False
-        result_data = None
-        
-        if applicator == "shopee":
-            success, result_data = extract_shopee_menu(outlet, output_dir)
-        elif applicator == "grab":
-            success, result_data = extract_grab_menu(outlet, output_dir)
-        elif applicator == "gofood":
-            success, result_data = extract_gofood_menu(outlet, output_dir)
+        if (idx + 1) < total_outlets and (idx + 1) % 10 == 0:
+            print(f"\n{YELLOW}[BATCH] Selesai memproses 10 outlet. Menunggu jeda 1 menit sebelum batch berikutnya...{RESET}")
+            for remaining in range(60, 0, -1):
+                sys.stdout.write(f"\rMenunggu... {remaining} detik")
+                sys.stdout.flush()
+                time.sleep(1)
+            print(f"\r{GREEN}[BATCH] Jeda selesai. Melanjutkan penarikan...{RESET}\n")
             
-        if success and isinstance(result_data, dict):
-            print(f"\n{GREEN}{BOLD}✔ PENARIKAN MENU BERHASIL!{RESET}")
-            print(f"  - Total Item     : {result_data['items_count']}")
-            print(f"  - Total Modifier : {result_data['mods_count']}")
-            print(f"  - Hasil disimpan di directory: {output_dir}")
-            print(f"    1. Items CSV     : {result_data['items_csv']}")
-            print(f"    2. Modifiers CSV : {result_data['mods_csv']}")
-            print(f"    3. Excel Unified : {result_data['excel']}")
-        else:
-            print(f"\n{RED}{BOLD}✘ PENARIKAN MENU GAGAL / STUB{RESET}")
-            if isinstance(result_data, str):
-                print(f"  Info: {result_data}")
+    print(f"\n{CYAN}=== PENARIKAN MENU SELESAI ==={RESET}")
+    print(f"  - Sukses : {GREEN}{success_count}{RESET}")
+    print(f"  - Gagal  : {RED}{fail_count}{RESET}")
             
 if __name__ == "__main__":
     main()

@@ -118,9 +118,7 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
 
     # 7. Write to O. C5 Template Excel
     BASE_DIR = Path(__file__).resolve().parents[1]
-    template_path = BASE_DIR / "shopee" / "O. C5 Template.xlsx"
-    if not template_path.exists():
-        template_path = Path("/home/akbarhann/project/FoodMaster/menu-prod/shopee/O. C5 Template.xlsx")
+    template_path = BASE_DIR / "O. C5 Template.xlsx"
 
     try:
         wb = openpyxl.load_workbook(template_path)
@@ -136,10 +134,10 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
         new_row_idx = 2
         for item in matched_items:
             avail_str = str(item.get('Ketersediaan item', '')).lower()
-            availability = "ON" if avail_str in ("available", "active", "1", "true") else "OFF"
+            availability = "Tersedia" if avail_str in ("available", "active", "1", "true") else "Habis"
             
             mapping = {
-                'OFD': 'Grab',
+                'OFD': 'GrabFood',
                 'Outlet Name': item.get('Nama panjang', nama_resto),
                 'Outlet Short Name': brand or item.get('Nama panjang', nama_resto),
                 'Outlet Link': item.get('Link outlet', f"https://food.grab.com/id/en/restaurant/{store_id}"),
@@ -178,10 +176,10 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
         new_row_idx = 2
         for mod in matched_mods:
             mod_avail = str(mod.get('Ketersediaan modifier', '')).lower()
-            availability_mod = "ON" if mod_avail in ("available", "active", "1", "true") else "OFF"
+            availability_mod = "Tersedia" if mod_avail in ("available", "active", "1", "true") else "Habis"
             
             mapping_mod = {
-                'OFD': 'Grab',
+                'OFD': 'GrabFood',
                 'Outlet Name': mod.get('Nama panjang', nama_resto),
                 'Outlet Short Name': brand or mod.get('Nama panjang', nama_resto),
                 'Outlet Link': mod.get('Link outlet', f"https://food.grab.com/id/en/restaurant/{store_id}"),

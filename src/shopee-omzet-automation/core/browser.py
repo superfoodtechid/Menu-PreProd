@@ -37,7 +37,9 @@ from core.logger import get_logger
 log = get_logger("browser")
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-SESSION_FILE    = Path("/home/akbarhann/project/FoodMaster/menu-prod/shopee/data/session.json")
+FILE_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = FILE_DIR.parent.parent.parent
+SESSION_FILE    = PROJECT_DIR / "shopee" / "data" / "session.json"
 import sys
 import threading
 from pathlib import Path
@@ -47,7 +49,7 @@ from discord_notifier import send_discord_error
 _thread_local = threading.local()
 
 def get_session_file() -> Path:
-    return Path("/home/akbarhann/project/FoodMaster/menu-prod/shopee/data/session.json")
+    return Path(__file__).resolve().parent.parent.parent.parent / "shopee" / "data" / "session.json"
 
 def get_otp_code(username: str, phone: str) -> str:
     discord_mode = os.getenv("OFD_DISCORD_MODE") == "1"
@@ -64,7 +66,7 @@ def get_otp_code(username: str, phone: str) -> str:
             return ""
 
     
-    script_dir = Path("/home/akbarhann/project/FoodMaster/menu-prod/shopee")
+    script_dir = Path(__file__).resolve().parent.parent.parent.parent / "shopee"
     data_dir = script_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
     otp_file = data_dir / f"otp_request_{username}.json"
@@ -721,7 +723,7 @@ def _init_driver(headless: bool):
     else:
         options.add_argument("--start-maximized")
     
-    script_dir = Path("/home/akbarhann/project/FoodMaster/menu-prod/shopee")
+    script_dir = Path(__file__).resolve().parent.parent.parent.parent / "shopee"
     profile_dir = script_dir / "data" / "chrome_profile"
     options.add_argument(f"--user-data-dir={profile_dir.resolve()}")
     options.add_argument("--profile-directory=shopee_profile")

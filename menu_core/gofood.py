@@ -217,33 +217,45 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
             }
             all_dishes.append(dish_obj)
             
-    # Build output DataFrames
+    # Build standard output DataFrames
     item_cols = [
-        'Link outlet', 'Nama panjang', 'Nama pendek (ShopeeFood)', 'Store ID',
-        'Nama kategori', 'Nama item', 'Jumlah terjual', 'Jumlah modifier group',
-        'Jumlah modifier', 'Deskripsi item', 'Harga item sebelum promo (harga coret)',
-        'Harga item setelah promo (harga coret)', 'Nominal atau persentase promo (harga coret)',
-        'Ketersediaan item', 'Link foto'
+        'OFD', 'Outlet Name', 'Outlet Short Name', 'Outlet Link', 'SID',
+        'Category ID', 'Category', 'Item ID', 'Item', 'Photo Link',
+        'Description', 'Keyword', 'Total Sold', 'Total Modifier Group', 'Total Modifier',
+        'Availability', 'Current Fake Price (Rp)', 'Current Real Price (Rp)',
+        'Current Slash Price (%)', 'Current Slash Price (Rp)', 'New Markup (%)',
+        'New Real Price (Rp)', 'Adjustment (Rp)', 'New Final Real Price (Rp)',
+        'New Slash Price (%)', 'New Fake Price (Rp)', 'Notes'
     ]
     
     item_data = []
     for d in all_dishes:
         item_data.append([
-            d['link_outlet'], d['nama_panjang'], d['nama_pendek'], d['store_id'],
-            d['nama_kategori'], d['nama_item'], d['jumlah_terjual'], d['jumlah_modifier_group'],
-            d['jumlah_modifier'], d['deskripsi_item'], d['harga_sebelum_promo'],
-            d['harga_setelah_promo'], d['promo'], d['ketersediaan'], d['link_foto']
+            'GoFood', d['nama_panjang'], d['nama_pendek'], d['link_outlet'], d['store_id'],
+            '', d['nama_kategori'], '', d['nama_item'], d['link_foto'],
+            d['deskripsi_item'], '', d['jumlah_terjual'], d['jumlah_modifier_group'],
+            d['jumlah_modifier'], d['ketersediaan'], 
+            d['harga_sebelum_promo'], d['harga_setelah_promo'], 0, 0,
+            "", "", "", "", "", "", ""
         ])
         
     df_items = pd.DataFrame(item_data, columns=item_cols)
     
     mod_cols = [
-        'Link outlet', 'Nama panjang', 'Nama pendek (ShopeeFood)', 'Store ID',
-        'Nama item', 'Nama modifier group', 'Nama modifier', 'Tipe modifier',
-        'Minimal', 'Maksimal', 'Harga modifier', 'Ketersediaan modifier'
+        'OFD', 'Outlet Name', 'Outlet Short Name', 'Outlet Link', 'SID',
+        'Item', 'Modifier Group ID', 'Modifier Group', 'Modifier ID',
+        'Modifier', 'Min', 'Max', 'Availability', 'Current Price (Rp)'
     ]
     
-    df_mods = pd.DataFrame(modifier_rows, columns=mod_cols)
+    mod_data = []
+    for m in modifier_rows:
+        mod_data.append([
+            'GoFood', m[1], m[2], m[0], m[3],
+            m[4], '', m[5], '',
+            m[6], m[8], m[9], m[11], m[10]
+        ])
+    
+    df_mods = pd.DataFrame(mod_data, columns=mod_cols)
     
     # Write to files
     os.makedirs(output_dir, exist_ok=True)
@@ -263,7 +275,6 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
         
     combined_name = re.sub(r'_+', '_', combined_name)
     
-    # Build paths conforming to "O.C5 {nama_outlet} - {brand}.xlsx"
     raw_outlet = store_metadata.get('nama_outlet') or store_metadata.get('nama_resto_final') or nama_resto or 'unknown'
     raw_brand = store_metadata.get('brand') or ''
     
@@ -280,9 +291,38 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
         
     excel_path = os.path.join(output_dir, excel_filename)
     
-    with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-        df_items.to_excel(writer, sheet_name='Items', index=False)
-        df_mods.to_excel(writer, sheet_name='Modifiers', index=False)
+    from pathlib import Path
+    import openpyxl
+    BASE_DIR = Path(__file__).resolve().parents[1]
+    template_path = BASE_DIR / "O. C5 Template.xlsx"
+    
+    try:
+        wb = openpyxl.load_workbook(template_path)
+        sheet_item = wb['Item']
+        if sheet_item.max_row > 1:
+            sheet_item.delete_rows(2, sheet_item.max_row - 1)
+        headers_item = {cell.value: cell.column for cell in sheet_item[1]}
+        for r_idx, row in df_items.iterrows():
+            for col_name, val in row.items():
+                if col_name in headers_item:
+                    sheet_item.cell(row=r_idx + 2, column=headers_item[col_name], value=val)
+                    
+        sheet_mod = wb['Modifier']
+        if sheet_mod.max_row > 1:
+            sheet_mod.delete_rows(2, sheet_mod.max_row - 1)
+        headers_mod = {cell.value: cell.column for cell in sheet_mod[1]}
+        for r_idx, row in df_mods.iterrows():
+            for col_name, val in row.items():
+                if col_name in headers_mod:
+                    sheet_mod.cell(row=r_idx + 2, column=headers_mod[col_name], value=val)
+                    
+        wb.save(excel_path)
+        print(f"   ✅ Berhasil menyimpan file catalog menggunakan template O.C5 ke: {excel_path}")
+    except Exception as ex_err:
+        print(f"   [-] Gagal menulis ke template O.C5: {ex_err}. Fallback ke Excel biasa.")
+        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
+            df_items.to_excel(writer, sheet_name='Item', index=False)
+            df_mods.to_excel(writer, sheet_name='Modifier', index=False)
         
     print(f"   ✅ Berhasil memproses data menu GoFood!")
     print(f"      - Item Count: {len(df_items)}")

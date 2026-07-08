@@ -9,7 +9,7 @@ from openpyxl import Workbook
 from selenium.webdriver.chrome.options import Options
 
 # Add shopee-omzet-automation to sys.path
-AUTOMATION_DIR = Path("/home/akbarhann/project/FoodMaster/menu-prod/src/shopee-omzet-automation")
+AUTOMATION_DIR = Path(__file__).resolve().parents[1] / "src" / "shopee-omzet-automation"
 if str(AUTOMATION_DIR) not in sys.path:
     sys.path.insert(0, str(AUTOMATION_DIR))
 

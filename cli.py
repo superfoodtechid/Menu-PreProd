@@ -57,7 +57,9 @@ def combine_c5(excel_paths, output_path):
         for r_idx, row in df_combined_items.iterrows():
             for col_name, val in row.items():
                 if col_name in headers_item:
-                    sheet_item.cell(row=r_idx + 2, column=headers_item[col_name], value=val)
+                    cell = sheet_item.cell(row=r_idx + 2, column=headers_item[col_name], value=val)
+                    if '%' in str(col_name):
+                        cell.number_format = '0%'
                     
         sheet_mod = wb['Modifier']
         if sheet_mod.max_row > 1:
@@ -67,7 +69,9 @@ def combine_c5(excel_paths, output_path):
         for r_idx, row in df_combined_mods.iterrows():
             for col_name, val in row.items():
                 if col_name in headers_mod:
-                    sheet_mod.cell(row=r_idx + 2, column=headers_mod[col_name], value=val)
+                    cell = sheet_mod.cell(row=r_idx + 2, column=headers_mod[col_name], value=val)
+                    if '%' in str(col_name):
+                        cell.number_format = '0%'
                     
         wb.save(output_path)
         return True

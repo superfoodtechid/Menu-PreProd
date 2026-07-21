@@ -55,25 +55,66 @@ def combine_c5(excel_paths, output_path):
         if sheet_item.max_row > 1:
             sheet_item.delete_rows(2, sheet_item.max_row - 1)
             
-        headers_item = {cell.value: cell.column for cell in sheet_item[1]}
+        headers_item = {}
+        for cell in sheet_item[1]:
+            if isinstance(cell.value, str):
+                headers_item[cell.value] = cell.column
+                
         for r_idx, row in df_combined_items.iterrows():
             for col_name, val in row.items():
                 if col_name in headers_item:
+                    if pd.isna(val):
+                        val = ""
+                    elif col_name in ['SID', 'Category ID', 'Item ID']:
+                        if isinstance(val, float):
+                            val = str(int(val)) if val.is_integer() else str(val)
+                        else:
+                            val = str(val)
                     cell = sheet_item.cell(row=r_idx + 2, column=headers_item[col_name], value=val)
-                    if '%' in str(col_name):
-                        cell.number_format = '0%'
+                    
+        # Apply percentage formatting to all columns with '(%)' in the header
+        for cell in sheet_item[1]:
+            val_str = ""
+            if hasattr(cell.value, 'text'):
+                val_str = cell.value.text
+            elif isinstance(cell.value, str):
+                val_str = cell.value
+                
+            if '(%)' in val_str:
+                for r in range(2, sheet_item.max_row + 1):
+                    sheet_item.cell(row=r, column=cell.column).number_format = '0%'
                     
         sheet_mod = wb['Modifier']
         if sheet_mod.max_row > 1:
             sheet_mod.delete_rows(2, sheet_mod.max_row - 1)
             
-        headers_mod = {cell.value: cell.column for cell in sheet_mod[1]}
+        headers_mod = {}
+        for cell in sheet_mod[1]:
+            if isinstance(cell.value, str):
+                headers_mod[cell.value] = cell.column
+                
         for r_idx, row in df_combined_mods.iterrows():
             for col_name, val in row.items():
                 if col_name in headers_mod:
-                    cell = sheet_mod.cell(row=r_idx + 2, column=headers_mod[col_name], value=val)
-                    if '%' in str(col_name):
-                        cell.number_format = '0%'
+                    if pd.isna(val):
+                        val = ""
+                    elif col_name in ['SID', 'Modifier Group ID', 'Modifier ID', 'Item']:
+                        if isinstance(val, float):
+                            val = str(int(val)) if val.is_integer() else str(val)
+                        else:
+                            val = str(val)
+                    sheet_mod.cell(row=r_idx + 2, column=headers_mod[col_name], value=val)
+                    
+        for cell in sheet_mod[1]:
+            val_str = ""
+            if hasattr(cell.value, 'text'):
+                val_str = cell.value.text
+            elif isinstance(cell.value, str):
+                val_str = cell.value
+                
+            if '(%)' in val_str:
+                for r in range(2, sheet_mod.max_row + 1):
+                    sheet_mod.cell(row=r, column=cell.column).number_format = '0%'
                     
         wb.save(output_path)
         return True

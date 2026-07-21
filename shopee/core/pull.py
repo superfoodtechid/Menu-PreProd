@@ -134,13 +134,14 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
                 if list_price > price:
                     current_fake_price = list_price
                     current_real_price = price
-                    current_slash_pct = round(((list_price - price) / list_price) * 100.0, 2)
-                    current_slash_rp = price
+                    pct_val = round(((list_price - price) / list_price) * 100.0, 2)
+                    current_slash_pct = f"{int(pct_val)}%" if pct_val.is_integer() else f"{pct_val}%"
+                    current_slash_rp = list_price - price
                 else:
                     current_fake_price = list_price
                     current_real_price = list_price
-                    current_slash_pct = ""
-                    current_slash_rp = ""
+                    current_slash_pct = "0%"
+                    current_slash_rp = 0
                 
                 available_str = "Tersedia" if available else "Habis"
                 picture_url = f"{IMG_BASE}/{picture}" if picture else ""
@@ -341,6 +342,13 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
                 for key, val in mapping.items():
                     if key in headers_item:
                         col_idx = headers_item[key]
+                        if pd.isna(val):
+                            val = ""
+                        elif key in ['SID', 'Category ID', 'Item ID']:
+                            if isinstance(val, float):
+                                val = str(int(val)) if val.is_integer() else str(val)
+                            else:
+                                val = str(val)
                         sheet_item.cell(row=new_row_idx, column=col_idx, value=val)
                 new_row_idx += 1
                         
@@ -374,6 +382,13 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
                 for key, val in mapping_mod.items():
                     if key in headers_mod:
                         col_idx = headers_mod[key]
+                        if pd.isna(val):
+                            val = ""
+                        elif key in ['SID', 'Modifier Group ID', 'Modifier ID', 'Item']:
+                            if isinstance(val, float):
+                                val = str(int(val)) if val.is_integer() else str(val)
+                            else:
+                                val = str(val)
                         sheet_mod.cell(row=new_row_idx, column=col_idx, value=val)
                 new_row_idx += 1
                         

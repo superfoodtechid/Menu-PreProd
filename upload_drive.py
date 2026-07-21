@@ -3,16 +3,19 @@ import base64
 import requests
 
 # URL Web App Google Apps Script
-URL_WEB_APP = "https://script.google.com/macros/s/AKfycbw0llBV-kd_6HU1PO4qRimmu0z2C6iWb9mRmRerIP_Yp_PAUTXjTI9-sCmMKJaUpQup1w/exec"
+URL_WEB_APP = "https://script.google.com/macros/s/AKfycbww-dv6C_vQAfsulCfrduMKNz6RuodcOOtQnprWcZ3mMZ0k2sfZagywVYNkRrhqPoM9pg/exec"
 
-def upload_combined_to_drive(file_path: str, outlet_name: str) -> bool:
+from typing import Optional
+
+def upload_combined_to_drive(file_path: str, outlet_name: str) -> Optional[str]:
     """
     Mengirim file excel hasil combine ke Google Drive via Apps Script Web App.
     File akan ditempatkan pada folder spesifik sesuai nama outlet.
+    Mengembalikan URL spreadsheet/file jika sukses, atau None jika gagal.
     """
     if not os.path.exists(file_path):
         print(f"File tidak ditemukan: {file_path}")
-        return False
+        return None
         
     try:
         # Membaca file dan encode ke base64
@@ -34,23 +37,24 @@ def upload_combined_to_drive(file_path: str, outlet_name: str) -> bool:
         }
         
         print(f"Mengirim {file_name} ke folder '{clean_folder_name}' di Google Drive...")
-        response = requests.post(URL_WEB_APP, json=payload)
+        response = requests.post(URL_WEB_APP, json=payload, timeout=60)
         
         if response.status_code == 200:
             result = response.json()
             if result.get("status") == "success":
-                print(f"✅ Berhasil diupload! URL: {result.get('fileUrl')}")
-                return True
+                url = result.get("spreadsheetUrl") or result.get("fileUrl")
+                print(f"✅ Berhasil diupload! URL: {url}")
+                return url
             else:
                 print(f"❌ Gagal upload dari sisi server: {result.get('message')}")
-                return False
+                return None
         else:
             print(f"❌ Error request HTTP: {response.status_code} - {response.text}")
-            return False
+            return None
             
     except Exception as e:
         print(f"❌ Exception saat upload: {e}")
-        return False
+        return None
 
 if __name__ == "__main__":
     # Contoh penggunaan untuk pengetesan (jika dijalankan langsung)

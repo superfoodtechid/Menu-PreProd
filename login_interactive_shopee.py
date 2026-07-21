@@ -17,7 +17,7 @@ def main():
     browser.set_session_file(session_file)
     
     username = "allvbadmin"
-    password = "Shopee@321"
+    password = "Master!00!"
     target_merchant = "Ayam Geprek Suroboyo Amp"
     
     print(f"[*] Launching non-headless browser for interactive login of {username}...")

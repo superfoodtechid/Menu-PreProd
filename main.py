@@ -2,6 +2,7 @@ import os
 import sys
 import uuid
 import logging
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
@@ -139,7 +140,7 @@ import pandas as pd
 
 @app.post("/api/sync-sheets", status_code=status.HTTP_200_OK)
 def sync_sheets(db: Session = Depends(get_db)):
-    url = "https://docs.google.com/spreadsheets/d/14eCb8DAEXhmbYj9MFj2KzC7AhkulbCbSNPltN2m-go0/export?format=csv&gid=0"
+    url = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3tLKBNXDqRgBw0mNhKZFxgvKx-JoiTDzm_s5Ix1cm7O6HCv4IvExOLR2HSRVaXSsx82V348mcr9X4/pub?gid=0&single=true&output=csv&t={int(datetime.utcnow().timestamp())}"
     try:
         logger.info("⏳ Downloading latest merchant sheet for database sync...")
         resp = requests.get(url, timeout=30)
@@ -176,7 +177,7 @@ def sync_sheets(db: Session = Depends(get_db)):
             username = "allvbadmin"
             # Get Password.1 or Kata Sandi.1
             pwd_col = "Kata Sandi.1" if "Kata Sandi.1" in df.columns else "Kata Sandi"
-            password = str(row.get(pwd_col, "Shopee@321")).strip()
+            password = str(row.get(pwd_col, "Master!00!")).strip()
         elif platform == "grab":
             user_col_sf = "Nama Pengguna.1"
             user_col_mt = "Nama Pengguna"
@@ -352,6 +353,14 @@ def list_outlets(platform: Optional[str] = None, db: Session = Depends(get_db)):
 
 # ─── BACKGROUND JOBS WORKER ───────────────────────────────────────────────────
 
+# Platform-specific locks to allow parallel execution between different platforms,
+# but enforce sequential execution within each platform (especially Shopee).
+PLATFORM_LOCKS = {
+    "shopee": threading.Lock(),
+    "grab": threading.Lock(),
+    "gofood": threading.Lock()
+}
+
 def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
     # Setup job-specific session context
     from menu_core.database import SessionLocal
@@ -361,7 +370,19 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
         db.close()
         return
 
+    platform = (job.platform or "").lower()
+    lock = PLATFORM_LOCKS.get(platform)
+    if lock:
+        logger.info(f"🔒 Job {job_id} ({platform}) waiting for lock...")
+        lock.acquire()
+        logger.info(f"🔓 Job {job_id} ({platform}) acquired lock. Starting execution.")
+
     try:
+        # Re-fetch job under lock to ensure we have the latest database state
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            return
+
         job.status = "RUNNING"
         job.started_at = datetime.utcnow()
         job.progress_pct = 10
@@ -420,6 +441,19 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
                     outlet.store_id = resolved_store_id
                     logger.info(f"💾 Dynamically updated store_id to {resolved_store_id} for outlet {outlet.merchant_name}")
             
+            # Upload to Google Drive/Sheets
+            excel_path = result.get("excel")
+            drive_url = None
+            if excel_path and os.path.exists(excel_path):
+                try:
+                    job.current_step = "Mengunggah hasil ke Google Sheets..."
+                    db.commit()
+                    from upload_drive import upload_combined_to_drive
+                    clean_outlet_filename = "".join(c for c in (outlet.nama_outlet or outlet.nama_resto_final or outlet.merchant_name or 'unknown') if c.isalnum() or c in (' ', '_', '-')).strip()
+                    drive_url = upload_combined_to_drive(excel_path, clean_outlet_filename)
+                except Exception as ue:
+                    logger.error(f"Failed to upload to Google Drive: {ue}")
+
             job.status = "SUCCESS"
             job.progress_pct = 100
             job.current_step = "Penarikan menu selesai!"
@@ -429,7 +463,8 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
                 "mods_csv_path": result.get("mods_csv"),
                 "items_count": result.get("items_count", 0),
                 "mods_count": result.get("mods_count", 0),
-                "completed_at": datetime.utcnow().isoformat()
+                "completed_at": datetime.utcnow().isoformat(),
+                "gspread_url": drive_url
             }
             job.completed_at = datetime.utcnow()
             outlet.last_sync_at = datetime.utcnow()
@@ -461,6 +496,19 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
             if not success:
                 raise Exception(f"GoFood extraction failed: {result}")
                 
+            # Upload to Google Drive/Sheets
+            excel_path = result.get("excel")
+            drive_url = None
+            if excel_path and os.path.exists(excel_path):
+                try:
+                    job.current_step = "Mengunggah hasil ke Google Sheets..."
+                    db.commit()
+                    from upload_drive import upload_combined_to_drive
+                    clean_outlet_filename = "".join(c for c in (outlet.nama_outlet or outlet.nama_resto_final or outlet.merchant_name or 'unknown') if c.isalnum() or c in (' ', '_', '-')).strip()
+                    drive_url = upload_combined_to_drive(excel_path, clean_outlet_filename)
+                except Exception as ue:
+                    logger.error(f"Failed to upload to Google Drive: {ue}")
+
             job.status = "SUCCESS"
             job.progress_pct = 100
             job.current_step = "Penarikan menu GoFood selesai!"
@@ -468,7 +516,8 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
                 "excel_path": result.get("excel"),
                 "items_count": result.get("items_count", 0),
                 "mods_count": result.get("mods_count", 0),
-                "completed_at": datetime.utcnow().isoformat()
+                "completed_at": datetime.utcnow().isoformat(),
+                "gspread_url": drive_url
             }
             job.completed_at = datetime.utcnow()
             outlet.last_sync_at = datetime.utcnow()
@@ -500,6 +549,19 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
             if not success:
                 raise Exception(f"Grab extraction failed: {result}")
                 
+            # Upload to Google Drive/Sheets
+            excel_path = result.get("excel")
+            drive_url = None
+            if excel_path and os.path.exists(excel_path):
+                try:
+                    job.current_step = "Mengunggah hasil ke Google Sheets..."
+                    db.commit()
+                    from upload_drive import upload_combined_to_drive
+                    clean_outlet_filename = "".join(c for c in (outlet.nama_outlet or outlet.nama_resto_final or outlet.merchant_name or 'unknown') if c.isalnum() or c in (' ', '_', '-')).strip()
+                    drive_url = upload_combined_to_drive(excel_path, clean_outlet_filename)
+                except Exception as ue:
+                    logger.error(f"Failed to upload to Google Drive: {ue}")
+
             job.status = "SUCCESS"
             job.progress_pct = 100
             job.current_step = "Penarikan menu GrabFood selesai!"
@@ -507,7 +569,8 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
                 "excel_path": result.get("excel"),
                 "items_count": result.get("items_count", 0),
                 "mods_count": result.get("mods_count", 0),
-                "completed_at": datetime.utcnow().isoformat()
+                "completed_at": datetime.utcnow().isoformat(),
+                "gspread_url": drive_url
             }
             job.completed_at = datetime.utcnow()
             outlet.last_sync_at = datetime.utcnow()
@@ -523,6 +586,12 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
         job.completed_at = datetime.utcnow()
         db.commit()
     finally:
+        if lock:
+            try:
+                lock.release()
+                logger.info(f"🔓 Job {job_id} ({platform}) lock released.")
+            except Exception as le:
+                logger.warning(f"⚠️ Failed to release lock: {le}")
         db.close()
 
 

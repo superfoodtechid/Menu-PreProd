@@ -57,7 +57,7 @@ OUTPUT_DIR = SCRIPT_DIR / "data"
 
 # Allvbadmin credentials (same as menu_core/shopee.py)
 DEFAULT_USERNAME = "allvbadmin"
-DEFAULT_PASSWORD = "Shopee@321"
+DEFAULT_PASSWORD = "Master!00!"
 
 # Merchants to switch to in allvbadmin (each has its own set of stores)
 # Format: (merchant_name_in_dropdown, label_for_output)

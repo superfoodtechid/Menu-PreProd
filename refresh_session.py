@@ -15,7 +15,7 @@ def main():
     
     # Load credentials from weekly/credentials.json if exists
     username = "allvbadmin"
-    password = "Shopee@321"
+    password = "Master!00!"
     
     import json
     creds_file = WEEKLY_DIR / "credentials.json"

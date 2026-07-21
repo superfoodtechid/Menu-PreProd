@@ -45,7 +45,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
     nama_pendek = store_metadata.get('brand') or store_metadata.get('nama_pendek') or store_metadata.get('nama_outlet') or target_name
     
     username = store_metadata.get("username", "allvbadmin")
-    password = store_metadata.get("password", "Shopee@321")
+    password = store_metadata.get("password", "Master!00!")
     session_file = MENU_DIR / "data" / "session.json"
     browser.set_session_file(session_file)
             

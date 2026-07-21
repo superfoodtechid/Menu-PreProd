@@ -18,7 +18,7 @@ ENV_PATH = MENU_DIR / ".env"
 load_dotenv(ENV_PATH)
 
 # Master credential Google Sheet
-MASTER_SHEET_URL = "https://docs.google.com/spreadsheets/d/14eCb8DAEXhmbYj9MFj2KzC7AhkulbCbSNPltN2m-go0/export?format=csv&gid=0"
+MASTER_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3tLKBNXDqRgBw0mNhKZFxgvKx-JoiTDzm_s5Ix1cm7O6HCv4IvExOLR2HSRVaXSsx82V348mcr9X4/pub?gid=0&single=true&output=csv"
 
 
 def normalisasi_nomor_hp(nomor_hp):
@@ -302,15 +302,34 @@ def login_outlet(outlet_info, proxy_config=None):
     Membuka browser Chromium untuk login otomatis 1 outlet.
     Menangkap token, menyimpannya di .env, dan mengembalikannya.
     """
-    nama = outlet_info['nama_outlet']
+    store_id = outlet_info.get('store_id')
+    nama = outlet_info.get('nama_outlet') or outlet_info.get('merchant_name') or ''
     cabang = outlet_info.get('cabang', '')
+    
     emails_to_try = outlet_info.get('emails', [])
+    phone = outlet_info.get('phone_raw', '') or outlet_info.get('phone', '')
+    
+    # Try to enrich the info from Google Sheet
+    try:
+        sheet_outlets = fetch_gofood_outlets()
+        matched_outlet = None
+        if store_id:
+            matched_outlet = next((o for o in sheet_outlets if str(o.get('store_id')) == str(store_id)), None)
+        if not matched_outlet and nama:
+            matched_outlet = next((o for o in sheet_outlets if o.get('nama_outlet') == nama and o.get('cabang') == cabang), None)
+            
+        if matched_outlet:
+            if not emails_to_try:
+                emails_to_try = matched_outlet.get('emails', [])
+            if not phone:
+                phone = matched_outlet.get('phone', '')
+    except Exception as e:
+        print(f"   ⚠️ Gagal memperkaya data outlet dari Google Sheet: {e}")
+        
     if not emails_to_try:
-        single_email = outlet_info.get('email', '')
+        single_email = outlet_info.get('email', '') or outlet_info.get('username', '')
         if single_email:
             emails_to_try = [single_email]
-            
-    phone = outlet_info.get('phone_raw', '') or outlet_info.get('phone', '')
 
     label = f"{nama} - {cabang}" if cabang and cabang != 'Tanpa Cabang' else nama
 

@@ -3,6 +3,7 @@ import json
 import re
 import sys
 import pandas as pd
+import base64
 
 def extract_gofood_menu(store_metadata: dict, output_dir: str):
     """
@@ -222,8 +223,6 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
             
             if isinstance(promo_info, str) and promo_info:
                 try:
-                    import base64
-                    import json
                     promo_info = json.loads(base64.b64decode(promo_info).decode('utf-8'))
                 except Exception:
                     promo_info = None

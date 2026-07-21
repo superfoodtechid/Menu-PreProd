@@ -749,7 +749,7 @@ def _init_driver(headless: bool):
 
 # ── Login Logic ────────────────────────────────────────────────────────────────
 
-def _perform_login(driver, wait, username: str = None, password: str = None, phone: str = None, is_retry: bool = False) -> bool:
+def _perform_login(driver, wait, username: str = None, password: str = None, phone: str = None, is_retry: bool = False, allow_otp: bool = False) -> bool:
     log.info("➡️  [AUTH] Starting login sequence...")
     if not phone and (not username or not password):
         raise Exception("Shopee credentials are not configured! Please configure them in 'credentials.json' at the project root directory.")
@@ -874,8 +874,20 @@ def _perform_login(driver, wait, username: str = None, password: str = None, pho
             """)
 
             if otp_input or is_verification_page:
-                log.error(f"❌ [AUTH] OTP or verification is required for '{username or phone}'. Aborting to prevent triggering OTP.")
-                return False
+                if not allow_otp:
+                    log.error(f"❌ [AUTH] OTP or verification is required for '{username or phone}'. Aborting to prevent triggering OTP.")
+                    return False
+                else:
+                    log.info(f"⏳ [AUTH] OTP or verification is required. Tolong selesaikan verifikasi OTP secara MANUAL di browser Chrome yang terbuka...")
+                    # Wait until user solves OTP and gets redirected (max 5 minutes)
+                    for _ in range(300):
+                        time.sleep(1)
+                        curr = driver.current_url.lower()
+                        if "onboarding" in curr or "merchant-selector" in curr or "dashboard" in curr:
+                            log.info("✅ [AUTH] Manual OTP verification successful. Proceeding...")
+                            return True
+                    log.error("❌ [AUTH] Timeout menunggu verifikasi OTP manual.")
+                    return False
         except Exception:
             pass
 
@@ -1402,7 +1414,7 @@ def return_to_selector(driver) -> bool:
             pass
         return True
 
-def get_session(username=None, password=None, phone=None, headless=True, close_browser=True, target_name=None, interactive=True) -> dict | None:
+def get_session(username=None, password=None, phone=None, headless=True, close_browser=True, target_name=None, interactive=True, allow_otp=False) -> dict | None:
     for attempt in range(3):
         log.info(f"🌐 [BROWSER] Launching (headless={headless}, attempt={attempt+1}/3)...")
         driver = _init_driver(headless=headless)
@@ -1483,7 +1495,7 @@ def get_session(username=None, password=None, phone=None, headless=True, close_b
                 
                 current_url = driver.current_url.lower()
                 if "login" in current_url or "authenticate" in current_url or "about:blank" in current_url:
-                    success = _perform_login(driver, wait, username, password, phone, is_retry=(attempt == 2))
+                    success = _perform_login(driver, wait, username, password, phone, is_retry=(attempt == 2), allow_otp=allow_otp)
                     if not success:
                         log.error("❌ [AUTH] _perform_login failed.")
                         driver.quit()

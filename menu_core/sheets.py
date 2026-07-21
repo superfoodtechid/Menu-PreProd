@@ -4,7 +4,7 @@ import time
 import requests
 import pandas as pd
 
-GSHEETS_URL = "https://docs.google.com/spreadsheets/d/14eCb8DAEXhmbYj9MFj2KzC7AhkulbCbSNPltN2m-go0/export?format=csv&gid=0"
+GSHEETS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3tLKBNXDqRgBw0mNhKZFxgvKx-JoiTDzm_s5Ix1cm7O6HCv4IvExOLR2HSRVaXSsx82V348mcr9X4/pub?output=csv&gid=0&single=true"
 CACHE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "master_merchants_cache.csv")
 
 def get_master_df(force_download=False):
@@ -31,6 +31,8 @@ def get_master_df(force_download=False):
                 df = pd.read_csv(CACHE_PATH)
             else:
                 raise RuntimeError(f"Gagal mengunduh daftar merchant: {e}")
+    if df is not None:
+        df = df.fillna('')
     return df
 
 def get_outlets_for_applicator(applicator_choice: str):
@@ -72,6 +74,10 @@ def get_outlets_for_applicator(applicator_choice: str):
     for _, row in filtered_df.iterrows():
         store_id = str(row.get('Store ID', '')).strip().split('.')[0]
         if not store_id or store_id == '-' or store_id.lower() == 'nan':
+            # Fallback to Merchant ID if Store ID is empty (e.g., for GoFood)
+            store_id = str(row.get('Merchant ID', '')).strip().split('.')[0]
+            
+        if (not store_id or store_id == '-' or store_id.lower() == 'nan') and app_lower != 'shopee':
             continue
             
         email1 = str(row.get(col_email1, '')) if col_email1 else ''
@@ -96,8 +102,12 @@ def get_outlets_for_applicator(applicator_choice: str):
                 return v
             return ''
             
-        username = get_valid('Nama Pengguna', 'Nama Pengguna.1')
-        password = get_valid('Kata Sandi', 'Kata Sandi.1')
+        if app_lower in ['grab', 'shopee']:
+            username = get_valid('Nama Pengguna.1', 'Nama Pengguna')
+            password = get_valid('Kata Sandi.1', 'Kata Sandi')
+        else:
+            username = get_valid('Nama Pengguna', 'Nama Pengguna.1')
+            password = get_valid('Kata Sandi', 'Kata Sandi.1')
             
         outlets.append({
             'store_id': store_id,

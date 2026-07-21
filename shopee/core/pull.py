@@ -20,7 +20,7 @@ IMG_BASE = "https://down-id.img.susercontent.com/file"
 
 def list_menu_shopee(store_metadata: dict) -> tuple[bool, list | str]:
     from shopee.core.item.edit import _boot_client
-    client, err = _boot_client(store_metadata, headless=True)
+    client, err = _boot_client(store_metadata, headless=False)
     if not client:
         return False, f"Boot client failed: {err}"
         
@@ -49,11 +49,11 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
     session_file = MENU_DIR / "data" / "session.json"
     browser.set_session_file(session_file)
             
-    print(f"[*] Membuka browser (headless=True) dan memilih merchant: '{target_name}'...")
+    print(f"[*] Membuka browser (headless=False) dan memilih merchant: '{target_name}'...")
     session_data = browser.get_session(
         username=username,
         password=password,
-        headless=True,
+        headless=False,
         close_browser=True,
         target_name=target_name,
         interactive=False

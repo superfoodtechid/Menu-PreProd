@@ -10,6 +10,8 @@ import os
 import sys
 import time
 import re
+import shutil
+import glob
 from datetime import datetime
 
 # Add parent directory of menu_core to sys.path so imports work
@@ -90,12 +92,7 @@ def check_outlet_processed(applicator, o, exports_dir=EXPORTS_DIR):
         return "".join(c for c in s if c.isalnum() or c in (' ', '_', '-')).strip()
         
     clean_outlet_filename = clean_filename_part(raw_outlet)
-    clean_brand = clean_filename_part(raw_brand)
-    
-    if clean_brand and clean_brand.lower() != clean_outlet_filename.lower():
-        excel_filename = f"O.C5 {clean_outlet_filename} - {clean_brand}.xlsx"
-    else:
-        excel_filename = f"O.C5 {clean_outlet_filename}.xlsx"
+    excel_filename = f"O.C5 {clean_outlet_filename}.xlsx"
         
     clean_outlet_folder = "".join(c for c in raw_outlet if c.isalnum() or c in (' ', '_', '-')).strip()
     clean_outlet_folder = re.sub(r'\s+', ' ', clean_outlet_folder).lower()
@@ -118,11 +115,31 @@ def banner():
     print(f"\033[90m=================================================================\033[0m")
     print()
 
+def clear_all_caches():
+    print(f"\n  {YELLOW}[*] Membersihkan cache master spreadsheet...{RESET}")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Master Merchants Cache (Google Sheets)
+    master_cache = os.path.join(base_dir, "master_merchants_cache.csv")
+    if os.path.exists(master_cache):
+        try:
+            os.remove(master_cache)
+            print(f"    {DIM}- Terhapus: master_merchants_cache.csv{RESET}")
+        except Exception as e:
+            print(f"    {RED}- Gagal menghapus master_merchants_cache.csv: {e}{RESET}")
+                
+    print(f"  {GREEN}✔ Cache data spreadsheet berhasil dibersihkan! (Session & Profile tetap aman){RESET}")
+    time.sleep(2)
+
+
 def interactive_menu():
     state = "applicator"
     applicator = None
     outlets = []
     selected_outlet = None
+    all_shopee = []
+    all_grab = []
+    all_gofood = []
     
     while True:
         if state == "applicator":
@@ -133,13 +150,48 @@ def interactive_menu():
             print(f"    {GREEN}[2]{RESET} GrabFood")
             print(f"    {CYAN}[3]{RESET} GoFood")
             print(f"    {YELLOW}[4]{RESET} Semua (Jadikan 1 C5)")
-            print(f"    {RED}[5]{RESET} Keluar")
+            print(f"    {DIM}[5]{RESET} Clear Cache (Reset Sesi)")
+            print(f"    {CYAN}[6]{RESET} Perbaiki Login Shopee (Manual OTP)")
+            print(f"    {RED}[7]{RESET} Keluar")
             print()
             
-            choice = input(f"  {BOLD}Pilihan (1/2/3/4/5):{RESET} ").strip()
-            if choice == "5":
+            choice = input(f"  {BOLD}Pilihan (1/2/3/4/5/6/7):{RESET} ").strip()
+            if choice == "7":
                 print("  Keluar.")
                 sys.exit(0)
+            elif choice == "6":
+                print(f"\n  {CYAN}=== PERBAIKI LOGIN SHOPEE ==={RESET}")
+                uname = input(f"  {BOLD}Username Shopee:{RESET} ").strip()
+                upass = input(f"  {BOLD}Password Shopee:{RESET} ").strip()
+                if uname and upass:
+                    print(f"  [*] Membuka browser Chrome (headless=False) untuk login manual...")
+                    # Set up session file path for shopee
+                    automation_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "shopee-omzet-automation")
+                    if automation_dir not in sys.path:
+                        sys.path.insert(0, automation_dir)
+                    from core import browser as shopee_browser
+                    
+                    session_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shopee", "data", "session.json")
+                    shopee_browser.set_session_file(session_file)
+                    
+                    session_data = shopee_browser.get_session(
+                        username=uname, 
+                        password=upass, 
+                        headless=False, 
+                        close_browser=True, 
+                        interactive=True,
+                        allow_otp=True
+                    )
+                    if session_data and "shopee_tob_token" in session_data:
+                        print(f"  {GREEN}✔ Login berhasil diperbaiki dan session tersimpan!{RESET}\n")
+                    else:
+                        print(f"  {RED}✘ Gagal memperbaiki login.{RESET}\n")
+                else:
+                    print(f"  {RED}✘ Username dan Password tidak boleh kosong!{RESET}\n")
+                state = "applicator"
+            elif choice == "5":
+                clear_all_caches()
+                state = "applicator"
             elif choice == "1":
                 applicator = "shopee"
                 state = "load_outlets"
@@ -160,15 +212,16 @@ def interactive_menu():
             print(f"\n  [*] Mengunduh & memuat daftar outlet untuk {applicator.upper()}...")
             try:
                 if applicator == "all":
-                    outlets_shopee = get_outlets_for_applicator("shopee")
-                    outlets_grab = get_outlets_for_applicator("grab")
-                    outlets_gofood = get_outlets_for_applicator("gofood")
+                    all_shopee = get_outlets_for_applicator("shopee")
+                    all_grab = get_outlets_for_applicator("grab")
+                    all_gofood = get_outlets_for_applicator("gofood")
                     
                     seen = set()
                     outlets = []
-                    for o_list in [outlets_shopee, outlets_grab, outlets_gofood]:
+                    for o_list in [all_shopee, all_grab, all_gofood]:
                         for o in o_list:
-                            ident = o.get('nama_outlet') or o.get('nama_resto_final') or o.get('merchant_name')
+                            n_outlet = str(o.get('nama_outlet') or '').strip().lower()
+                            ident = f"{n_outlet}"
                             if ident and ident not in seen:
                                 seen.add(ident)
                                 outlets.append(o)
@@ -299,7 +352,23 @@ def interactive_menu():
             print(f"  Aplikator : {BOLD}{applicator.upper()}{RESET}")
             name_to_show = selected_outlet['brand'] or selected_outlet['nama_resto_final'] or selected_outlet['nama_outlet']
             print(f"  Outlet    : {BOLD}{name_to_show}{RESET}")
-            print(f"  Store ID  : {BOLD}{selected_outlet['store_id']}{RESET}")
+            
+            if applicator == "all":
+                target_outlet = str(selected_outlet.get('nama_outlet') or '').strip().lower()
+                s_ids = [str(o.get('store_id')) for o in all_shopee if str(o.get('nama_outlet') or '').strip().lower() == target_outlet and o.get('store_id')]
+                g_ids = [str(o.get('store_id')) for o in all_grab if str(o.get('nama_outlet') or '').strip().lower() == target_outlet and o.get('store_id')]
+                gf_ids = [str(o.get('store_id')) for o in all_gofood if str(o.get('nama_outlet') or '').strip().lower() == target_outlet and o.get('store_id')]
+                
+                print(f"  Store IDs :")
+                if s_ids:
+                    print(f"    - ShopeeFood ({len(s_ids)}) = {', '.join(s_ids)}")
+                if g_ids:
+                    print(f"    - GrabFood ({len(g_ids)})   = {', '.join(g_ids)}")
+                if gf_ids:
+                    print(f"    - GoFood ({len(gf_ids)})     = {', '.join(gf_ids)}")
+            else:
+                print(f"  Store ID  : {BOLD}{selected_outlet['store_id']}{RESET}")
+                
             print(f"  {CYAN}{'─'*60}{RESET}")
             print()
             print(f"  {BOLD}Konfirmasi tindakan:{RESET}")
@@ -410,58 +479,78 @@ def main():
         if applicator == "all":
             excel_paths = []
             
-            def find_o(olist):
-                for ro in olist:
-                    r_ident = ro.get('nama_outlet') or ro.get('nama_resto_final') or ro.get('merchant_name')
-                    if r_ident == raw_outlet:
-                        return ro
-                return None
+            def find_all_o(olist):
+                target_outlet = str(o.get('nama_outlet') or '').strip().lower()
                 
-            o_s = find_o(all_shopee)
-            o_g = find_o(all_grab)
-            o_gf = find_o(all_gofood)
+                results = []
+                for ro in olist:
+                    ro_outlet = str(ro.get('nama_outlet') or '').strip().lower()
+                    
+                    if ro_outlet == target_outlet and ro_outlet != "":
+                        results.append(ro)
+                return results
+                
+            o_s_list = find_all_o(all_shopee)
+            o_g_list = find_all_o(all_grab)
+            o_gf_list = find_all_o(all_gofood)
             
-            if o_gf:
-                output_dir_gf = os.path.join(EXPORTS_DIR, "gofood", clean_outlet)
-                os.makedirs(output_dir_gf, exist_ok=True)
-                print(f"  [*] Menjalankan GoFood...")
-                try:
-                    s, r = extract_gofood_menu(o_gf, output_dir_gf)
-                    if s and isinstance(r, dict): excel_paths.append(r['excel'])
-                except Exception as e:
-                    print(f"  {RED}Error GoFood: {e}{RESET}")
-                    
-            if o_g:
-                output_dir_g = os.path.join(EXPORTS_DIR, "grab", clean_outlet)
-                os.makedirs(output_dir_g, exist_ok=True)
-                print(f"  [*] Menjalankan Grab...")
-                try:
-                    s, r = extract_grab_menu(o_g, output_dir_g)
-                    if s and isinstance(r, dict): excel_paths.append(r['excel'])
-                except Exception as e:
-                    print(f"  {RED}Error Grab: {e}{RESET}")
-                    
-            if o_s:
-                output_dir_s = os.path.join(EXPORTS_DIR, "shopee", clean_outlet)
-                os.makedirs(output_dir_s, exist_ok=True)
-                print(f"  [*] Menjalankan Shopee...")
-                try:
-                    s, r = extract_shopee_menu(o_s, output_dir_s)
-                    if s and isinstance(r, dict): excel_paths.append(r['excel'])
-                except Exception as e:
-                    print(f"  {RED}Error Shopee: {e}{RESET}")
+            if o_gf_list:
+                for idx_item, o_gf in enumerate(o_gf_list):
+                    output_dir_gf = os.path.join(EXPORTS_DIR, "gofood", clean_outlet, f"gofood_{idx_item}")
+                    os.makedirs(output_dir_gf, exist_ok=True)
+                    for attempt in range(3):
+                        if attempt > 0: print(f"  [*] Mengulang GoFood (ID: {o_gf.get('store_id', '-')}) - Percobaan ke-{attempt+1}...")
+                        else: print(f"  [*] Menjalankan GoFood (ID: {o_gf.get('store_id', '-')})...")
+                        try:
+                            s, r = extract_gofood_menu(o_gf, output_dir_gf)
+                            if s and isinstance(r, dict): 
+                                excel_paths.append(r['excel'])
+                                break
+                            elif attempt == 2:
+                                print(f"  {RED}Gagal GoFood setelah 3x percobaan: {r}{RESET}")
+                        except Exception as e:
+                            print(f"  {RED}Error GoFood: {e}{RESET}")
+                        
+            if o_g_list:
+                for idx_item, o_g in enumerate(o_g_list):
+                    output_dir_g = os.path.join(EXPORTS_DIR, "grab", clean_outlet, f"grab_{idx_item}")
+                    os.makedirs(output_dir_g, exist_ok=True)
+                    for attempt in range(3):
+                        if attempt > 0: print(f"  [*] Mengulang Grab (ID: {o_g.get('store_id', '-')}) - Percobaan ke-{attempt+1}...")
+                        else: print(f"  [*] Menjalankan Grab (ID: {o_g.get('store_id', '-')})...")
+                        try:
+                            s, r = extract_grab_menu(o_g, output_dir_g)
+                            if s and isinstance(r, dict): 
+                                excel_paths.append(r['excel'])
+                                break
+                            elif attempt == 2:
+                                print(f"  {RED}Gagal Grab setelah 3x percobaan: {r}{RESET}")
+                        except Exception as e:
+                            print(f"  {RED}Error Grab: {e}{RESET}")
+                        
+            if o_s_list:
+                for idx_item, o_s in enumerate(o_s_list):
+                    output_dir_s = os.path.join(EXPORTS_DIR, "shopee", clean_outlet, f"shopee_{idx_item}")
+                    os.makedirs(output_dir_s, exist_ok=True)
+                    for attempt in range(3):
+                        if attempt > 0: print(f"  [*] Mengulang Shopee (ID: {o_s.get('store_id', '-')}) - Percobaan ke-{attempt+1}...")
+                        else: print(f"  [*] Menjalankan Shopee (ID: {o_s.get('store_id', '-')})...")
+                        try:
+                            s, r = extract_shopee_menu(o_s, output_dir_s)
+                            if s and isinstance(r, dict): 
+                                excel_paths.append(r['excel'])
+                                break
+                            elif attempt == 2:
+                                print(f"  {RED}Gagal Shopee setelah 3x percobaan: {r}{RESET}")
+                        except Exception as e:
+                            print(f"  {RED}Error Shopee: {e}{RESET}")
                 
             if excel_paths:
                 combined_dir = os.path.join(EXPORTS_DIR, "combined", clean_outlet)
                 os.makedirs(combined_dir, exist_ok=True)
                 
-                raw_brand = o.get('brand') or ''
-                clean_brand = "".join(c for c in raw_brand if c.isalnum() or c in (' ', '_', '-')).strip()
                 clean_outlet_filename = "".join(c for c in raw_outlet if c.isalnum() or c in (' ', '_', '-')).strip()
-                if clean_brand and clean_brand.lower() != clean_outlet_filename.lower():
-                    excel_filename = f"O.C5 {clean_outlet_filename} - {clean_brand}.xlsx"
-                else:
-                    excel_filename = f"O.C5 {clean_outlet_filename}.xlsx"
+                excel_filename = f"O.C5 {clean_outlet_filename}.xlsx"
                     
                 combined_path = os.path.join(combined_dir, excel_filename)
                 print(f"  [*] Menggabungkan {len(excel_paths)} file C5 ke {combined_path}...")
@@ -486,12 +575,21 @@ def main():
             result_data = None
             
             try:
-                if applicator == "shopee":
-                    success, result_data = extract_shopee_menu(o, output_dir)
-                elif applicator == "grab":
-                    success, result_data = extract_grab_menu(o, output_dir)
-                elif applicator == "gofood":
-                    success, result_data = extract_gofood_menu(o, output_dir)
+                for attempt in range(3):
+                    if attempt > 0: print(f"  [*] Mengulang {applicator.upper()} (ID: {o.get('store_id', '-')}) - Percobaan ke-{attempt+1}...")
+                    else: print(f"  [*] Menjalankan {applicator.upper()} (ID: {o.get('store_id', '-')})...")
+                    
+                    if applicator == "shopee":
+                        success, result_data = extract_shopee_menu(o, output_dir)
+                    elif applicator == "grab":
+                        success, result_data = extract_grab_menu(o, output_dir)
+                    elif applicator == "gofood":
+                        success, result_data = extract_gofood_menu(o, output_dir)
+                        
+                    if success and isinstance(result_data, dict):
+                        break
+                    elif attempt == 2:
+                        print(f"  {RED}Gagal {applicator.upper()} setelah 3x percobaan: {result_data}{RESET}")
             except Exception as e:
                 success = False
                 result_data = f"Exception occurred: {e}"

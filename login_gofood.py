@@ -18,7 +18,7 @@ ENV_PATH = MENU_DIR / ".env"
 load_dotenv(ENV_PATH)
 
 # Master credential Google Sheet
-MASTER_SHEET_URL = "https://docs.google.com/spreadsheets/d/14eCb8DAEXhmbYj9MFj2KzC7AhkulbCbSNPltN2m-go0/export?format=csv&gid=0"
+MASTER_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3tLKBNXDqRgBw0mNhKZFxgvKx-JoiTDzm_s5Ix1cm7O6HCv4IvExOLR2HSRVaXSsx82V348mcr9X4/pub?gid=0&single=true&output=csv"
 
 
 def normalisasi_nomor_hp(nomor_hp):

@@ -49,7 +49,7 @@ console = Console(theme=custom_theme)
 START_TIME_TOTAL = time.time()
 
 # Master credential Google Sheet — source of truth for ALL scrapers
-SHEET_PUBLISHED_URL = "https://docs.google.com/spreadsheets/d/14eCb8DAEXhmbYj9MFj2KzC7AhkulbCbSNPltN2m-go0/export?format=csv&gid=0"
+SHEET_PUBLISHED_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3tLKBNXDqRgBw0mNhKZFxgvKx-JoiTDzm_s5Ix1cm7O6HCv4IvExOLR2HSRVaXSsx82V348mcr9X4/pub?gid=0&single=true&output=csv"
 
 
 def to_csv_url(url):

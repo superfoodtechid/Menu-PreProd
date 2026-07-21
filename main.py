@@ -140,7 +140,7 @@ import pandas as pd
 
 @app.post("/api/sync-sheets", status_code=status.HTTP_200_OK)
 def sync_sheets(db: Session = Depends(get_db)):
-    url = "https://docs.google.com/spreadsheets/d/14eCb8DAEXhmbYj9MFj2KzC7AhkulbCbSNPltN2m-go0/export?format=csv&gid=0"
+    url = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3tLKBNXDqRgBw0mNhKZFxgvKx-JoiTDzm_s5Ix1cm7O6HCv4IvExOLR2HSRVaXSsx82V348mcr9X4/pub?gid=0&single=true&output=csv&t={int(datetime.utcnow().timestamp())}"
     try:
         logger.info("⏳ Downloading latest merchant sheet for database sync...")
         resp = requests.get(url, timeout=30)

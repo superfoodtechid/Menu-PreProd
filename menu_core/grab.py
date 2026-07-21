@@ -136,15 +136,26 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
             avail_str = str(item.get('Ketersediaan item', '')).lower()
             availability = "Tersedia" if avail_str in ("available", "active", "1", "true") else "Habis"
             
+            fake_price = item.get('Harga item sebelum promo (harga coret)', 0.0)
+            real_price = item.get('Harga item setelah promo (harga coret)', 0.0)
+            slash_rp = item.get('Nominal atau persentase promo (harga coret)', 0.0)
+            
+            if fake_price > real_price and fake_price > 0:
+                pct = round(((fake_price - real_price) / fake_price) * 100.0, 2)
+                slash_pct = f"{int(pct)}%" if pct.is_integer() else f"{pct}%"
+            else:
+                slash_pct = "0%"
+                slash_rp = 0
+                
             mapping = {
                 'OFD': 'GrabFood',
                 'Outlet Name': item.get('Nama panjang', nama_resto),
                 'Outlet Short Name': brand or item.get('Nama panjang', nama_resto),
                 'Outlet Link': item.get('Link outlet', f"https://food.grab.com/id/en/restaurant/{store_id}"),
                 'SID': item.get('Store ID', store_id),
-                'Category ID': '',
+                'Category ID': item.get('Category ID', ''),
                 'Category': item.get('Nama kategori', ''),
-                'Item ID': '',
+                'Item ID': item.get('Item ID', ''),
                 'Item': item.get('Nama item', ''),
                 'Photo Link': item.get('Link foto', ''),
                 'Description': item.get('Deskripsi item', ''),
@@ -153,15 +164,22 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
                 'Total Modifier Group': item.get('Jumlah modifier group', 0),
                 'Total Modifier': item.get('Jumlah modifier', 0),
                 'Availability': availability,
-                'Current Fake Price (Rp)': item.get('Harga item sebelum promo (harga coret)', 0.0),
-                'Current Real Price (Rp)': item.get('Harga item setelah promo (harga coret)', 0.0),
-                'Current Slash Price (%)': 0.0,
-                'Current Slash Price (Rp)': item.get('Nominal atau persentase promo (harga coret)', 0.0)
+                'Current Fake Price (Rp)': fake_price,
+                'Current Real Price (Rp)': real_price,
+                'Current Slash Price (%)': slash_pct,
+                'Current Slash Price (Rp)': slash_rp
             }
             
             for key, val in mapping.items():
                 if key in headers_item:
                     col_idx = headers_item[key]
+                    if pd.isna(val):
+                        val = ""
+                    elif key in ['SID', 'Category ID', 'Item ID']:
+                        if isinstance(val, float):
+                            val = str(int(val)) if val.is_integer() else str(val)
+                        else:
+                            val = str(val)
                     sheet_item.cell(row=new_row_idx, column=col_idx, value=val)
             new_row_idx += 1
                     
@@ -185,9 +203,9 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
                 'Outlet Link': mod.get('Link outlet', f"https://food.grab.com/id/en/restaurant/{store_id}"),
                 'SID': mod.get('Store ID', store_id),
                 'Item': mod.get('Nama item', ''),
-                'Modifier Group ID': '',
+                'Modifier Group ID': mod.get('Modifier Group ID', ''),
                 'Modifier Group': mod.get('Nama modifier group', ''),
-                'Modifier ID': '',
+                'Modifier ID': mod.get('Modifier ID', ''),
                 'Modifier': mod.get('Nama modifier', ''),
                 'Min': mod.get('Minimal', 0),
                 'Max': mod.get('Maksimal', 1),
@@ -198,6 +216,13 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
             for key, val in mapping_mod.items():
                 if key in headers_mod:
                     col_idx = headers_mod[key]
+                    if pd.isna(val):
+                        val = ""
+                    elif key in ['SID', 'Modifier Group ID', 'Modifier ID', 'Item']:
+                        if isinstance(val, float):
+                            val = str(int(val)) if val.is_integer() else str(val)
+                        else:
+                            val = str(val)
                     sheet_mod.cell(row=new_row_idx, column=col_idx, value=val)
             new_row_idx += 1
                     

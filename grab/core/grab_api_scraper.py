@@ -761,10 +761,12 @@ def parse_menu(menu_data, store_id, outlet_name, shopee_short_name):
     categories = menu_data.get("categories") or menu_data.get("menu", {}).get("categories") or []
     
     for cat in categories:
+        cat_id = cat.get("categoryID") or cat.get("id") or ""
         cat_name = cat.get("categoryName") or cat.get("name") or cat.get("title") or "Unknown Category"
         
         items = cat.get("items") or cat.get("menuItems") or []
         for item in items:
+            item_id = item.get("itemID") or item.get("id") or ""
             item_name = item.get("itemName") or item.get("name") or item.get("title") or "Unknown Item"
             item_desc = item.get("description") or ""
             
@@ -864,6 +866,7 @@ def parse_menu(menu_data, store_id, outlet_name, shopee_short_name):
                 mg_type = mg.get("selectionType") or ("SINGLE" if mg_max == 1 else "MULTIPLE")
                 
                 for mod in mods:
+                    mod_id = mod.get("modifierID") or mod.get("id") or ""
                     mod_name = mod.get("modifierName") or mod.get("name") or mod.get("title") or "Unknown Modifier"
                     
                     # Harga modifier
@@ -891,8 +894,11 @@ def parse_menu(menu_data, store_id, outlet_name, shopee_short_name):
                         "Link outlet": f"https://food.grab.com/id/en/restaurant/{store_id}",
                         "Nama panjang": outlet_name,
                         "Store ID": store_id,
+                        "Item ID": item_id,
                         "Nama item": item_name,
+                        "Modifier Group ID": mg_id,
                         "Nama modifier group": mg_name,
+                        "Modifier ID": mod_id,
                         "Nama modifier": mod_name,
                         "Tipe modifier": mg_type,
                         "Minimal": mg_min,
@@ -907,7 +913,9 @@ def parse_menu(menu_data, store_id, outlet_name, shopee_short_name):
                 "Link outlet": f"https://food.grab.com/id/en/restaurant/{store_id}",
                 "Nama panjang": outlet_name,
                 "Store ID": store_id,
+                "Category ID": cat_id,
                 "Nama kategori": cat_name,
+                "Item ID": item_id,
                 "Nama item": item_name,
                 "Jumlah terjual": sold_qty,
                 "Jumlah modifier group": num_mod_groups,

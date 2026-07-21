@@ -70,6 +70,45 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
     if not menus:
         return False, "Data menu kosong di dalam file JSON."
         
+    access_token = login_result.get('access_token')
+
+    # --- GET GOFOOD URL WITH UUID ---
+    restaurant_uuid = ""
+    for cat in menus:
+        if cat.get("restaurant_id"):
+            restaurant_uuid = cat.get("restaurant_id")
+            break
+            
+    # Ambil nama kota dari GoBiz API
+    city_slug = "indonesia"
+    if access_token:
+        try:
+            import requests
+            headers = {
+                'Accept': 'application/json, text/plain, */*',
+                'Authentication-Type': 'go-id',
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json'
+            }
+            resp = requests.get(f'https://api.gobiz.co.id/v1/merchants/{store_id}', headers=headers, timeout=10)
+            if resp.status_code == 200:
+                merch_data = resp.json()
+                if merch_data.get('outlet_city'):
+                    city_raw = merch_data['outlet_city']
+                    # Hapus kata "Kota", "Kabupaten", atau "Kab." di awal nama kota
+                    city_raw = re.sub(r'^(kota|kabupaten|kab\.)\s+', '', city_raw, flags=re.IGNORECASE)
+                    city_slug = re.sub(r'[^a-zA-Z0-9\s\-]', '', city_raw)
+                    city_slug = re.sub(r'\s+', '-', city_slug.strip()).lower()
+        except Exception as e:
+            print(f"   ⚠️ Gagal mengambil nama kota dari API: {e}")
+            
+    gofood_link = f"https://gofood.link/a/{store_id}"
+    if restaurant_uuid:
+        raw_slug = store_metadata.get('nama_resto_final') or store_metadata.get('nama_outlet') or store_metadata.get('brand') or 'outlet'
+        clean_slug = re.sub(r'[^a-zA-Z0-9\s\-]', '', raw_slug)
+        clean_slug = re.sub(r'\s+', '-', clean_slug.strip()).lower()
+        gofood_link = f"https://gofood.co.id/{city_slug}/restaurant/{clean_slug}-{restaurant_uuid}"
+
     # --- LOAD MODIFIER DATA ---
     modifier_path = os.path.join(api_dir, f"modifier-response-{store_id}.json")
         
@@ -100,6 +139,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
     
     # Parse GoFood menu categories and items
     for cat in menus:
+        cat_id = cat.get("common_id") or cat.get("id", "")
         cat_name = cat.get("name", "").strip()
         cat_active = cat.get("active", True)
         if not cat_active:
@@ -107,6 +147,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
             
         items = cat.get("menu_items", [])
         for item in items:
+            item_id = item.get("common_id") or item.get("id", "")
             item_name = item.get("name", "").strip()
             item_price_str = item.get("price", "0")
             try:
@@ -138,6 +179,8 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
                 if not vcat:
                     continue
                 
+                vcat_id_to_save = vcat.get("common_id") or vcat.get("id", "")
+                
                 variants = vcat.get("variants", [])
                 total_modifiers_count += len(variants)
                 
@@ -149,6 +192,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
                 tipe_modifier = "Pilihan Tunggal" if max_qty == 1 else "Pilihan Ganda"
                 
                 for var in variants:
+                    var_id = var.get("common_id") or var.get("id", "")
                     var_name = var.get("name", "").strip()
                     var_price = float(var.get("price", 0))
                     var_active = var.get("active", True)
@@ -156,12 +200,14 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
                     var_ketersediaan = "Tersedia" if (var_active and var_instock) else "Habis"
                     
                     modifier_rows.append([
-                        f"https://gofood.link/a/{store_id}",
+                        gofood_link,
                         nama_resto,
                         brand or nama_resto,
                         store_id,
                         item_name,
+                        vcat_id_to_save,
                         vcat_name,
+                        var_id,
                         var_name,
                         tipe_modifier,
                         min_qty,
@@ -198,12 +244,24 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
                         diff = harga_sebelum - harga_setelah
                         promo_val = f"{int(round(diff / harga_sebelum * 100))}%"
             
+            if isinstance(promo_val, str) and "%" in promo_val:
+                slash_pct = promo_val
+                slash_rp = 0
+            elif isinstance(promo_val, str) and "Rp" in promo_val:
+                slash_pct = "0%"
+                slash_rp = int(promo_val.replace("Rp", "").strip())
+            else:
+                slash_pct = promo_val if promo_val else "0%"
+                slash_rp = 0
+                
             dish_obj = {
-                'link_outlet': f"https://gofood.link/a/{store_id}",
+                'link_outlet': gofood_link,
                 'nama_panjang': nama_resto,
                 'nama_pendek': brand or nama_resto,
                 'store_id': store_id,
+                'cat_id': cat_id,
                 'nama_kategori': cat_name,
+                'item_id': item_id,
                 'nama_item': item_name,
                 'jumlah_terjual': 0,
                 'jumlah_modifier_group': mod_groups_count,
@@ -211,7 +269,8 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
                 'deskripsi_item': item_desc,
                 'harga_sebelum_promo': harga_sebelum,
                 'harga_setelah_promo': harga_setelah,
-                'promo': promo_val,
+                'slash_pct': slash_pct,
+                'slash_rp': slash_rp,
                 'ketersediaan': ketersediaan,
                 'link_foto': img_url
             }
@@ -232,10 +291,10 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
     for d in all_dishes:
         item_data.append([
             'GoFood', d['nama_panjang'], d['nama_pendek'], d['link_outlet'], d['store_id'],
-            '', d['nama_kategori'], '', d['nama_item'], d['link_foto'],
+            d['cat_id'], d['nama_kategori'], d['item_id'], d['nama_item'], d['link_foto'],
             d['deskripsi_item'], '', d['jumlah_terjual'], d['jumlah_modifier_group'],
             d['jumlah_modifier'], d['ketersediaan'], 
-            d['harga_sebelum_promo'], d['harga_setelah_promo'], 0, 0,
+            d['harga_sebelum_promo'], d['harga_setelah_promo'], d['slash_pct'], d['slash_rp'],
             "", "", "", "", "", "", ""
         ])
         
@@ -251,8 +310,8 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
     for m in modifier_rows:
         mod_data.append([
             'GoFood', m[1], m[2], m[0], m[3],
-            m[4], '', m[5], '',
-            m[6], m[8], m[9], m[11], m[10]
+            m[4], m[5], m[6], m[7],
+            m[8], m[10], m[11], m[13], m[12]
         ])
     
     df_mods = pd.DataFrame(mod_data, columns=mod_cols)
@@ -305,6 +364,13 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
         for r_idx, row in df_items.iterrows():
             for col_name, val in row.items():
                 if col_name in headers_item:
+                    if pd.isna(val):
+                        val = ""
+                    elif col_name in ['SID', 'Category ID', 'Item ID']:
+                        if isinstance(val, float):
+                            val = str(int(val)) if val.is_integer() else str(val)
+                        else:
+                            val = str(val)
                     sheet_item.cell(row=r_idx + 2, column=headers_item[col_name], value=val)
                     
         sheet_mod = wb['Modifier']
@@ -314,6 +380,13 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
         for r_idx, row in df_mods.iterrows():
             for col_name, val in row.items():
                 if col_name in headers_mod:
+                    if pd.isna(val):
+                        val = ""
+                    elif col_name in ['SID', 'Modifier Group ID', 'Modifier ID', 'Item']:
+                        if isinstance(val, float):
+                            val = str(int(val)) if val.is_integer() else str(val)
+                        else:
+                            val = str(val)
                     sheet_mod.cell(row=r_idx + 2, column=headers_mod[col_name], value=val)
                     
         wb.save(excel_path)

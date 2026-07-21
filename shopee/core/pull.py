@@ -335,6 +335,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
                     'Total Modifier Group': d['jumlah_modifier_group'],
                     'Total Modifier': d['jumlah_modifier'],
                     'Availability': d['ketersediaan'],
+                    'Visibility': d['visibility'],
                     'Current Fake Price (Rp)': d['harga_sebelum_promo'],
                     'Current Real Price (Rp)': d['harga_setelah_promo'],
                     'Current Slash Price (%)': d['discount_pct_val'],
@@ -378,6 +379,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
                     'Min': m['min'],
                     'Max': m['max'],
                     'Availability': m['availability'],
+                    'Visibility': m['visibility'],
                     'Current Price (Rp)': m['current_price']
                 }
                 

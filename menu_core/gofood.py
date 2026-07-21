@@ -142,8 +142,6 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
         cat_id = cat.get("common_id") or cat.get("id", "")
         cat_name = cat.get("name", "").strip()
         cat_active = cat.get("active", True)
-        if not cat_active:
-            continue
             
         items = cat.get("menu_items", [])
         for item in items:
@@ -159,7 +157,8 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
             item_active = item.get("active", True)
             item_instock = item.get("in_stock", True)
             
-            ketersediaan = "Available" if (item_active and item_instock) else "Unavailable"
+            visibility = "Show" if item_active else "Hide"
+            ketersediaan = "Available" if item_instock else "Unavailable"
             
             # Cari link foto
             img_url = ""
@@ -197,7 +196,8 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
                     var_price = float(var.get("price", 0))
                     var_active = var.get("active", True)
                     var_instock = var.get("in_stock", True)
-                    var_ketersediaan = "Available" if (var_active and var_instock) else "Unavailable"
+                    var_visibility = "Show" if var_active else "Hide"
+                    var_ketersediaan = "Available" if var_instock else "Unavailable"
                     
                     modifier_rows.append([
                         gofood_link,
@@ -213,17 +213,27 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
                         min_qty,
                         max_qty,
                         var_price,
-                        var_ketersediaan
+                        var_ketersediaan,
+                        var_visibility
                     ])
             
             # Robust promotion parsing if present in API response
             promo_info = item.get("promotion")
+            
+            if isinstance(promo_info, str) and promo_info:
+                try:
+                    import base64
+                    import json
+                    promo_info = json.loads(base64.b64decode(promo_info).decode('utf-8'))
+                except Exception:
+                    promo_info = None
+                    
             harga_sebelum = item_price
             harga_setelah = item_price
             promo_val = 0
             
             if isinstance(promo_info, dict):
-                disc_price = promo_info.get("discounted_price") or promo_info.get("price") or promo_info.get("promo_price")
+                disc_price = promo_info.get("selling_price") or promo_info.get("discounted_price") or promo_info.get("price") or promo_info.get("promo_price")
                 if disc_price:
                     try:
                         harga_setelah = float(disc_price)
@@ -272,6 +282,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
                 'slash_pct': slash_pct,
                 'slash_rp': slash_rp,
                 'ketersediaan': ketersediaan,
+                'visibility': visibility,
                 'link_foto': img_url
             }
             all_dishes.append(dish_obj)
@@ -281,7 +292,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
         'OFD', 'Outlet Name', 'Outlet Short Name', 'Outlet Link', 'SID',
         'Category ID', 'Category', 'Item ID', 'Item', 'Photo Link',
         'Description', 'Keyword', 'Total Sold', 'Total Modifier Group', 'Total Modifier',
-        'Availability', 'Current Fake Price (Rp)', 'Current Real Price (Rp)',
+        'Availability', 'Visibility', 'Current Fake Price (Rp)', 'Current Real Price (Rp)',
         'Current Slash Price (%)', 'Current Slash Price (Rp)', 'New Markup (%)',
         'New Real Price (Rp)', 'Adjustment (Rp)', 'New Final Real Price (Rp)',
         'New Slash Price (%)', 'New Fake Price (Rp)', 'Notes'
@@ -293,7 +304,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
             'GoFood', d['nama_panjang'], d['nama_pendek'], d['link_outlet'], d['store_id'],
             d['cat_id'], d['nama_kategori'], d['item_id'], d['nama_item'], d['link_foto'],
             d['deskripsi_item'], '', d['jumlah_terjual'], d['jumlah_modifier_group'],
-            d['jumlah_modifier'], d['ketersediaan'], 
+            d['jumlah_modifier'], d['ketersediaan'], d['visibility'],
             d['harga_sebelum_promo'], d['harga_setelah_promo'], d['slash_pct'], d['slash_rp'],
             "", "", "", "", "", "", ""
         ])
@@ -303,7 +314,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
     mod_cols = [
         'OFD', 'Outlet Name', 'Outlet Short Name', 'Outlet Link', 'SID',
         'Item', 'Modifier Group ID', 'Modifier Group', 'Modifier ID',
-        'Modifier', 'Min', 'Max', 'Availability', 'Current Price (Rp)'
+        'Modifier', 'Min', 'Max', 'Availability', 'Visibility', 'Current Price (Rp)'
     ]
     
     mod_data = []
@@ -311,7 +322,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
         mod_data.append([
             'GoFood', m[1], m[2], m[0], m[3],
             m[4], m[5], m[6], m[7],
-            m[8], m[10], m[11], m[13], m[12]
+            m[8], m[10], m[11], m[13], m[14], m[12]
         ])
     
     df_mods = pd.DataFrame(mod_data, columns=mod_cols)

@@ -164,6 +164,7 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
                 'Total Modifier Group': item.get('Jumlah modifier group', 0),
                 'Total Modifier': item.get('Jumlah modifier', 0),
                 'Availability': availability,
+                'Visibility': 'Show',
                 'Current Fake Price (Rp)': fake_price,
                 'Current Real Price (Rp)': real_price,
                 'Current Slash Price (%)': slash_pct,
@@ -210,6 +211,7 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
                 'Min': mod.get('Minimal', 0),
                 'Max': mod.get('Maksimal', 1),
                 'Availability': mod_availability,
+                'Visibility': 'Show',
                 'Current Price (Rp)': mod.get('Harga modifier', 0.0)
             }
             

@@ -165,6 +165,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
                     'discount_pct_val': current_slash_pct,
                     'slash_price_rp': current_slash_rp,
                     'ketersediaan': available_str,
+                    'visibility': 'Show',
                     'link_foto': picture_url,
                     'dish_id': dish_id,
                     'jumlah_modifier_group': 0,
@@ -221,6 +222,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
                         'min': select_min,
                         'max': select_max,
                         'availability': opt_available_str,
+                        'visibility': 'Show',
                         'current_price': opt_price
                     })
             
@@ -231,7 +233,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
             'OFD', 'Outlet Name', 'Outlet Short Name', 'Outlet Link', 'SID',
             'Category ID', 'Category', 'Item ID', 'Item', 'Photo Link',
             'Description', 'Keyword', 'Total Sold', 'Total Modifier Group', 'Total Modifier',
-            'Availability', 'Current Fake Price (Rp)', 'Current Real Price (Rp)',
+            'Availability', 'Visibility', 'Current Fake Price (Rp)', 'Current Real Price (Rp)',
             'Current Slash Price (%)', 'Current Slash Price (Rp)', 'New Markup (%)',
             'New Real Price (Rp)', 'Adjustment (Rp)', 'New Final Real Price (Rp)',
             'New Slash Price (%)', 'New Fake Price (Rp)', 'Notes'
@@ -243,7 +245,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
                 d['ofd'], d['nama_panjang'], d['nama_pendek'], d['link_outlet'], d['store_id'],
                 d['cat_id'], d['nama_kategori'], d['dish_id'], d['nama_item'], d['link_foto'],
                 d['deskripsi_item'], d['keyword'], d['jumlah_terjual'], d['jumlah_modifier_group'], d['jumlah_modifier'],
-                d['ketersediaan'], d['harga_sebelum_promo'], d['harga_setelah_promo'],
+                d['ketersediaan'], d['visibility'], d['harga_sebelum_promo'], d['harga_setelah_promo'],
                 d['discount_pct_val'], d['slash_price_rp'],
                 "", "", "", "", "", "", ""
             ])
@@ -253,7 +255,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
         mod_cols = [
             'OFD', 'Outlet Name', 'Outlet Short Name', 'Outlet Link', 'SID',
             'Item', 'Modifier Group ID', 'Modifier Group', 'Modifier ID',
-            'Modifier', 'Min', 'Max', 'Availability', 'Current Price (Rp)'
+            'Modifier', 'Min', 'Max', 'Availability', 'Visibility', 'Current Price (Rp)'
         ]
         
         mod_data = []
@@ -261,7 +263,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
             mod_data.append([
                 m['ofd'], m['outlet_name'], m['outlet_short_name'], m['outlet_link'], m['sid'],
                 m['item'], m['modifier_group_id'], m['modifier_group'], m['modifier_id'],
-                m['modifier'], m['min'], m['max'], m['availability'], m['current_price']
+                m['modifier'], m['min'], m['max'], m['availability'], m['visibility'], m['current_price']
             ])
             
         df_mods = pd.DataFrame(mod_data, columns=mod_cols)

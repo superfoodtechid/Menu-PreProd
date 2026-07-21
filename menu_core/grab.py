@@ -134,7 +134,7 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
         new_row_idx = 2
         for item in matched_items:
             avail_str = str(item.get('Ketersediaan item', '')).lower()
-            availability = "Tersedia" if avail_str in ("available", "active", "1", "true") else "Habis"
+            availability = "Available" if avail_str in ("available", "active", "1", "true") else "Unavailable"
             
             fake_price = item.get('Harga item sebelum promo (harga coret)', 0.0)
             real_price = item.get('Harga item setelah promo (harga coret)', 0.0)
@@ -193,8 +193,8 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
         
         new_row_idx = 2
         for mod in matched_mods:
-            mod_avail = str(mod.get('Ketersediaan modifier', '')).lower()
-            availability_mod = "Tersedia" if mod_avail in ("available", "active", "1", "true") else "Habis"
+            mod_avail_str = str(mod.get('Ketersediaan modifier', '')).lower()
+            mod_availability = "Available" if mod_avail_str in ("available", "active", "1", "true") else "Unavailable"
             
             mapping_mod = {
                 'OFD': 'GrabFood',
@@ -209,7 +209,7 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
                 'Modifier': mod.get('Nama modifier', ''),
                 'Min': mod.get('Minimal', 0),
                 'Max': mod.get('Maksimal', 1),
-                'Availability': availability_mod,
+                'Availability': mod_availability,
                 'Current Price (Rp)': mod.get('Harga modifier', 0.0)
             }
             

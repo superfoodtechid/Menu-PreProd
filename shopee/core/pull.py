@@ -143,7 +143,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
                     current_slash_pct = "0%"
                     current_slash_rp = 0
                 
-                available_str = "Tersedia" if available else "Habis"
+                available_str = "Available" if available else "Unavailable"
                 picture_url = f"{IMG_BASE}/{picture}" if picture else ""
                 link_outlet = f"https://shopee.co.id/now-food/shop/{store_id}"
                 
@@ -205,7 +205,7 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
                     opt_name = opt.get('name', '')
                     opt_price = float(opt.get('price', '0')) / 100000.0
                     opt_available = opt.get('available', True)
-                    opt_available_str = "Tersedia" if opt_available else "Habis"
+                    opt_available_str = "Available" if opt_available else "Unavailable"
                     
                     modifier_rows.append({
                         'ofd': 'ShopeeFood',

@@ -159,7 +159,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
             item_active = item.get("active", True)
             item_instock = item.get("in_stock", True)
             
-            ketersediaan = "Tersedia" if (item_active and item_instock) else "Habis"
+            ketersediaan = "Available" if (item_active and item_instock) else "Unavailable"
             
             # Cari link foto
             img_url = ""
@@ -197,7 +197,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
                     var_price = float(var.get("price", 0))
                     var_active = var.get("active", True)
                     var_instock = var.get("in_stock", True)
-                    var_ketersediaan = "Tersedia" if (var_active and var_instock) else "Habis"
+                    var_ketersediaan = "Available" if (var_active and var_instock) else "Unavailable"
                     
                     modifier_rows.append([
                         gofood_link,

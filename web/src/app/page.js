@@ -173,6 +173,7 @@ export default function Home() {
                     progress_pct: job.progress_pct,
                     current_step: job.current_step,
                     error_message: job.error_message,
+                    result_metadata: job.result_metadata,
                   }
                 : j
             )
@@ -249,32 +250,32 @@ export default function Home() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
-      <header className="border-b border-slate-800 pb-6 mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-100">
+      <header className="border-b border-brand-red pb-6 mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-brand-dark">
           FoodMaster Menu Portal
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-brand-muted mt-1">
           Penarikan data menu terintegrasi ShopeeFood dan GoFood.
         </p>
       </header>
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Form: Selectors */}
-        <section className="lg:col-span-1 bg-slate-900 border border-slate-800 p-6 rounded-lg h-fit space-y-6">
-          <h2 className="text-base font-semibold text-slate-200 pb-2 border-b border-slate-800">
+        <section className="lg:col-span-1 bg-brand-white border border-brand-red p-6 rounded-md h-fit space-y-6">
+          <h2 className="text-base font-semibold text-brand-dark pb-2 border-b border-brand-red">
             Menu Pull
           </h2>
           
           <form onSubmit={handleTriggerPull} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-brand-muted uppercase tracking-wider mb-2">
                 Aplikator
               </label>
               <select
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value)}
                 disabled={triggering}
-                className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-slate-700 disabled:opacity-50"
+                className="w-full bg-brand-white border border-brand-red rounded px-3 py-2 text-sm text-brand-dark focus:outline-none focus:ring-1 focus:ring-brand-red disabled:opacity-50"
               >
                 <option value="">Pilih Aplikator</option>
                 <option value="shopee">ShopeeFood</option>
@@ -287,13 +288,13 @@ export default function Home() {
             {/* Checklist Selection of Parent Outlets (Multi-select) */}
             {platform && (
               <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                <div className="flex justify-between items-center text-xs font-semibold text-brand-muted uppercase tracking-wider mb-1">
                   <span>Outlet ({checkedParentNames.length}/{uniqueParentNames.length})</span>
                   <button
                     type="button"
                     onClick={handleSelectAllParents}
                     disabled={loadingOutlets || triggering}
-                    className="text-slate-300 hover:text-white underline normal-case font-normal disabled:opacity-50 text-xs"
+                    className="text-brand-red hover:text-brand-red-hover underline normal-case font-normal disabled:opacity-50 text-xs"
                   >
                     {filteredParents.every((name) => checkedParentNames.includes(name)) ? "Batal Semua" : "Pilih Semua"}
                   </button>
@@ -306,23 +307,23 @@ export default function Home() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   disabled={loadingOutlets || triggering}
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-slate-700 placeholder-slate-600"
+                  className="w-full bg-brand-white border border-brand-red rounded px-2.5 py-1.5 text-xs text-brand-dark focus:outline-none focus:ring-1 focus:ring-brand-red placeholder-brand-muted/60"
                 />
 
-                <div className="max-h-48 overflow-y-auto border border-slate-800 bg-slate-950 rounded p-3 space-y-2">
+                <div className="max-h-48 overflow-y-auto border border-brand-red bg-brand-white rounded p-3 space-y-2">
                   {loadingOutlets ? (
-                    <div className="text-xs text-slate-500 font-mono">Memuat daftar outlet...</div>
+                    <div className="text-xs text-brand-muted font-mono">Memuat daftar outlet...</div>
                   ) : filteredParents.length === 0 ? (
-                    <div className="text-xs text-slate-500 font-mono">Tidak ada outlet yang cocok.</div>
+                    <div className="text-xs text-brand-muted font-mono">Tidak ada outlet yang cocok.</div>
                   ) : (
                     filteredParents.map((name) => (
-                      <label key={name} className="flex items-center space-x-2 text-sm text-slate-300 cursor-pointer hover:text-white">
+                      <label key={name} className="flex items-center space-x-2 text-sm text-brand-dark cursor-pointer hover:text-brand-red">
                         <input
                           type="checkbox"
                           checked={checkedParentNames.includes(name)}
                           onChange={() => handleParentCheck(name)}
                           disabled={triggering}
-                          className="accent-slate-200"
+                          className="accent-brand-red"
                         />
                         <span>{name}</span>
                       </label>
@@ -335,33 +336,33 @@ export default function Home() {
             {/* Checklist Selection of Branches (Multi-select) */}
             {availableBranches.length > 0 && (
               <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                <div className="flex justify-between items-center text-xs font-semibold text-brand-muted uppercase tracking-wider mb-1">
                   <span>Cabang / Brand ({checkedBranchIds.length}/{availableBranches.length})</span>
                   <button
                     type="button"
                     onClick={handleSelectAllBranches}
                     disabled={triggering}
-                    className="text-slate-300 hover:text-white underline normal-case font-normal disabled:opacity-50 text-xs"
+                    className="text-brand-red hover:text-brand-red-hover underline normal-case font-normal disabled:opacity-50 text-xs"
                   >
                     {checkedBranchIds.length === availableBranches.length ? "Batal Semua" : "Pilih Semua"}
                   </button>
                 </div>
                 
-                <div className="max-h-60 overflow-y-auto border border-slate-800 bg-slate-950 rounded p-3 space-y-2">
+                <div className="max-h-60 overflow-y-auto border border-brand-red bg-brand-white rounded p-3 space-y-2">
                   {availableBranches.map((b) => {
                     const branchLabel = b.brand || b.nama_resto_final || b.merchant_name;
                     return (
-                      <label key={b.id} className="flex items-start space-x-2 text-sm text-slate-300 cursor-pointer hover:text-white">
+                      <label key={b.id} className="flex items-start space-x-2 text-sm text-brand-dark cursor-pointer hover:text-brand-red">
                         <input
                           type="checkbox"
                           checked={checkedBranchIds.includes(b.id)}
                           onChange={() => handleBranchCheck(b.id)}
                           disabled={triggering}
-                          className="mt-1 accent-slate-200"
+                          className="mt-1 accent-brand-red"
                         />
                         <div className="leading-tight">
                           <div>{branchLabel}</div>
-                          <div className="text-[10px] text-slate-500 font-mono">
+                          <div className="text-[10px] text-brand-muted font-mono">
                             ID: {b.store_id || "No Store ID"} | {b.platform?.toUpperCase()}
                           </div>
                         </div>
@@ -375,7 +376,7 @@ export default function Home() {
             <button
               type="submit"
               disabled={checkedBranchIds.length === 0 || triggering}
-              className="w-full bg-slate-200 hover:bg-slate-100 text-slate-900 text-sm font-semibold py-2 px-4 rounded transition-colors disabled:opacity-50"
+              className="w-full bg-brand-red hover:bg-brand-red-hover text-brand-white text-sm font-semibold py-2 px-4 rounded transition-colors disabled:opacity-50"
             >
               {triggering ? "Menjalankan..." : `Tarik ${checkedBranchIds.length} Menu`}
             </button>
@@ -384,61 +385,74 @@ export default function Home() {
 
         {/* Right Status Panel: Active/Completed Jobs List */}
         <section className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-lg min-h-[350px] flex flex-col">
-            <h2 className="text-base font-semibold text-slate-200 pb-2 border-b border-slate-800 mb-4">
+          <div className="bg-brand-white border border-brand-red p-6 rounded-md min-h-[350px] flex flex-col">
+            <h2 className="text-base font-semibold text-brand-dark pb-2 border-b border-brand-red mb-4">
               Status Penarikan Menu
             </h2>
 
             {activeJobs.length === 0 ? (
-              <div className="text-slate-500 text-sm py-16 text-center my-auto">
+              <div className="text-brand-muted text-sm py-16 text-center my-auto">
                 Belum ada penarikan menu yang aktif. Silakan pilih outlet dan jalankan.
               </div>
             ) : (
               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {activeJobs.map((job) => (
-                  <div key={job.id} className="bg-slate-950 border border-slate-850 p-4 rounded space-y-3">
+                  <div key={job.id} className="bg-brand-white border border-brand-red/40 p-4 rounded-md space-y-3">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="text-sm font-semibold text-slate-100">{job.name}</div>
-                        <div className="text-[10px] font-mono text-slate-500">
+                        <div className="text-sm font-semibold text-brand-dark">{job.name}</div>
+                        <div className="text-[10px] font-mono text-brand-muted">
                           PLATFORM: {job.platform.toUpperCase()} | ID: {job.id}
                         </div>
                       </div>
                       <span className={`text-xs font-semibold uppercase ${
-                        job.status === "SUCCESS" ? "text-emerald-400" :
-                        job.status === "FAILED" ? "text-rose-400" :
-                        "text-amber-400"
+                        job.status === "SUCCESS" ? "text-emerald-600" :
+                        job.status === "FAILED" ? "text-rose-600" :
+                        "text-amber-600"
                       }`}>
                         {job.status}
                       </span>
                     </div>
 
                     <div className="space-y-1">
-                      <div className="flex justify-between items-center text-[10px] text-slate-400">
+                      <div className="flex justify-between items-center text-[10px] text-brand-muted">
                         <span>Langkah: {job.current_step}</span>
                         <span>{job.progress_pct}%</span>
                       </div>
-                      <div className="w-full bg-slate-900 rounded-full h-1 overflow-hidden">
+                      <div className="w-full bg-zinc-100 rounded-full h-1 overflow-hidden">
                         <div
-                          className="bg-slate-200 h-1 transition-all duration-300"
+                          className="bg-brand-red h-1 transition-all duration-300"
                           style={{ width: `${job.progress_pct}%` }}
                         ></div>
                       </div>
                     </div>
 
                     {job.error_message && (
-                      <div className="text-[11px] text-rose-400 bg-rose-950/20 border border-rose-900/40 p-2 rounded">
+                      <div className="text-[11px] text-rose-750 bg-rose-50 border border-rose-200 p-2 rounded">
                         {job.error_message}
                       </div>
                     )}
 
                     {job.status === "SUCCESS" && (
-                      <div className="pt-2 border-t border-slate-900 flex justify-end">
+                      <div className="pt-2 border-t border-zinc-100 flex justify-end gap-2">
+                        {job.result_metadata?.gspread_url && (
+                          <a
+                            href={job.result_metadata.gspread_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-green-700 hover:bg-green-800 text-white text-[11px] font-semibold py-1.5 px-3 rounded transition-colors flex items-center gap-1.5"
+                          >
+                            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 14H6v-2h6v2zm8-4H6v-2h14v2zm0-4H6V7h14v2z" />
+                            </svg>
+                            Buka Google Sheets
+                          </a>
+                        )}
                         <a
                           href={`${API_BASE_URL}/api/jobs/download/${job.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-emerald-600 hover:bg-emerald-500 text-slate-100 text-[11px] font-semibold py-1 px-3 rounded transition-colors"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded transition-colors"
                         >
                           Unduh Excel C5
                         </a>

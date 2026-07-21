@@ -823,7 +823,12 @@ def _perform_login(driver, wait, username: str = None, password: str = None, pho
                 if btn.is_displayed(): login_btn = btn; break
             except: continue
 
-        if login_btn: login_btn.click()
+        if login_btn:
+            try:
+                login_btn.click()
+            except Exception as click_err:
+                log.warning(f"⚠️ Native login button click intercepted: {click_err}. Trying JS click...")
+                driver.execute_script("arguments[0].click();", login_btn)
         else: raise Exception("Could not find Login button")
 
     # Check for immediate credential errors

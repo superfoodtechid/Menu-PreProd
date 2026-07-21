@@ -38,6 +38,14 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
 
     # 1. Import Grab API Scraper
     try:
+        import sys
+        from pathlib import Path
+        project_root = str(Path(__file__).resolve().parent.parent)
+        if project_root not in sys.path:
+            sys.path.insert(0, project_root)
+        elif sys.path[0] != project_root:
+            sys.path.remove(project_root)
+            sys.path.insert(0, project_root)
         from grab.core.grab_api_scraper import run_api_download_for_portal
     except ImportError as e:
         print(f"[!] Error importing Grab Scraper: {e}")

@@ -219,6 +219,7 @@ export default function MenuPullTab({ API_BASE_URL }) {
 
         newJobsList.push({
           id: job.id,
+          outlet_id: target.id,
           name: branchLabel,
           platform: target.platform,
           status: job.status,
@@ -232,6 +233,7 @@ export default function MenuPullTab({ API_BASE_URL }) {
         console.error(err);
         newJobsList.push({
           id: `err-${Math.random()}`,
+          outlet_id: target.id,
           name: branchLabel,
           platform: target.platform,
           status: "FAILED",
@@ -243,6 +245,40 @@ export default function MenuPullTab({ API_BASE_URL }) {
     }
 
     setActiveJobs((prev) => [...newJobsList, ...prev]);
+  };
+
+  // Re-run a failed pull job for a single outlet
+  const handleRerunJob = async (jobToRerun) => {
+    if (!jobToRerun.outlet_id) return;
+    setTriggering(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/jobs/pull?outlet_id=${jobToRerun.outlet_id}`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Gagal memicu ulang penarikan menu");
+      const job = await res.json();
+
+      setActiveJobs((prev) =>
+        prev.map((j) =>
+          j.id === jobToRerun.id
+            ? {
+                ...j,
+                id: job.id,
+                status: job.status,
+                progress_pct: job.progress_pct,
+                current_step: job.current_step,
+                error_message: null,
+              }
+            : j
+        )
+      );
+
+      startPollingJob(job.id, jobToRerun.name);
+    } catch (err) {
+      console.error(err);
+      alert(`Gagal memicu ulang penarikan menu: ${err.message}`);
+      setTriggering(false);
+    }
   };
 
   return (
@@ -417,6 +453,21 @@ export default function MenuPullTab({ API_BASE_URL }) {
                   {job.error_message && (
                     <div className="text-[11px] text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 p-2 rounded-lg">
                       {job.error_message}
+                    </div>
+                  )}
+
+                  {job.status === "FAILED" && (
+                    <div className="pt-2 border-t border-zinc-100 dark:border-zinc-700/60 flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleRerunJob(job)}
+                        className="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Coba Lagi (Re-run)
+                      </button>
                     </div>
                   )}
 

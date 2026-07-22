@@ -770,6 +770,7 @@ def login_outlet(outlet_info, proxy_config=None):
             # --- REDIRECT TO MENUS PAGE AND INTERCEPT API ---
             store_id = outlet_info.get('store_id', '')
             captured_menu = None
+            captured_restaurant_id = None
             captured_modifiers = []
             if store_id:
                 store_id_clean = str(store_id).strip()
@@ -777,12 +778,25 @@ def login_outlet(outlet_info, proxy_config=None):
                 try:
                     # Register response listener to capture API response asynchronously
                     def handle_response(response):
-                        nonlocal captured_menu
-                        if "gofood/merchant/v1/restaurants" in response.url and "/menus" in response.url:
+                        nonlocal captured_menu, captured_restaurant_id
+                        url_lower = response.url.lower()
+
+                        if "/restaurants/" in url_lower:
+                            parts = response.url.split("/")
+                            for idx, part in enumerate(parts):
+                                if part.lower() == "restaurants" and idx + 1 < len(parts):
+                                    cand = parts[idx + 1].split("?")[0]
+                                    if len(cand) == 36 and "-" in cand:
+                                        captured_restaurant_id = cand
+                                        break
+
+                        if "gofood/merchant" in url_lower and ("/menus" in url_lower or "menu_groups" in url_lower):
                             try:
                                 if response.status == 200:
-                                    captured_menu = response.json()
-                                    print(f"   ✅ [Listener] Berhasil menangkap response API Menu! Total kategori: {len(captured_menu.get('menus', []))}")
+                                    data = response.json()
+                                    if isinstance(data, dict) and ("menus" in data or "categories" in data):
+                                        captured_menu = data
+                                        print(f"   ✅ [Listener] Berhasil menangkap response API Menu! Total kategori: {len(data.get('menus', []))}")
                             except Exception as e:
                                 print(f"   ⚠️ [Listener] Gagal memproses JSON response: {e}")
                                 
@@ -825,15 +839,16 @@ def login_outlet(outlet_info, proxy_config=None):
                         except Exception:
                             continue
                             
-                    if not menu_clicked:
-                        print("   🤖 Tab Menu tidak ditemukan di sidebar, mencoba navigasi langsung...")
-                        page.goto("https://portal.gofoodmerchant.co.id/gofood", wait_until="domcontentloaded")
+                    if menu_clicked:
+                        print("   ✅ Berhasil mengklik tab Menu di sidebar.")
+                        tutup_semua_popup(page)
+                        page.wait_for_timeout(1000)
+                        
+                        # Cek apakah ada tutorial/popup lagi
+                        tutup_semua_popup(page)
                     else:
-                        try:
-                            page.wait_for_url("**/gofood**", timeout=8000)
-                        except Exception:
-                            # Fallback jika click tidak memicu perpindahan URL
-                            page.goto("https://portal.gofoodmerchant.co.id/gofood", wait_until="domcontentloaded")
+                        print("   ⚠️ Tab Menu di sidebar tidak ditemukan, mencoba langsung ke URL /gofood...")
+                        page.goto("https://portal.gofoodmerchant.co.id/gofood", wait_until="domcontentloaded")
                     
                     # Cek apakah sudah otomatis ter-redirect ke halaman menu items (untuk single-branch)
                     current_url = page.url
@@ -843,11 +858,62 @@ def login_outlet(outlet_info, proxy_config=None):
                         print(f"   🤖 Langsung navigasi ke halaman menu outlet {store_id_clean}...")
                         page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{store_id_clean}/", wait_until="domcontentloaded")
                             
-                    # Tunggu hingga captured_menu terisi
-                    print("   🤖 Menunggu response API Menu ditangkap...")
+                    # Tunggu 15 detik pertama hingga captured_menu terisi
+                    print("   🤖 Menunggu response API Menu ditangkap (15 detik)...")
                     start_wait = time.time()
-                    while captured_menu is None and (time.time() - start_wait) < 20:
+                    while captured_menu is None and (time.time() - start_wait) < 15:
                         page.wait_for_timeout(500)
+
+                    # Reload halaman jika 15 detik pertama tidak ada respon
+                    if captured_menu is None:
+                        print("   🔄 15 detik tanpa respons, melakukan Reload halaman menu...")
+                        try:
+                            page.reload(wait_until="domcontentloaded", timeout=15000)
+                            tutup_semua_popup(page)
+                        except Exception as reload_err:
+                            print(f"   ⚠️ Reload halaman warning: {reload_err}")
+
+                        start_wait = time.time()
+                        while captured_menu is None and (time.time() - start_wait) < 15:
+                            page.wait_for_timeout(500)
+
+                    # Direct Fetch Fallback jika listener belum menangkap data menu setelah reload
+                    if captured_menu is None and access_token:
+                        print("   🤖 [Direct Fetch Fallback] Listener belum menangkap menu, mencoba fetch langsung via API Gojek...")
+                        target_ids = [i for i in [captured_restaurant_id, store_id_clean] if i]
+                        try:
+                            direct_menu = page.evaluate("""async ({token, targetIds}) => {
+                                for (const restId of targetIds) {
+                                    const endpoints = [
+                                        `https://api.gojekapi.com/gofood/merchant/v1/restaurants/${restId}/menus`,
+                                        `https://api.gobiz.co.id/gofood/merchant/v1/restaurants/${restId}/menus`,
+                                        `https://api.gojekapi.com/gofood/merchant/v2/restaurants/${restId}/menus`
+                                    ];
+                                    for (const ep of endpoints) {
+                                        try {
+                                            const res = await fetch(ep, {
+                                                headers: {
+                                                    "Authorization": "Bearer " + token,
+                                                    "Authentication-Type": "go-id",
+                                                    "Gojek-Country-Code": "ID",
+                                                    "Accept": "application/json"
+                                                }
+                                            });
+                                            if (res.ok) {
+                                                const d = await res.json();
+                                                if (d && (d.menus || d.categories)) return d;
+                                            }
+                                        } catch (e) {}
+                                    }
+                                }
+                                return null;
+                            }""", {"token": access_token, "targetIds": target_ids})
+
+                            if direct_menu:
+                                captured_menu = direct_menu
+                                print(f"   ✅ [Direct Fetch Fallback] Berhasil mengambil menu GoFood langsung dari API! Total kategori: {len(direct_menu.get('menus', []))}")
+                        except Exception as err:
+                            print(f"   ⚠️ [Direct Fetch Fallback] Error: {err}")
                         
                     # Beri waktu tambahan 5 detik untuk menangkap pemanggilan API variant_categories
                     if captured_menu is not None:

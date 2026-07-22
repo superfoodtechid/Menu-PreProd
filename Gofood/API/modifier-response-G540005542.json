@@ -1,9 +1,7 @@
 {
     "variant_categories": [
         {
-            "id": "31300646-c671-4740-af60-f53e59e4e69d",
-            "master_variant_category_id": "085326b9-6e33-4d27-b634-849da41cdb39",
-            "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+            "common_id": "085326b9-6e33-4d27-b634-849da41cdb39",
             "name": "Jenis Ayam Bakar",
             "internal_name": "",
             "rules": {
@@ -16,33 +14,24 @@
             },
             "variants": [
                 {
-                    "id": "72a633a5-4e5d-4609-bee9-b70d65c693a6",
-                    "variant_category_id": "31300646-c671-4740-af60-f53e59e4e69d",
-                    "master_variant_id": "ebbcd1d5-056b-49f4-9677-2f16ec406df2",
-                    "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+                    "common_id": "ebbcd1d5-056b-49f4-9677-2f16ec406df2",
                     "name": "Paha Bawah",
-                    "active": true,
                     "price": 0,
-                    "weight": 1,
-                    "in_stock": true
+                    "active": true,
+                    "weight": 1
                 },
                 {
-                    "id": "ed6eb0c1-2a39-47b1-a28e-a968b634aa66",
-                    "variant_category_id": "31300646-c671-4740-af60-f53e59e4e69d",
-                    "master_variant_id": "28456636-527d-4fcb-98d5-a6c4c59849c1",
-                    "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+                    "common_id": "28456636-527d-4fcb-98d5-a6c4c59849c1",
                     "name": "Dada",
-                    "active": true,
                     "price": 0,
-                    "weight": 2,
-                    "in_stock": false
+                    "active": true,
+                    "weight": 2
                 }
-            ]
+            ],
+            "total_menu_items": 2
         },
         {
-            "id": "f21c7e2f-2ed9-45ea-be1e-9989727bd773",
-            "master_variant_category_id": "99bf45e9-a641-4543-a3b6-a1bc732ebe8d",
-            "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+            "common_id": "99bf45e9-a641-4543-a3b6-a1bc732ebe8d",
             "name": "Jenis Bumbu",
             "internal_name": "",
             "rules": {
@@ -55,22 +44,17 @@
             },
             "variants": [
                 {
-                    "id": "f72b1979-1485-4856-948f-a717f4e4dcec",
-                    "variant_category_id": "f21c7e2f-2ed9-45ea-be1e-9989727bd773",
-                    "master_variant_id": "4a4f71e5-5f70-41db-ba36-f9ef2abfe8f8",
-                    "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+                    "common_id": "4a4f71e5-5f70-41db-ba36-f9ef2abfe8f8",
                     "name": "Bumbu Rujak",
-                    "active": true,
                     "price": 0,
-                    "weight": 1,
-                    "in_stock": true
+                    "active": true,
+                    "weight": 1
                 }
-            ]
+            ],
+            "total_menu_items": 6
         },
         {
-            "id": "4a382448-f63a-408f-a9ca-89ab6e4c7bb9",
-            "master_variant_category_id": "02ddf6cd-5e2a-45a5-b3a5-6bd377ccbc15",
-            "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+            "common_id": "02ddf6cd-5e2a-45a5-b3a5-6bd377ccbc15",
             "name": "Level pedas",
             "internal_name": "",
             "rules": {
@@ -83,66 +67,45 @@
             },
             "variants": [
                 {
-                    "id": "be356af2-37e3-47cc-8493-0dcafab519fb",
-                    "variant_category_id": "4a382448-f63a-408f-a9ca-89ab6e4c7bb9",
-                    "master_variant_id": "fa2927b2-d16c-4df7-99b3-554f8a5e3a72",
-                    "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+                    "common_id": "fa2927b2-d16c-4df7-99b3-554f8a5e3a72",
                     "name": "Lvl 1 (5 Cabe)",
-                    "active": true,
                     "price": 4000,
-                    "weight": 1,
-                    "in_stock": true
+                    "active": true,
+                    "weight": 1
                 },
                 {
-                    "id": "581feada-44bf-4e8c-89ef-551f5b885045",
-                    "variant_category_id": "4a382448-f63a-408f-a9ca-89ab6e4c7bb9",
-                    "master_variant_id": "f7de8be5-4715-4ead-91f2-01495bf40c3c",
-                    "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+                    "common_id": "f7de8be5-4715-4ead-91f2-01495bf40c3c",
                     "name": "Lvl 2 ( 10 Cabe)",
-                    "active": true,
                     "price": 5000,
-                    "weight": 2,
-                    "in_stock": true
+                    "active": true,
+                    "weight": 2
                 },
                 {
-                    "id": "8e9c0947-c6fa-4042-a452-a8897e7ba43f",
-                    "variant_category_id": "4a382448-f63a-408f-a9ca-89ab6e4c7bb9",
-                    "master_variant_id": "ae8fa3e3-0921-4e45-8b36-952c76159271",
-                    "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+                    "common_id": "ae8fa3e3-0921-4e45-8b36-952c76159271",
                     "name": "Lvl 3 (15 Cabe)",
-                    "active": true,
                     "price": 6000,
-                    "weight": 3,
-                    "in_stock": true
+                    "active": true,
+                    "weight": 3
                 },
                 {
-                    "id": "24073234-5749-47f5-960e-561239846a17",
-                    "variant_category_id": "4a382448-f63a-408f-a9ca-89ab6e4c7bb9",
-                    "master_variant_id": "e3fea3b7-63fb-4302-adc8-79659e95caef",
-                    "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+                    "common_id": "e3fea3b7-63fb-4302-adc8-79659e95caef",
                     "name": "Lvl 4 ( 20 Cabe)",
-                    "active": true,
                     "price": 7000,
-                    "weight": 4,
-                    "in_stock": true
+                    "active": true,
+                    "weight": 4
                 },
                 {
-                    "id": "1d2f48b0-29c6-445a-a3cf-be435a84bbc3",
-                    "variant_category_id": "4a382448-f63a-408f-a9ca-89ab6e4c7bb9",
-                    "master_variant_id": "ec1d0d19-6a20-400a-a1dc-2f95c2bb277f",
-                    "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+                    "common_id": "ec1d0d19-6a20-400a-a1dc-2f95c2bb277f",
                     "name": "Lvl 5 ( 25 Cabe)",
-                    "active": true,
                     "price": 8000,
-                    "weight": 5,
-                    "in_stock": true
+                    "active": true,
+                    "weight": 5
                 }
-            ]
+            ],
+            "total_menu_items": 13
         },
         {
-            "id": "9300650e-b655-403d-9a60-14c6142ad690",
-            "master_variant_category_id": "0fb26572-5036-4c0e-aba1-605afc2b0acd",
-            "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+            "common_id": "0fb26572-5036-4c0e-aba1-605afc2b0acd",
             "name": "Packing",
             "internal_name": "",
             "rules": {
@@ -155,28 +118,21 @@
             },
             "variants": [
                 {
-                    "id": "a23c3d51-b83e-446d-965c-350d473c2e7a",
-                    "variant_category_id": "9300650e-b655-403d-9a60-14c6142ad690",
-                    "master_variant_id": "c8345407-abee-4edc-a5d4-320ea53d017c",
-                    "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+                    "common_id": "c8345407-abee-4edc-a5d4-320ea53d017c",
                     "name": "Thinwall",
-                    "active": true,
                     "price": 3000,
-                    "weight": 1,
-                    "in_stock": false
+                    "active": true,
+                    "weight": 1
                 },
                 {
-                    "id": "403832de-175a-4751-89a4-1e732744efbc",
-                    "variant_category_id": "9300650e-b655-403d-9a60-14c6142ad690",
-                    "master_variant_id": "5fa5e9db-fcd4-493b-b80a-4f9b318fdb11",
-                    "restaurant_id": "4e145b11-4e7f-4016-ad0e-193c1cfb4134",
+                    "common_id": "5fa5e9db-fcd4-493b-b80a-4f9b318fdb11",
                     "name": "Sterofoam",
-                    "active": true,
                     "price": 1000,
-                    "weight": 3,
-                    "in_stock": true
+                    "active": true,
+                    "weight": 3
                 }
-            ]
+            ],
+            "total_menu_items": 30
         }
     ]
 }

@@ -24,7 +24,9 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
         
     try:
         from login_gofood import login_outlet
-        print(f"[*] Meluncurkan browser untuk login GoFood & pengalihan ke halaman menu...")
+        os.environ["HEADLESS"] = "true"
+        os.environ["HEADLESS_GOFOOD"] = "true"
+        print(f"[*] Meluncurkan browser GoFood secara headless untuk login & pengalihan ke halaman menu...")
         login_result = login_outlet(store_metadata)
         if not login_result or not login_result.get('access_token'):
             print(f"[!] Login atau penarikan menu dibatalkan/gagal.")

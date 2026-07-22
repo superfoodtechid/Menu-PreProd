@@ -114,7 +114,7 @@ def main():
     with sync_playwright() as p:
         print("[*] Membuka browser...")
         browser = p.chromium.launch(
-            headless=False, 
+            headless=True, 
             args=[
                 '--disable-blink-features=AutomationControlled',
                 '--disable-infobars',

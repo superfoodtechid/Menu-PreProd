@@ -351,7 +351,7 @@ def login_outlet(outlet_info, proxy_config=None):
         else:
             proxy_config = {"server": proxy_server}
 
-    headless_mode = False
+    headless_mode = True
     try:
         env_headless = os.getenv("HEADLESS") or os.getenv("HEADLESS_GOFOOD")
         if env_headless is not None:

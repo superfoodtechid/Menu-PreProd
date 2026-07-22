@@ -1,33 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-// ─── Dummy data ───────────────────────────────────────────────────────────────
-const DUMMY_MENU = {
-  "AGSA – Ayam Geprek Suroboyo Ampel": [
-    { id: "m1", category: "Ayam", name: "Ayam Geprek Original", price: 25000 },
-    { id: "m2", category: "Ayam", name: "Ayam Geprek Keju", price: 28000 },
-    { id: "m3", category: "Ayam", name: "Ayam Geprek Mozarella", price: 32000 },
-    { id: "m4", category: "Minuman", name: "Es Teh Manis", price: 5000 },
-    { id: "m5", category: "Minuman", name: "Es Jeruk", price: 7000 },
-    { id: "m6", category: "Tambahan", name: "Nasi Putih", price: 5000 },
-    { id: "m7", category: "Tambahan", name: "Tempe Goreng", price: 4000 },
-  ],
-  "Ayam Bakar Ori": [
-    { id: "m8",  category: "Ayam Bakar", name: "Ayam Bakar Madu", price: 30000 },
-    { id: "m9",  category: "Ayam Bakar", name: "Ayam Bakar Kecap", price: 28000 },
-    { id: "m10", category: "Ayam Bakar", name: "Paket Hemat", price: 35000 },
-    { id: "m11", category: "Minuman", name: "Es Teh Manis", price: 5000 },
-    { id: "m12", category: "Minuman", name: "Jus Alpukat", price: 12000 },
-  ],
-  default: [
-    { id: "d1", category: "Menu Utama", name: "Paket Nasi Ayam", price: 25000 },
-    { id: "d2", category: "Menu Utama", name: "Paket Nasi Ikan", price: 22000 },
-    { id: "d3", category: "Minuman", name: "Es Teh Manis", price: 5000 },
-    { id: "d4", category: "Minuman", name: "Air Mineral", price: 4000 },
-    { id: "d5", category: "Snack", name: "Kentang Goreng", price: 10000 },
-  ],
-};
+import { useState, useEffect, useRef } from "react";
 
 const fmt = (v) => (!v && v !== 0) ? "" : Number(v).toLocaleString("id-ID");
 const parse = (s) => parseInt(String(s).replace(/\D/g, ""), 10) || 0;
@@ -156,9 +129,8 @@ function PlatformBadge({ platform, storeId, dark = false, className = "" }) {
 }
 
 // ─── Branch Card ──────────────────────────────────────────────────────────────
-function BranchCard({ branch, edits, onChange, onBulkAdj, onReset, onSave, onApplyToAll, totalBranches, saving, saved }) {
+function BranchCard({ branch, items = [], edits, onChange, onBulkAdj, onReset, onSave, onApplyToAll, totalBranches, saving, saved }) {
   const label = branch.brand || branch.nama_resto_final || branch.merchant_name;
-  const items = DUMMY_MENU[label] || DUMMY_MENU["default"];
   const groups = group(items);
   const changed = items.filter((i) => (edits[i.id] ?? i.price) !== i.price).length;
   const [showAdj, setShowAdj] = useState(false);
@@ -202,69 +174,80 @@ function BranchCard({ branch, edits, onChange, onBulkAdj, onReset, onSave, onApp
 
       {/* menu items */}
       <div className="flex-1 overflow-y-auto max-h-64 px-4 pb-2">
-        {Object.entries(groups).map(([cat, items]) => (
-          <div key={cat} className="mt-3 first:mt-0">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-300 dark:text-zinc-600 mb-1.5">{cat}</p>
-            <div className="space-y-1">
-              {items.map((item) => {
-                const cur = edits[item.id] ?? item.price;
-                const diff = cur !== item.price;
-                const pct = item.price > 0 ? ((cur - item.price) / item.price) * 100 : 0;
-                const pctFmt = (pct > 0 ? "+" : "") + (Number.isInteger(pct) ? pct.toFixed(0) : pct.toFixed(1)) + "%";
-                const { isViolation, message: violationMsg } = checkViolation(branch.platform, item.price, cur);
+        {items.length === 0 ? (
+          branch.last_sync_at ? (
+            <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-6">Tidak ada item menu ditemukan.</p>
+          ) : (
+            <div className="text-center py-6 px-3 bg-amber-50/50 dark:bg-amber-950/40 rounded-lg border border-dashed border-amber-200 dark:border-amber-900/60">
+              <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">⚠️ Menu belum di-sync</p>
+              <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">Silakan lakukan tarik menu pada tab "Menu Pull" terlebih dahulu.</p>
+            </div>
+          )
+        ) : (
+          Object.entries(groups).map(([cat, items]) => (
+            <div key={cat} className="mt-3 first:mt-0">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-300 dark:text-zinc-600 mb-1.5">{cat}</p>
+              <div className="space-y-1">
+                {items.map((item) => {
+                  const cur = edits[item.id] ?? item.price;
+                  const diff = cur !== item.price;
+                  const pct = item.price > 0 ? ((cur - item.price) / item.price) * 100 : 0;
+                  const pctFmt = (pct > 0 ? "+" : "") + (Number.isInteger(pct) ? pct.toFixed(0) : pct.toFixed(1)) + "%";
+                  const { isViolation, message: violationMsg } = checkViolation(branch.platform, item.price, cur);
 
-                return (
-                  <div key={item.id}
-                    className={`flex items-center justify-between py-1.5 px-2 rounded-lg transition-colors ${
-                      isViolation
-                        ? "bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900"
-                        : diff
-                        ? "bg-amber-50 dark:bg-amber-950/40"
-                        : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1 mr-3">
-                      <div className="flex items-center gap-1">
-                        <p className={`text-xs truncate font-medium ${isViolation ? "text-rose-900 dark:text-rose-300 font-semibold" : "text-zinc-700 dark:text-zinc-200"}`}>{item.name}</p>
-                        {isViolation && (
-                          <span title={violationMsg} className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] font-bold cursor-help shrink-0 shadow-sm">!</span>
+                  return (
+                    <div key={item.id}
+                      className={`flex items-center justify-between py-1.5 px-2 rounded-lg transition-colors ${
+                        isViolation
+                          ? "bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900"
+                          : diff
+                          ? "bg-amber-50 dark:bg-amber-950/40"
+                          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1 mr-3">
+                        <div className="flex items-center gap-1">
+                          <p className={`text-xs truncate font-medium ${isViolation ? "text-rose-900 dark:text-rose-300 font-semibold" : "text-zinc-700 dark:text-zinc-200"}`}>{item.name}</p>
+                          {isViolation && (
+                            <span title={violationMsg} className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] font-bold cursor-help shrink-0 shadow-sm">!</span>
+                          )}
+                        </div>
+                        {diff && (
+                          <p className="text-[10px] font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1 mt-0.5 flex-wrap">
+                            <span className="line-through text-zinc-400 dark:text-zinc-500 font-normal">Rp {fmt(item.price)}</span>
+                            <span className="text-amber-500 font-bold">»</span>
+                            <span className={`font-semibold ${isViolation ? "text-rose-700 dark:text-rose-400 font-bold" : "text-amber-700 dark:text-amber-400"}`}>Rp {fmt(cur)}</span>
+                            <span className={`text-[9px] font-bold px-1 rounded ${
+                              isViolation
+                                ? "bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200"
+                                : pct > 0 ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300" : "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300"
+                            }`}>
+                              ({pctFmt})
+                            </span>
+                          </p>
                         )}
                       </div>
-                      {diff && (
-                        <p className="text-[10px] font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1 mt-0.5 flex-wrap">
-                          <span className="line-through text-zinc-400 dark:text-zinc-500 font-normal">Rp {fmt(item.price)}</span>
-                          <span className="text-amber-500 font-bold">»</span>
-                          <span className={`font-semibold ${isViolation ? "text-rose-700 dark:text-rose-400 font-bold" : "text-amber-700 dark:text-amber-400"}`}>Rp {fmt(cur)}</span>
-                          <span className={`text-[9px] font-bold px-1 rounded ${
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className={`text-[10px] ${isViolation ? "text-rose-500 font-medium" : "text-zinc-400 dark:text-zinc-500"}`}>Rp</span>
+                        <input type="text" inputMode="numeric"
+                          value={fmt(cur)}
+                          onChange={(e) => onChange(branch.id, item.id, e.target.value)}
+                          className={`w-20 text-right text-xs font-semibold rounded-md px-2 py-1 border transition-colors focus:outline-none focus:ring-1 ${
                             isViolation
-                              ? "bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200"
-                              : pct > 0 ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300" : "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300"
-                          }`}>
-                            ({pctFmt})
-                          </span>
-                        </p>
-                      )}
+                              ? "border-rose-400 dark:border-rose-600 text-rose-700 dark:text-rose-300 bg-white dark:bg-zinc-800 focus:ring-rose-400 ring-1 ring-rose-300 dark:ring-rose-800"
+                              : diff
+                              ? "border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 bg-white dark:bg-zinc-800 focus:ring-amber-300"
+                              : "border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 bg-zinc-50 dark:bg-zinc-800/80 focus:ring-zinc-400 focus:bg-white dark:focus:bg-zinc-800"
+                          }`}
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span className={`text-[10px] ${isViolation ? "text-rose-500 font-medium" : "text-zinc-400 dark:text-zinc-500"}`}>Rp</span>
-                      <input type="text" inputMode="numeric"
-                        value={fmt(cur)}
-                        onChange={(e) => onChange(branch.id, item.id, e.target.value)}
-                        className={`w-20 text-right text-xs font-semibold rounded-md px-2 py-1 border transition-colors focus:outline-none focus:ring-1 ${
-                          isViolation
-                            ? "border-rose-400 dark:border-rose-600 text-rose-700 dark:text-rose-300 bg-white dark:bg-zinc-800 focus:ring-rose-400 ring-1 ring-rose-300 dark:ring-rose-800"
-                            : diff
-                            ? "border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 bg-white dark:bg-zinc-800 focus:ring-amber-300"
-                            : "border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 bg-zinc-50 dark:bg-zinc-800/80 focus:ring-zinc-400 focus:bg-white dark:focus:bg-zinc-800"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* footer */}
@@ -283,15 +266,11 @@ function BranchCard({ branch, edits, onChange, onBulkAdj, onReset, onSave, onApp
           )}
         </div>
         <div className="flex items-center gap-2">
-          {saved && (
-            <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-            </svg>
-          )}
-          <button type="button" onClick={() => onSave(branch.id)}
-            disabled={saving || changed === 0}
-            className="text-[11px] font-semibold px-3 py-1 rounded-md bg-zinc-800 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors disabled:opacity-30"
-          >{saving ? "..." : `Simpan`}</button>
+          {saving && <span className="text-[10px] text-zinc-400 dark:text-zinc-500 animate-pulse">Menyimpan...</span>}
+          {saved && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Tersimpan ✓</span>}
+          <button type="button" onClick={() => onSave([branch.id])} disabled={saving}
+            className="text-[10px] font-semibold px-2.5 py-1 rounded bg-zinc-800 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors disabled:opacity-30"
+          >Simpan</button>
         </div>
       </div>
     </div>
@@ -324,23 +303,33 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
   const [selectedParents, setSelectedParents] = useState([]);
   const [branches, setBranches] = useState([]);
   const [checkedIds, setCheckedIds] = useState([]);
+  const [branchMenus, setBranchMenus] = useState({});
   const [edits, setEdits] = useState({});
   const [saveState, setSaveState] = useState({});
+
   const [openPlatformDropdown, setOpenPlatformDropdown] = useState(false);
   const [openOutletDropdown, setOpenOutletDropdown] = useState(false);
   const [openBranchDropdown, setOpenBranchDropdown] = useState(false);
+
+  const [pushing, setPushing] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showPushConfirm, setShowPushConfirm] = useState(false);
+  const [pushViolations, setPushViolations] = useState([]);
+  const [activeJobs, setActiveJobs] = useState([]);
+  
+  const pollingIntervalsRef = useRef({});
 
   // fetch outlets
   useEffect(() => {
     if (!platform) {
       setAllOutlets([]); setUniqueParents([]); setSelectedParents([]);
-      setBranches([]); setCheckedIds([]); setSearch(""); setEdits({});
+      setBranches([]); setCheckedIds([]); setSearch(""); setEdits({}); setBranchMenus({});
       setOpenOutletDropdown(false); setOpenBranchDropdown(false);
       return;
     }
     setLoading(true);
     setAllOutlets([]); setUniqueParents([]); setSelectedParents([]);
-    setBranches([]); setCheckedIds([]); setSearch(""); setEdits({});
+    setBranches([]); setCheckedIds([]); setSearch(""); setEdits({}); setBranchMenus({});
     const url = platform === "all" ? `${API_BASE_URL}/api/outlets` : `${API_BASE_URL}/api/outlets?platform=${platform}`;
     fetch(url).then(r => r.json())
       .then(data => {
@@ -351,25 +340,45 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
       .finally(() => setLoading(false));
   }, [platform, API_BASE_URL]);
 
+  const fetchMenus = async (filteredBranches = branches) => {
+    setLoading(true);
+    const menusMap = {};
+    const editsMap = {};
+    await Promise.all(filteredBranches.map(async (b) => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/outlets/${b.id}/menu-items`);
+        if (res.ok) {
+          const items = await res.json();
+          menusMap[b.id] = items;
+          editsMap[b.id] = {};
+          items.forEach(i => { editsMap[b.id][i.id] = i.price; });
+        } else {
+          menusMap[b.id] = [];
+        }
+      } catch (err) {
+        menusMap[b.id] = [];
+      }
+    }));
+    setBranchMenus(menusMap);
+    setEdits(editsMap);
+    setLoading(false);
+  };
+
   // update branches when parent changes
   useEffect(() => {
-    if (selectedParents.length === 0) { setBranches([]); setCheckedIds([]); return; }
+    if (selectedParents.length === 0) { setBranches([]); setCheckedIds([]); setBranchMenus({}); setEdits({}); return; }
     const filtered = allOutlets.filter(o => selectedParents.includes(o.nama_outlet));
     setBranches(filtered);
     setCheckedIds(filtered.map(b => b.id));
-    setEdits(prev => {
-      const e = { ...prev };
-      filtered.forEach(b => {
-        if (!e[b.id]) {
-          const l = b.brand || b.nama_resto_final || b.merchant_name;
-          const items = DUMMY_MENU[l] || DUMMY_MENU["default"];
-          e[b.id] = {};
-          items.forEach(i => { e[b.id][i.id] = i.price; });
-        }
-      });
-      return e;
-    });
+    fetchMenus(filtered);
   }, [selectedParents, allOutlets]);
+
+  // Clean up polling intervals on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(pollingIntervalsRef.current).forEach(clearInterval);
+    };
+  }, []);
 
   const filtered = uniqueParents.filter(n => n.toLowerCase().includes(search.toLowerCase()));
   const preview = branches.filter(b => checkedIds.includes(b.id));
@@ -389,6 +398,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     }
     setSaveState({});
   };
+
   const toggleBranch = (id) => setCheckedIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
   const toggleAll = () => setCheckedIds(checkedIds.length === branches.length ? [] : branches.map(b => b.id));
 
@@ -402,9 +412,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setEdits(p => {
       const n = { ...p };
       targets.forEach(bid => {
-        const b = branches.find(x => x.id === bid); if (!b) return;
-        const l = b.brand || b.nama_resto_final || b.merchant_name;
-        const items = DUMMY_MENU[l] || DUMMY_MENU["default"];
+        const items = branchMenus[bid] || [];
         const be = { ...(p[bid] || {}) };
         items.forEach(i => { be[i.id] = applyAdj(be[i.id] ?? i.price, mode, type, val); });
         n[bid] = be;
@@ -414,16 +422,117 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setSaveState(p => { const n = { ...p }; targets.forEach(id => { n[id] = null; }); return n; });
   };
 
-  const [pushing, setPushing] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showPushConfirm, setShowPushConfirm] = useState(false);
-  const [pushViolations, setPushViolations] = useState([]);
+  const startPollingJob = (jobId, branchName) => {
+    if (pollingIntervalsRef.current[jobId]) {
+      clearInterval(pollingIntervalsRef.current[jobId]);
+    }
+
+    pollingIntervalsRef.current[jobId] = setInterval(() => {
+      fetch(`${API_BASE_URL}/api/jobs/${jobId}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch job");
+          return res.json();
+        })
+        .then((job) => {
+          setActiveJobs((prevJobs) =>
+            prevJobs.map((j) =>
+              j.id === jobId
+                ? {
+                    ...j,
+                    status: job.status,
+                    progress_pct: job.progress_pct,
+                    current_step: job.current_step,
+                    error_message: job.error_message,
+                  }
+                : j
+            )
+          );
+
+          if (job.status === "SUCCESS" || job.status === "FAILED") {
+            clearInterval(pollingIntervalsRef.current[jobId]);
+            delete pollingIntervalsRef.current[jobId];
+            fetchMenus();
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          clearInterval(pollingIntervalsRef.current[jobId]);
+          delete pollingIntervalsRef.current[jobId];
+        });
+    }, 2000);
+  };
+
+  const triggerPriceUpdate = async (bidsToUpdate) => {
+    setPushing(true);
+    const targets = Array.isArray(bidsToUpdate) ? bidsToUpdate : [bidsToUpdate];
+    const newJobsList = [];
+
+    for (const bid of targets) {
+      const branch = branches.find(x => x.id === bid);
+      if (!branch) continue;
+      const label = branch.brand || branch.nama_resto_final || branch.merchant_name;
+
+      const branchEdits = edits[bid] || {};
+      const branchItems = branchMenus[bid] || [];
+      const updates = [];
+
+      branchItems.forEach(i => {
+        const curPrice = branchEdits[i.id];
+        if (curPrice !== undefined && curPrice !== i.price) {
+          updates.push({
+            item_id: i.id,
+            category_id: i.category_id || "",
+            new_price: curPrice
+          });
+        }
+      });
+
+      if (updates.length === 0) continue;
+
+      try {
+        setSaveState(p => ({ ...p, [bid]: "saving" }));
+        const res = await fetch(`${API_BASE_URL}/api/jobs/push-price`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            outlet_id: bid,
+            updates: updates
+          })
+        });
+
+        if (res.ok) {
+          const job = await res.json();
+          newJobsList.push({
+            id: job.id,
+            name: label,
+            platform: branch.platform,
+            status: job.status,
+            progress_pct: job.progress_pct,
+            current_step: job.current_step,
+            error_message: null
+          });
+          startPollingJob(job.id, label);
+          setSaveState(p => ({ ...p, [bid]: "saved" }));
+        } else {
+          setSaveState(p => ({ ...p, [bid]: null }));
+          alert(`Gagal memicu update harga untuk ${label}`);
+        }
+      } catch (err) {
+        setSaveState(p => ({ ...p, [bid]: null }));
+        console.error(err);
+      }
+    }
+
+    if (newJobsList.length > 0) {
+      setActiveJobs(p => [...newJobsList, ...p]);
+    }
+    setPushing(false);
+  };
 
   const checkAndPushToOFD = () => {
     const violations = [];
     preview.forEach(b => {
-      const l = b.brand || b.nama_resto_final || b.merchant_name;
-      const items = DUMMY_MENU[l] || DUMMY_MENU["default"];
+      const items = branchMenus[b.id] || [];
       items.forEach(item => {
         const cur = edits[b.id]?.[item.id] ?? item.price;
         const { isViolation } = checkViolation(b.platform, item.price, cur);
@@ -439,14 +548,10 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     }
   };
 
-  const executePush = () => {
+  const executePush = async () => {
     setShowPushConfirm(false);
-    setPushing(true);
-    setShowSuccessModal(false);
-    setTimeout(() => {
-      setPushing(false);
-      setShowSuccessModal(true);
-    }, 1500);
+    await triggerPriceUpdate(checkedIds);
+    setShowSuccessModal(true);
   };
 
   const resetOne = (bid, items) => {
@@ -455,32 +560,11 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setSaveState(p => ({ ...p, [bid]: null }));
   };
 
-  const applyBranchToAll = (sourceBranchId) => {
-    const sourceEdits = edits[sourceBranchId];
-    if (!sourceEdits) return;
-    setEdits(p => {
-      const n = { ...p };
-      checkedIds.forEach(bid => {
-        if (bid !== sourceBranchId) {
-          n[bid] = { ...sourceEdits };
-        }
-      });
-      return n;
-    });
-    setSaveState(p => {
-      const n = { ...p };
-      checkedIds.forEach(id => { n[id] = null; });
-      return n;
-    });
-  };
-
   const resetAll = () => {
-    if (!window.confirm(`Reset harga semua ${preview.length} cabang?`)) return;
     setEdits(p => {
       const n = { ...p };
       preview.forEach(b => {
-        const l = b.brand || b.nama_resto_final || b.merchant_name;
-        const items = DUMMY_MENU[l] || DUMMY_MENU["default"];
+        const items = branchMenus[b.id] || [];
         const r = {}; items.forEach(i => { r[i.id] = i.price; }); n[b.id] = r;
       });
       return n;
@@ -488,9 +572,17 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setSaveState({});
   };
 
-  const save = (bid) => {
-    setSaveState(p => ({ ...p, [bid]: "saving" }));
-    setTimeout(() => setSaveState(p => ({ ...p, [bid]: "saved" })), 1200);
+  const applyBranchToAll = (sourceBranchId) => {
+    const sourceEdits = edits[sourceBranchId];
+    if (!sourceEdits) return;
+    setEdits(p => {
+      const n = { ...p };
+      preview.forEach(b => {
+        n[b.id] = { ...(n[b.id] || {}), ...sourceEdits };
+      });
+      return n;
+    });
+    setSaveState({});
   };
 
   return (
@@ -544,11 +636,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                       }`}
                     >
                       <PlatformBadge platform={val === "all" ? "Semua Aplikator" : val} dark={platform === val} />
-                      {platform === val && (
-                        <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
+                      {platform === val && <span className="text-xs">✓</span>}
                     </button>
                   ))}
                 </div>
@@ -556,141 +644,130 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
             )}
           </div>
 
-          {/* 2: Outlet */}
+          {/* 2: Outlet (Multi-select) */}
           <div className="relative">
-            <StepLabel number={2} label={`Outlet${uniqueParents.length ? ` (${selectedParents.length})` : ""}`} active={!!platform && selectedParents.length === 0} done={selectedParents.length > 0} />
-            {!platform ? (
-              <div className="h-9 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-[11px] text-zinc-300 dark:text-zinc-600">
-                —
-              </div>
-            ) : (
-              <>
-                <button type="button"
-                  onClick={() => {
-                    setOpenOutletDropdown(!openOutletDropdown);
-                    setOpenPlatformDropdown(false);
-                    setOpenBranchDropdown(false);
-                  }}
-                  className="w-full border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs text-left font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 flex items-center justify-between hover:border-zinc-300 dark:hover:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all shadow-sm"
-                >
-                  <span className={`truncate ${selectedParents.length > 0 ? "text-zinc-800 dark:text-zinc-100 font-semibold" : "text-zinc-400"}`}>
-                    {selectedParents.length === 0
-                      ? "Pilih Outlet..."
-                      : selectedParents.length === uniqueParents.length
-                      ? `Semua Outlet (${uniqueParents.length})`
-                      : `${selectedParents.length} dari ${uniqueParents.length} Outlet`}
-                  </span>
-                  <svg className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${openOutletDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+            <StepLabel number={2} label={`Outlet ${selectedParents.length > 0 ? `(${selectedParents.length})` : ""}`} active={!!platform && selectedParents.length === 0} done={selectedParents.length > 0} />
+            <button type="button"
+              disabled={!platform || loading}
+              onClick={() => {
+                setOpenOutletDropdown(!openOutletDropdown);
+                setOpenPlatformDropdown(false);
+                setOpenBranchDropdown(false);
+              }}
+              className="w-full border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs text-left font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 flex items-center justify-between hover:border-zinc-300 dark:hover:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-400 disabled:opacity-40 transition-all shadow-sm"
+            >
+              <span className={`truncate ${selectedParents.length > 0 ? "text-zinc-800 dark:text-zinc-100 font-semibold" : "text-zinc-400 dark:text-zinc-400"}`}>
+                {loading
+                  ? "Memuat..."
+                  : !platform
+                  ? "Pilih Aplikator dulu"
+                  : selectedParents.length === 0
+                  ? "Pilih Outlet..."
+                  : selectedParents.length === uniqueParents.length
+                  ? `Semua Outlet (${uniqueParents.length})`
+                  : `${selectedParents.length} dari ${uniqueParents.length} Outlet`}
+              </span>
+              <svg className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${openOutletDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-                {openOutletDropdown && (
-                  <>
-                    <div className="fixed inset-0 z-20" onClick={() => setOpenOutletDropdown(false)} />
-                    <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-100 dark:border-zinc-800 p-2 space-y-1.5 animate-scale-up">
-                      <div className="flex items-center justify-between px-2 py-1 border-b border-zinc-100 dark:border-zinc-800 pb-1.5">
-                        <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Pilih Outlet ({selectedParents.length}/{uniqueParents.length})</span>
-                        <button type="button" onClick={toggleAllParents}
-                          className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 font-semibold transition-colors"
-                        >
-                          {selectedParents.length === uniqueParents.length ? "Batal Semua" : "Pilih Semua"}
-                        </button>
-                      </div>
-                      <input type="text" placeholder="Cari outlet..." autoFocus
-                        value={search} onChange={e => setSearch(e.target.value)}
-                        className="w-full border border-zinc-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
-                      />
-                      <div className="max-h-48 overflow-y-auto space-y-1 p-0.5">
-                        {loading ? (
-                          <p className="text-[11px] text-zinc-400 text-center py-2">Memuat...</p>
-                        ) : filtered.length === 0 ? (
-                          <p className="text-[11px] text-zinc-400 text-center py-2">Tidak ditemukan</p>
-                        ) : filtered.map(name => {
-                          const on = selectedParents.includes(name);
-                          return (
-                            <label key={name} className={`flex items-center gap-2 text-xs cursor-pointer rounded-md px-2.5 py-1.5 transition-all ${
-                              on ? "bg-zinc-800 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                            }`}>
-                              <input type="checkbox" checked={on} onChange={() => toggleParent(name)}
-                                className="accent-white dark:accent-zinc-900" />
-                              <span className="truncate flex-1">{name}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </>
-                )}
+            {openOutletDropdown && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setOpenOutletDropdown(false)} />
+                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-100 dark:border-zinc-800 p-2.5 space-y-2 animate-scale-up min-w-[240px]">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-zinc-100 dark:border-zinc-800">
+                    <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                      Terpilih ({selectedParents.length}/{uniqueParents.length})
+                    </span>
+                    <button type="button" onClick={toggleAllParents}
+                      className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
+                      {selectedParents.length === uniqueParents.length ? "Batal Semua" : "Pilih Semua"}
+                    </button>
+                  </div>
+
+                  <input type="text" placeholder="Cari outlet..." value={search} onChange={e => setSearch(e.target.value)}
+                    className="w-full border border-zinc-200 dark:border-zinc-700 rounded-md px-2.5 py-1 text-xs bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  />
+
+                  <div className="max-h-48 overflow-y-auto space-y-0.5 pr-1">
+                    {filtered.length === 0 ? (
+                      <p className="text-center text-xs text-zinc-400 py-3">Tidak ada outlet cocok</p>
+                    ) : (
+                      filtered.map(name => {
+                        const on = selectedParents.includes(name);
+                        return (
+                          <label key={name} className="flex items-center space-x-2 px-2 py-1 rounded-md text-xs cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors">
+                            <input type="checkbox" checked={on} onChange={() => toggleParent(name)} className="accent-zinc-800 dark:accent-zinc-100 rounded" />
+                            <span className={`truncate ${on ? "text-zinc-800 dark:text-zinc-100 font-medium" : "text-zinc-600 dark:text-zinc-400"}`}>{name}</span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
               </>
             )}
           </div>
 
           {/* 3: Cabang */}
           <div className="relative">
-            <StepLabel number={3} label={`Cabang${branches.length ? ` (${checkedIds.length})` : ""}`}
-              active={selectedParents.length > 0 && checkedIds.length === 0} done={checkedIds.length > 0} />
-            {selectedParents.length === 0 ? (
-              <div className="h-9 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-[11px] text-zinc-300 dark:text-zinc-600">
-                —
-              </div>
-            ) : (
-              <>
-                <button type="button"
-                  onClick={() => {
-                    setOpenBranchDropdown(!openBranchDropdown);
-                    setOpenOutletDropdown(false);
-                    setOpenPlatformDropdown(false);
-                  }}
-                  className="w-full border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs text-left font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 flex items-center justify-between hover:border-zinc-300 dark:hover:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all shadow-sm"
-                >
-                  <span className="truncate text-zinc-800 dark:text-zinc-100 font-semibold">
-                    {checkedIds.length === 0
-                      ? "Pilih Cabang..."
-                      : checkedIds.length === branches.length
-                      ? `Semua Cabang (${branches.length})`
-                      : `${checkedIds.length} dari ${branches.length} Cabang`}
-                  </span>
-                  <svg className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${openBranchDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+            <StepLabel number={3} label={`Cabang ${branches.length > 0 ? `(${checkedIds.length})` : ""}`} active={selectedParents.length > 0} done={checkedIds.length > 0} />
+            <button type="button"
+              disabled={selectedParents.length === 0}
+              onClick={() => {
+                setOpenBranchDropdown(!openBranchDropdown);
+                setOpenPlatformDropdown(false);
+                setOpenOutletDropdown(false);
+              }}
+              className="w-full border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs text-left font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 flex items-center justify-between hover:border-zinc-300 dark:hover:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-400 disabled:opacity-40 transition-all shadow-sm"
+            >
+              <span className="truncate text-zinc-800 dark:text-zinc-100 font-semibold">
+                {selectedParents.length === 0
+                  ? "Pilih Outlet dulu"
+                  : checkedIds.length === branches.length
+                  ? `Semua Cabang (${branches.length})`
+                  : `${checkedIds.length} dari ${branches.length} Cabang`}
+              </span>
+              <svg className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${openBranchDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-                {openBranchDropdown && (
-                  <>
-                    <div className="fixed inset-0 z-20" onClick={() => setOpenBranchDropdown(false)} />
-                    <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-100 dark:border-zinc-800 p-2 space-y-1.5 animate-scale-up">
-                      <div className="flex items-center justify-between px-2 py-1 border-b border-zinc-100 dark:border-zinc-800 pb-1.5">
-                        <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Pilih Cabang ({checkedIds.length}/{branches.length})</span>
-                        <button type="button" onClick={toggleAll}
-                          className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 font-semibold transition-colors"
-                        >
-                          {checkedIds.length === branches.length ? "Batal Semua" : "Pilih Semua"}
-                        </button>
-                      </div>
-                      <div className="max-h-48 overflow-y-auto space-y-1 p-0.5">
-                        {branches.map(b => {
-                          const l = b.brand || b.nama_resto_final || b.merchant_name;
-                          const on = checkedIds.includes(b.id);
-                          return (
-                            <label key={b.id} className={`flex items-center gap-2 text-xs cursor-pointer rounded-md px-2 py-1.5 transition-all ${
-                              on ? "bg-zinc-800 dark:bg-zinc-100 text-white dark:text-zinc-900" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                            }`}>
-                              <input type="checkbox" checked={on} onChange={() => toggleBranch(b.id)}
-                                className="accent-white dark:accent-zinc-900" />
-                              <div className="min-w-0 leading-tight flex-1">
-                                <div className="font-medium truncate">{l}</div>
-                                <div className="mt-1">
-                                  <PlatformBadge platform={b.platform} storeId={b.store_id} dark={on} />
-                                </div>
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </>
-                )}
+            {openBranchDropdown && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setOpenBranchDropdown(false)} />
+                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-100 dark:border-zinc-800 p-2.5 space-y-2 animate-scale-up min-w-[260px]">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-zinc-100 dark:border-zinc-800">
+                    <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                      Terpilih ({checkedIds.length}/{branches.length})
+                    </span>
+                    <button type="button" onClick={toggleAll}
+                      className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
+                      {checkedIds.length === branches.length ? "Batal Semua" : "Pilih Semua"}
+                    </button>
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto space-y-0.5 pr-1">
+                    {branches.map(b => {
+                      const on = checkedIds.includes(b.id);
+                      const l = b.brand || b.nama_resto_final || b.merchant_name;
+                      return (
+                        <label key={b.id} className="flex items-start space-x-2 px-2 py-1.5 rounded-md text-xs cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors">
+                          <input type="checkbox" checked={on} onChange={() => toggleBranch(b.id)} className="accent-zinc-800 dark:accent-zinc-100 rounded mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <span className={`block truncate ${on ? "text-zinc-800 dark:text-zinc-100 font-medium" : "text-zinc-600 dark:text-zinc-400"}`}>{l}</span>
+                            <div className="mt-0.5">
+                              <PlatformBadge platform={b.platform} storeId={b.store_id} dark={on} />
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
               </>
             )}
           </div>
@@ -730,18 +807,64 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
         </section>
       )}
 
+      {/* ── Active Jobs Section ── */}
+      {activeJobs.length > 0 && (
+        <section className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5 space-y-4 transition-colors">
+          <h3 className="text-xs font-semibold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider">
+            Status Pembaruan Harga ke Merchant Portal
+          </h3>
+          <div className="space-y-3 max-h-60 overflow-y-auto">
+            {activeJobs.map(job => (
+              <div key={job.id} className="border border-zinc-150 dark:border-zinc-800 p-4 rounded-lg flex flex-col gap-2.5 bg-zinc-50/40 dark:bg-zinc-800/40">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">{job.name}</div>
+                    <div className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500">
+                      JOB ID: {job.id} · PLATFORM: {job.platform?.toUpperCase()}
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                    job.status === "SUCCESS" ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300" :
+                    job.status === "FAILED" ? "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300" :
+                    "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
+                  }`}>{job.status}</span>
+                </div>
+                
+                {/* progress bar */}
+                <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-1.5 overflow-hidden">
+                  <div className={`h-full transition-all duration-500 ${
+                    job.status === "SUCCESS" ? "bg-emerald-500" :
+                    job.status === "FAILED" ? "bg-rose-500" :
+                    "bg-amber-500"
+                  }`} style={{ width: `${job.progress_pct}%` }} />
+                </div>
+                
+                <div className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">
+                  {job.current_step || "Mengantre..."}
+                </div>
+                {job.error_message && (
+                  <div className="text-[10px] text-rose-500 font-mono">
+                    Error: {job.error_message}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ── Bottom: Cards ── */}
       <section>
         {preview.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-zinc-200 py-16 flex flex-col items-center justify-center text-center">
-            <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center mb-3">
-              <svg className="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 py-16 flex flex-col items-center justify-center text-center">
+            <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
+              <svg className="w-5 h-5 text-zinc-300 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-zinc-500">Pilih outlet dan cabang di atas</p>
-            <p className="text-xs text-zinc-400 mt-0.5">Harga menu akan muncul di sini</p>
+            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Pilih outlet dan cabang di atas</p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Harga menu akan muncul di sini</p>
           </div>
         ) : (
           <div className={`grid gap-4 ${
@@ -751,9 +874,10 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           }`}>
             {preview.map(branch => (
               <BranchCard key={branch.id} branch={branch}
+                items={branchMenus[branch.id] || []}
                 edits={edits[branch.id] || {}}
                 onChange={changePrice} onBulkAdj={bulkAdj}
-                onReset={resetOne} onSave={save}
+                onReset={resetOne} onSave={triggerPriceUpdate}
                 onApplyToAll={applyBranchToAll}
                 totalBranches={preview.length}
                 saving={saveState[branch.id] === "saving"}

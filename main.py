@@ -3,7 +3,7 @@ import sys
 import uuid
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 
@@ -130,6 +130,16 @@ class AuditTrailResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PriceUpdateItem(BaseModel):
+    item_id: str
+    category_id: str
+    new_price: float
+
+class PriceUpdateRequest(BaseModel):
+    outlet_id: uuid.UUID
+    updates: List[PriceUpdateItem]
 
 
 # ─── GSHEETS SYNC ENDPOINT ───────────────────────────────────────────────────
@@ -595,6 +605,476 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
         db.close()
 
 
+def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: list):
+    """Background task to push price changes to GoFood, GrabFood, or ShopeeFood."""
+    import asyncio
+    from menu_core.database import SessionLocal
+    db = SessionLocal()
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        db.close()
+        return
+
+    platform = (job.platform or "").lower()
+    lock = PLATFORM_LOCKS.get(platform)
+    if lock:
+        logger.info(f"🔒 Job {job_id} ({platform}) waiting for lock...")
+        lock.acquire()
+        logger.info(f"🔓 Job {job_id} ({platform}) acquired lock. Starting execution.")
+
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            return
+
+        job.status = "RUNNING"
+        job.started_at = datetime.utcnow()
+        job.progress_pct = 10
+        job.current_step = "Menginisialisasi kredensial..."
+        db.commit()
+
+        outlet = db.query(Outlet).filter(Outlet.id == outlet_id).first()
+        account = db.query(Account).filter(Account.id == outlet.account_id).first()
+
+        total_updates = len(updates_list)
+        success_count = 0
+        fail_count = 0
+
+        if platform == "shopee":
+            # Add project root to sys.path
+            if str(BASE_DIR) not in sys.path:
+                sys.path.insert(0, str(BASE_DIR))
+            from shopee.core.edit import edit_dish_via_portal
+
+            store_metadata = {
+                "store_id": outlet.store_id,
+                "username": account.username,
+                "password": account.password,
+                "merchant_name": outlet.merchant_name,
+                "nama_resto_final": outlet.nama_resto_final,
+                "nama_outlet": outlet.nama_outlet
+            }
+
+            job.progress_pct = 30
+            job.current_step = "Membuka browser Shopee..."
+            db.commit()
+
+            for idx, update in enumerate(updates_list):
+                item_id = update["item_id"]
+                new_price = update["new_price"]
+                
+                job.current_step = f"Memproses update harga item {item_id} ke Rp {new_price}..."
+                job.progress_pct = int(30 + (idx / total_updates) * 60)
+                db.commit()
+
+                try:
+                    success, msg = edit_dish_via_portal(store_metadata, dish_id=item_id, price=new_price, headless=True)
+                    if success:
+                        success_count += 1
+                        status_str = "SUCCESS"
+                        err_msg = None
+                    else:
+                        fail_count += 1
+                        status_str = "FAILED"
+                        err_msg = msg
+                except Exception as ex:
+                    fail_count += 1
+                    status_str = "FAILED"
+                    err_msg = str(ex)
+
+                trail = AuditTrail(
+                    job_id=job.id,
+                    outlet_id=outlet.id,
+                    item_id=item_id,
+                    item_name=item_id,
+                    change_type="PRICE_UPDATE",
+                    field_changed="price",
+                    old_value=None,
+                    new_value=str(new_price),
+                    status=status_str,
+                    error_message=err_msg
+                )
+                db.add(trail)
+                db.commit()
+
+        elif platform == "grab":
+            from playwright.sync_api import sync_playwright
+            from grab.core.grab_api_scraper import GrabAPI, perform_login, SESSION_DIR
+
+            username = account.username
+            password = account.password
+            store_id = outlet.store_id
+
+            job.progress_pct = 30
+            job.current_step = "Meluncurkan browser Grab..."
+            db.commit()
+
+            with sync_playwright() as p:
+                session_path = os.path.join(SESSION_DIR, f"{username}.json")
+                storage_state = session_path if os.path.exists(session_path) else None
+                
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(
+                    storage_state=storage_state,
+                    user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                )
+                page = context.new_page()
+
+                try:
+                    page.goto("https://merchant.grab.com/dashboard", wait_until="domcontentloaded", timeout=30000)
+                except Exception as e:
+                    logger.warning(f"Grab dashboard navigate warning: {e}")
+
+                async def grab_async_flow():
+                    nonlocal success_count, fail_count
+                    api = GrabAPI(page, username, password)
+                    mgid = await api.get_merchant_group_id()
+                    if not mgid:
+                        if await perform_login(page, username, password):
+                            mgid = await api.get_merchant_group_id()
+                            if mgid:
+                                await context.storage_state(path=session_path)
+                            else:
+                                return "Failed to retrieve Grab merchant group ID after login."
+                        else:
+                            return "Grab login failed."
+
+                    menu_data, err = await api.fetch_menu(mgid, store_id, is_menu_group=False)
+                    if err or not menu_data:
+                        return f"Failed to fetch Grab menu: {err}"
+
+                    grab_items_by_id = {}
+                    for cat in menu_data.get("categories", []):
+                        items_list = cat.get("items") or cat.get("menuItems") or []
+                        selling_time_id = cat.get("sellingTimeID")
+                        for item in items_list:
+                            grab_items_by_id[str(item.get("itemID"))] = {
+                                "item": item,
+                                "category_id": cat.get("categoryID"),
+                                "sellingTimeID": selling_time_id
+                            }
+
+                    for idx, update in enumerate(updates_list):
+                        item_id = update["item_id"]
+                        new_price = update["new_price"]
+
+                        item_info = grab_items_by_id.get(item_id)
+                        if not item_info:
+                            fail_count += 1
+                            trail = AuditTrail(
+                                job_id=job.id,
+                                outlet_id=outlet.id,
+                                item_id=item_id,
+                                item_name=item_id,
+                                change_type="PRICE_UPDATE",
+                                field_changed="price",
+                                old_value=None,
+                                new_value=str(new_price),
+                                status="FAILED",
+                                error_message="Item ID not found in current Grab menu."
+                            )
+                            db.add(trail)
+                            db.commit()
+                            continue
+
+                        orig_item = item_info["item"]
+                        category_id = item_info["category_id"]
+                        selling_time_id = item_info["sellingTimeID"]
+                        
+                        item_data = {
+                            "itemID": item_id,
+                            "itemName": orig_item.get("itemName"),
+                            "description": orig_item.get("description", ""),
+                            "priceInMin": int(new_price * 100),
+                            "availableStatus": orig_item.get("availableStatus", 1),
+                            "sellingTimeID": selling_time_id,
+                            "advancedPricing": orig_item.get("advancedPricing") or {},
+                            "purchasability": orig_item.get("purchasability") or {},
+                            "imageURL": orig_item.get("imageURL") or "",
+                            "imageURLs": orig_item.get("imageURLs") or [],
+                            "weight": orig_item.get("weight"),
+                            "itemAttributeValues": orig_item.get("itemAttributeValues") or []
+                        }
+
+                        val_ok, val_err = await api.validate_item(mgid, store_id, category_id, item_data)
+                        if val_err:
+                            logger.warning(f"Grab validation warning for item {item_id}: {val_err}")
+
+                        upsert_res, upsert_err = await api.upsert_item(mgid, store_id, category_id, item_data)
+                        if upsert_res and not upsert_err:
+                            success_count += 1
+                            status_str = "SUCCESS"
+                            err_msg = None
+                        else:
+                            fail_count += 1
+                            status_str = "FAILED"
+                            err_msg = upsert_err or "Unknown Grab API error."
+
+                        trail = AuditTrail(
+                            job_id=job.id,
+                            outlet_id=outlet.id,
+                            item_id=item_id,
+                            item_name=orig_item.get("itemName", item_id),
+                            change_type="PRICE_UPDATE",
+                            field_changed="price",
+                            old_value=str(float(orig_item.get("priceInMin", 0)) / 100.0),
+                            new_value=str(new_price),
+                            status=status_str,
+                            error_message=err_msg
+                        )
+                        db.add(trail)
+                        db.commit()
+
+                    return None
+
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                err_msg = loop.run_until_complete(grab_async_flow())
+                loop.close()
+                browser.close()
+
+                if err_msg:
+                    raise Exception(err_msg)
+
+        elif platform == "gofood":
+            from playwright.sync_api import sync_playwright
+            from Gofood.GO.actions import _menu_api as go_api
+            from Gofood.GO.updater_gofood import SESSION_DIR as GO_SESSION_DIR
+
+            email = account.username
+            password = account.password
+            merchant_id = outlet.store_id
+
+            if not merchant_id:
+                raise Exception("Merchant ID (store_id) is missing for GoFood outlet.")
+            if not merchant_id.startswith("G"):
+                merchant_id = "G" + merchant_id
+
+            job.progress_pct = 30
+            job.current_step = "Meluncurkan browser GoFood..."
+            db.commit()
+
+            with sync_playwright() as p:
+                session_path = os.path.join(GO_SESSION_DIR, f"session_{email}.json")
+                storage_state = session_path if os.path.exists(session_path) else None
+
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(
+                    storage_state=storage_state,
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                )
+                page = context.new_page()
+
+                page.goto("https://portal.gofoodmerchant.co.id/dashboard", wait_until="domcontentloaded")
+                time.sleep(3)
+
+                api_headers = {}
+                def capture_headers(request):
+                    if "api.gojekapi.com" in request.url or "api.gobiz.co.id" in request.url:
+                        h = request.headers
+                        if 'authorization' in h:
+                            api_headers['authorization'] = h['authorization']
+                        if 'x-passkey' in h:
+                            api_headers['x-passkey'] = h['x-passkey']
+                    if "restaurants/" in request.url and "v1" in request.url:
+                        parts = request.url.split("/")
+                        for i, part in enumerate(parts):
+                            if part == "restaurants" and i + 1 < len(parts):
+                                candidate = parts[i + 1].split("?")[0]
+                                if len(candidate) == 36:
+                                    api_headers['restaurant_uuid'] = candidate
+                    if "/v2/menu_groups/" in request.url:
+                        parts = request.url.split("/")
+                        for i, part in enumerate(parts):
+                            if part == "menu_groups" and i + 1 < len(parts):
+                                candidate = parts[i + 1].split("?")[0]
+                                if len(candidate) == 36:
+                                    api_headers['menu_group_id'] = candidate
+
+                page.on("request", capture_headers)
+
+                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}", wait_until="domcontentloaded")
+                time.sleep(3)
+
+                if "/auth" in page.url or "login" in page.url:
+                    page.goto("https://portal.gofoodmerchant.co.id/auth/login/email", wait_until="domcontentloaded")
+                    time.sleep(2)
+                    email_input = page.locator('input[type="email"]')
+                    email_input.fill(email)
+                    submit_btn = page.locator('button:has-text("Lanjut")')
+                    submit_btn.first.click()
+                    time.sleep(2)
+                    pass_input = page.locator('input[type="password"]')
+                    pass_input.fill(password)
+                    page.locator('button:has-text("Masuk")').first.click()
+                    
+                    page.wait_for_url(lambda url: "/auth/login" not in url, timeout=45000)
+                    context.storage_state(path=session_path)
+                    page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}", wait_until="domcontentloaded")
+                    time.sleep(3)
+
+                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu", wait_until="domcontentloaded")
+                time.sleep(5)
+
+                token = api_headers.get('authorization')
+                rest_uuid = api_headers.get('restaurant_uuid')
+                group_id = api_headers.get('menu_group_id')
+
+                if not token or not rest_uuid:
+                    raise Exception("Gagal menangkap Authorization Token atau Restaurant UUID untuk GoFood.")
+
+                menu_data = go_api.fetch_menus(page, token, rest_uuid)
+                if not menu_data:
+                    raise Exception("Gagal menarik menu GoFood untuk perbandingan harga.")
+
+                categories = go_api.parse_menus(menu_data)
+                go_items_by_id = {}
+                for cat in categories:
+                    for item in cat.get("menu_items") or []:
+                        iid = item.get("common_id") or item.get("id")
+                        go_items_by_id[str(iid)] = {
+                            "item": item,
+                            "category_id": cat.get("id"),
+                            "category_common_id": cat.get("common_id")
+                        }
+
+                for idx, update in enumerate(updates_list):
+                    item_id = update["item_id"]
+                    new_price = update["new_price"]
+
+                    item_info = go_items_by_id.get(item_id)
+                    if not item_info:
+                        fail_count += 1
+                        trail = AuditTrail(
+                            job_id=job.id,
+                            outlet_id=outlet.id,
+                            item_id=item_id,
+                            item_name=item_id,
+                            change_type="PRICE_UPDATE",
+                            field_changed="price",
+                            old_value=None,
+                            new_value=str(new_price),
+                            status="FAILED",
+                            error_message="Item ID tidak ditemukan di menu GoFood."
+                        )
+                        db.add(trail)
+                        db.commit()
+                        continue
+
+                    orig_item = item_info["item"]
+                    cat_common_id = item_info["category_common_id"] or item_info["category_id"]
+
+                    v2_payload = {
+                        "menu_common_id": cat_common_id,
+                        "image_url": orig_item.get('image_url', orig_item.get('image', '')),
+                        "name": orig_item.get('name'),
+                        "description": orig_item.get('description', ''),
+                        "price": int(new_price),
+                        "active": orig_item.get('is_active', orig_item.get('active', True)),
+                        "signature": orig_item.get('signature', False)
+                    }
+
+                    patch_group_id = group_id if group_id else cat_common_id
+                    res = go_api.update_v2_menu_item(page, token, patch_group_id, item_id, v2_payload)
+
+                    if not res or not res.get('ok'):
+                        v1_payload = {
+                            "name": orig_item.get('name'),
+                            "price": str(int(new_price)),
+                            "active": orig_item.get('is_active', orig_item.get('active', True)),
+                            "description": orig_item.get('description', ''),
+                            "image": orig_item.get('image_url', orig_item.get('image', ''))
+                        }
+                        v1_item_id = orig_item.get('id')
+                        res = go_api.update_item(page, token, rest_uuid, v1_item_id, v1_payload)
+
+                    if res and res.get('ok'):
+                        success_count += 1
+                        status_str = "SUCCESS"
+                        err_msg = None
+                    else:
+                        fail_count += 1
+                        status_str = "FAILED"
+                        err_msg = res.get('body') or "GoFood API error."
+
+                    trail = AuditTrail(
+                        job_id=job.id,
+                        outlet_id=outlet.id,
+                        item_id=item_id,
+                        item_name=orig_item.get("name", item_id),
+                        change_type="PRICE_UPDATE",
+                        field_changed="price",
+                        old_value=str(orig_item.get("price", 0)),
+                        new_value=str(new_price),
+                        status=status_str,
+                        error_message=err_msg
+                    )
+                    db.add(trail)
+                    db.commit()
+
+                browser.close()
+
+        job.status = "SUCCESS"
+        job.progress_pct = 100
+        job.current_step = f"Pembaruan harga selesai! {success_count} sukses, {fail_count} gagal."
+        job.result_metadata = {
+            "success_count": success_count,
+            "fail_count": fail_count,
+            "completed_at": datetime.utcnow().isoformat()
+        }
+        job.completed_at = datetime.utcnow()
+        db.commit()
+
+    except Exception as e:
+        logger.error(f"❌ Job {job_id} failed: {e}")
+        job.status = "FAILED"
+        job.error_message = str(e)
+        job.current_step = f"Terjadi kesalahan: {str(e)}"
+        job.completed_at = datetime.utcnow()
+        db.commit()
+
+    finally:
+        if lock:
+            try:
+                lock.release()
+                logger.info(f"🔓 Job {job_id} ({platform}) lock released.")
+            except Exception as le:
+                logger.warning(f"⚠️ Failed to release lock: {le}")
+        db.close()
+
+
+@app.post("/api/jobs/push-price", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED)
+def trigger_push_price_job(request: PriceUpdateRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Triggers a background job to push price changes to the applicator merchant portal."""
+    outlet = db.query(Outlet).filter(Outlet.id == request.outlet_id).first()
+    if not outlet:
+        raise HTTPException(status_code=404, detail="Outlet not found")
+        
+    updates_payload = []
+    for item in request.updates:
+        updates_payload.append({
+            "item_id": item.item_id,
+            "category_id": item.category_id,
+            "new_price": item.new_price
+        })
+
+    new_job = Job(
+        outlet_id=outlet.id,
+        job_type="PUSH_UPDATE",
+        platform=outlet.account.platform,
+        status="PENDING",
+        progress_pct=0,
+        current_step="Mengantrekan pembaruan harga...",
+        payload={"store_id": outlet.store_id, "merchant_name": outlet.merchant_name, "updates_count": len(updates_payload)}
+    )
+    db.add(new_job)
+    db.commit()
+    db.refresh(new_job)
+
+    background_tasks.add_task(run_push_price_job, new_job.id, outlet.id, updates_payload)
+    return new_job
+
+
 # ─── JOBS ENDPOINTS ───────────────────────────────────────────────────────────
 
 @app.post("/api/jobs/pull", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED)
@@ -656,3 +1136,151 @@ def download_job_file(job_id: uuid.UUID, db: Session = Depends(get_db)):
 @app.get("/api/audit-trails", response_model=List[AuditTrailResponse])
 def get_audit_trails(db: Session = Depends(get_db)):
     return db.query(AuditTrail).order_by(AuditTrail.created_at.desc()).limit(100).all()
+
+@app.get("/api/outlets/{outlet_id}/items/{item_id}/pricing-quota")
+def get_pricing_quota(outlet_id: uuid.UUID, item_id: str, db: Session = Depends(get_db)):
+    """Retrieve remaining pricing quota for a specific item in a specific outlet."""
+    outlet = db.query(Outlet).filter(Outlet.id == outlet_id).first()
+    if not outlet:
+        raise HTTPException(status_code=404, detail="Outlet not found")
+        
+    account = db.query(Account).filter(Account.id == outlet.account_id).first()
+    platform = (account.platform or "").lower() if account else "grab"
+
+    now = datetime.utcnow()
+    one_day_ago = now - timedelta(days=1)
+    thirty_days_ago = now - timedelta(days=30)
+    
+    # Query successful price updates in the last 24 hours
+    daily_count = db.query(AuditTrail).filter(
+        AuditTrail.outlet_id == outlet_id,
+        AuditTrail.item_id == item_id,
+        AuditTrail.field_changed.ilike("price"),
+        AuditTrail.status.ilike("SUCCESS"),
+        AuditTrail.created_at >= one_day_ago
+    ).count()
+    
+    # Query successful price updates in the last 30 days
+    monthly_count = db.query(AuditTrail).filter(
+        AuditTrail.outlet_id == outlet_id,
+        AuditTrail.item_id == item_id,
+        AuditTrail.field_changed.ilike("price"),
+        AuditTrail.status.ilike("SUCCESS"),
+        AuditTrail.created_at >= thirty_days_ago
+    ).count()
+    
+    # Dynamic rules based on platform
+    if platform == "shopee":
+        daily_limit = 1
+        monthly_limit = 99999  # Practically unlimited monthly quota
+        max_increase_pct = 25.0
+    elif platform == "grab":
+        daily_limit = 10
+        monthly_limit = 15
+        max_increase_pct = 15.0
+    else:  # GoFood or fallback
+        daily_limit = 99999
+        monthly_limit = 99999
+        max_increase_pct = 99999.0
+    
+    daily_remaining = max(0, daily_limit - daily_count)
+    monthly_remaining = max(0, monthly_limit - monthly_count)
+    
+    return {
+        "outlet_id": outlet_id,
+        "item_id": item_id,
+        "platform": platform,
+        "daily_limit": daily_limit,
+        "daily_count": daily_count,
+        "daily_remaining": daily_remaining,
+        "monthly_limit": monthly_limit,
+        "monthly_count": monthly_count,
+        "monthly_remaining": monthly_remaining,
+        "max_increase_pct": max_increase_pct
+    }
+
+@app.get("/api/outlets/{outlet_id}/menu-items")
+def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
+    """Retrieve the menu items list of an outlet from the latest pulled Excel sheet catalog."""
+    job = db.query(Job).filter(
+        Job.outlet_id == outlet_id,
+        Job.job_type == "PULL",
+        Job.status == "SUCCESS"
+    ).order_by(Job.completed_at.desc()).first()
+    
+    excel_path = None
+    if job and job.result_metadata:
+        excel_path = job.result_metadata.get("excel_path")
+        
+    if not excel_path or not os.path.exists(excel_path):
+        # Fallback to scanning the exports folder directly
+        outlet = db.query(Outlet).filter(Outlet.id == outlet_id).first()
+        if not outlet:
+            raise HTTPException(status_code=404, detail="Outlet not found")
+        import re
+        raw_outlet = outlet.nama_outlet or outlet.nama_resto_final or outlet.merchant_name or 'unknown'
+        clean_outlet = "".join(c for c in raw_outlet if c.isalnum() or c in (' ', '_', '-')).strip()
+        clean_outlet = re.sub(r'\s+', ' ', clean_outlet).lower()
+        
+        exports_dir = BASE_DIR / "data" / "exports" / outlet.platform / clean_outlet
+        excel_files = list(exports_dir.glob("*.xlsx")) if exports_dir.exists() else []
+        if not excel_files:
+            return []
+        excel_path = str(excel_files[0])
+
+    if not excel_path or not os.path.exists(excel_path):
+        return []
+
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(excel_path, data_only=True, read_only=True)
+        if 'Item' not in wb.sheetnames:
+            return []
+        sheet = wb['Item']
+        rows = list(sheet.iter_rows(values_only=True))
+        if len(rows) <= 1:
+            return []
+            
+        headers = rows[0]
+        header_map = {str(h).strip(): i for i, h in enumerate(headers) if h is not None}
+        
+        required_cols = ['Item ID', 'Category', 'Item', 'Current Real Price (Rp)']
+        for col in required_cols:
+            if col not in header_map:
+                logger.warning(f"Missing column '{col}' in Excel sheet mapping: {list(header_map.keys())}")
+                return []
+                
+        items = []
+        for row in rows[1:]:
+            # Skip empty rows
+            if not row or all(v is None for v in row):
+                continue
+                
+            item_id = str(row[header_map['Item ID']]).strip() if row[header_map['Item ID']] is not None else ""
+            category_id = str(row[header_map['Category ID']]).strip() if 'Category ID' in header_map and row[header_map['Category ID']] is not None else ""
+            category_name = str(row[header_map['Category']]).strip() if row[header_map['Category']] is not None else ""
+            item_name = str(row[header_map['Item']]).strip() if row[header_map['Item']] is not None else ""
+            desc = str(row[header_map['Description']]).strip() if 'Description' in header_map and row[header_map['Description']] is not None else ""
+            
+            p_val = row[header_map['Current Real Price (Rp)']]
+            try:
+                price_val = int(float(p_val)) if p_val is not None else 0
+            except:
+                price_val = 0
+                
+            avail_val = str(row[header_map['Availability']]).strip() if 'Availability' in header_map and row[header_map['Availability']] is not None else "Available"
+            
+            if item_id and item_name:
+                items.append({
+                    "id": item_id,
+                    "category_id": category_id,
+                    "category": category_name,
+                    "name": item_name,
+                    "description": desc,
+                    "price": price_val,
+                    "availability": avail_val
+                })
+        return items
+    except Exception as e:
+        logger.error(f"Error parsing excel menu file at {excel_path}: {e}")
+        return []

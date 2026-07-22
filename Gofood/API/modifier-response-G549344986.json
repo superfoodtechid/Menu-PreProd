@@ -1,0 +1,332 @@
+{
+    "variant_categories": [
+        {
+            "id": "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+            "master_variant_category_id": "f3004997-9a96-40fa-a17e-fd441f258488",
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "name": "Alat Makan",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_ONE",
+                    "required": false,
+                    "min_quantity": 0,
+                    "max_quantity": 1
+                }
+            },
+            "variants": [
+                {
+                    "id": "b3ba0823-c7c4-47e8-9bbc-d243647f2f5e",
+                    "variant_category_id": "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                    "master_variant_id": "1afb32b8-f188-4a8d-a0be-82eef7d68442",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Sendok Plastik",
+                    "active": true,
+                    "price": 2310,
+                    "weight": 1,
+                    "in_stock": true
+                }
+            ]
+        },
+        {
+            "id": "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+            "master_variant_category_id": "4c7e7997-3ff3-4473-89e8-56b461ecf5f9",
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "name": "Pilihan Nasi",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_ONE",
+                    "required": true,
+                    "min_quantity": 1,
+                    "max_quantity": 1
+                }
+            },
+            "variants": [
+                {
+                    "id": "a78e4eef-06a7-4978-a89e-1ca86c2f7274",
+                    "variant_category_id": "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                    "master_variant_id": "a179b034-ef98-43d5-b299-0ad5f0738c28",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Nasi Putih",
+                    "active": true,
+                    "price": 0,
+                    "weight": 1,
+                    "in_stock": true
+                },
+                {
+                    "id": "4a03db11-39cf-4231-a351-a21b3fbe4a3f",
+                    "variant_category_id": "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                    "master_variant_id": "23d43bfd-0443-4e3b-bba4-abef043ec8eb",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Nasi Kuning",
+                    "active": true,
+                    "price": 4620,
+                    "weight": 2,
+                    "in_stock": true
+                },
+                {
+                    "id": "abe7b4c6-7978-4f86-aec7-90748b87fcf7",
+                    "variant_category_id": "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                    "master_variant_id": "b8fc9ff3-e240-4b59-a32c-5934f28d6326",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Nasi Daun Jeruk",
+                    "active": true,
+                    "price": 4620,
+                    "weight": 3,
+                    "in_stock": true
+                },
+                {
+                    "id": "fdfd6e38-fe6c-456c-9d63-5999c6803e4d",
+                    "variant_category_id": "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                    "master_variant_id": "b53cb3b9-baa3-41ee-a744-cb1b189a84e3",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Nasi Uduk",
+                    "active": true,
+                    "price": 4620,
+                    "weight": 4,
+                    "in_stock": true
+                }
+            ]
+        },
+        {
+            "id": "cda99d25-22dc-4291-a32a-59c7e7eee9bf",
+            "master_variant_category_id": "548fa515-371c-4bd6-870c-b9285a7d5bc7",
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "name": "Pilihan Sambal",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_ONE",
+                    "required": true,
+                    "min_quantity": 1,
+                    "max_quantity": 1
+                }
+            },
+            "variants": [
+                {
+                    "id": "d236a747-df35-4a2a-ad96-5c9a973da52f",
+                    "variant_category_id": "cda99d25-22dc-4291-a32a-59c7e7eee9bf",
+                    "master_variant_id": "3e2db26c-71af-452b-91b1-c7055f7cc2c2",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Sambal Bawang",
+                    "active": true,
+                    "price": 0,
+                    "weight": 1,
+                    "in_stock": true
+                },
+                {
+                    "id": "5c0ff7d6-685a-475a-afbd-b9de1dcaf286",
+                    "variant_category_id": "cda99d25-22dc-4291-a32a-59c7e7eee9bf",
+                    "master_variant_id": "5522411c-ac75-43fc-9044-709b6255172a",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Sambal Tomat",
+                    "active": true,
+                    "price": 0,
+                    "weight": 2,
+                    "in_stock": true
+                },
+                {
+                    "id": "2bd5dc31-9b81-4856-995a-942090e9f671",
+                    "variant_category_id": "cda99d25-22dc-4291-a32a-59c7e7eee9bf",
+                    "master_variant_id": "993057fc-df95-4ebb-a744-7b42d4cd4887",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Sambal Hijau",
+                    "active": true,
+                    "price": 0,
+                    "weight": 3,
+                    "in_stock": true
+                },
+                {
+                    "id": "2a926c4e-6ab1-498f-947e-6f3048f81e43",
+                    "variant_category_id": "cda99d25-22dc-4291-a32a-59c7e7eee9bf",
+                    "master_variant_id": "d4cda12b-eaca-4daa-8fa3-a7c9ef332dee",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Sambal Matah",
+                    "active": true,
+                    "price": 1540,
+                    "weight": 4,
+                    "in_stock": true
+                }
+            ]
+        },
+        {
+            "id": "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+            "master_variant_category_id": "6ef76303-4bc3-4432-bd0e-853145027cb4",
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "name": "Pilihan Telur",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_ONE",
+                    "required": true,
+                    "min_quantity": 1,
+                    "max_quantity": 1
+                }
+            },
+            "variants": [
+                {
+                    "id": "7e7fa37d-c763-4772-b46c-6bc56e8722cb",
+                    "variant_category_id": "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                    "master_variant_id": "a3a542b9-58a7-48b7-b6fa-5c564e7c808c",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Telur Ceplok",
+                    "active": true,
+                    "price": 0,
+                    "weight": 1,
+                    "in_stock": true
+                },
+                {
+                    "id": "5dc199f3-7431-4309-83db-7caa3ec0659f",
+                    "variant_category_id": "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                    "master_variant_id": "3bec8d0d-677a-45f3-aeec-9955224a8f81",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Telur Dadar",
+                    "active": true,
+                    "price": 0,
+                    "weight": 2,
+                    "in_stock": true
+                }
+            ]
+        },
+        {
+            "id": "31982d87-662e-4092-93c0-5cb0b239ac4b",
+            "master_variant_category_id": "dfa8d7d0-f1ef-4e5b-879b-95993358ec43",
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "name": "Tambah Lauk Ayam",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_MANY",
+                    "required": false,
+                    "min_quantity": 0,
+                    "max_quantity": 2
+                }
+            },
+            "variants": [
+                {
+                    "id": "71240cbf-28f0-4467-8851-091009e683c2",
+                    "variant_category_id": "31982d87-662e-4092-93c0-5cb0b239ac4b",
+                    "master_variant_id": "c924b1a5-fcdb-428f-b3d4-6dc84b9195c8",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Ayam Goreng",
+                    "active": true,
+                    "price": 29260,
+                    "weight": 1,
+                    "in_stock": true
+                },
+                {
+                    "id": "3401083d-09e1-4a73-9d0b-f1ae22a0b5d2",
+                    "variant_category_id": "31982d87-662e-4092-93c0-5cb0b239ac4b",
+                    "master_variant_id": "633b365d-848d-4e20-9cb9-cfd69216e268",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Ayam Ketumbar",
+                    "active": true,
+                    "price": 26180,
+                    "weight": 2,
+                    "in_stock": true
+                }
+            ]
+        },
+        {
+            "id": "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+            "master_variant_category_id": "be0bb978-b7d2-402f-acca-6f9753e36a6e",
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "name": "Tambah Penyegar",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_MANY",
+                    "required": false,
+                    "min_quantity": 0,
+                    "max_quantity": 2
+                }
+            },
+            "variants": [
+                {
+                    "id": "64849d08-dccf-468b-8c4e-648f69aaa183",
+                    "variant_category_id": "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                    "master_variant_id": "104f2cb7-9fda-47c4-ba8f-d832d550da84",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Es Teh Tawar",
+                    "active": true,
+                    "price": 7700,
+                    "weight": 1,
+                    "in_stock": true
+                },
+                {
+                    "id": "2a29bc37-a748-4ed7-be76-2f8222b023ee",
+                    "variant_category_id": "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                    "master_variant_id": "263ed6d9-9520-49d2-b4ba-431f7881b648",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Es Teh Manis",
+                    "active": true,
+                    "price": 9240,
+                    "weight": 2,
+                    "in_stock": true
+                }
+            ]
+        },
+        {
+            "id": "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+            "master_variant_category_id": "07f7a8a3-58f1-483d-9b3b-e188fa0bc9c5",
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "name": "Tebus Murah",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_ONE",
+                    "required": false,
+                    "min_quantity": 0,
+                    "max_quantity": 1
+                }
+            },
+            "variants": [
+                {
+                    "id": "1fa565d0-0340-42aa-83f8-30fb4d06e874",
+                    "variant_category_id": "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                    "master_variant_id": "9086535d-247d-416c-83c6-b151c6897088",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Tanpa Tebus Murah",
+                    "active": true,
+                    "price": 0,
+                    "weight": 1,
+                    "in_stock": true
+                },
+                {
+                    "id": "7834e7a7-9fdc-4066-bc8e-20d1cb93eb2e",
+                    "variant_category_id": "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                    "master_variant_id": "44043bb5-4a95-4788-9aca-94de12b89a83",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Aquaviva",
+                    "active": true,
+                    "price": 6160,
+                    "weight": 2,
+                    "in_stock": true
+                },
+                {
+                    "id": "522179f6-8032-4bfc-b719-05505506aa64",
+                    "variant_category_id": "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                    "master_variant_id": "0160596f-c98a-423e-9bce-ac75e9e80ff8",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Aquaviva & Telur",
+                    "active": true,
+                    "price": 10780,
+                    "weight": 3,
+                    "in_stock": true
+                },
+                {
+                    "id": "b21adf3e-f09f-4b5c-a944-c094f5a5cf5b",
+                    "variant_category_id": "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                    "master_variant_id": "c0174d63-8dc3-4b5c-916d-5d5d0f04c220",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "name": "Upsize Nasi + Aquaviva + Telur",
+                    "active": true,
+                    "price": 13860,
+                    "weight": 4,
+                    "in_stock": true
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,171 @@
+{
+    "variant_categories": [
+        {
+            "id": "4ffdb683-1e0a-41dc-8906-67353a10b89b",
+            "master_variant_category_id": "7cf10b07-eed8-4e9c-bfe6-17adfe81e07a",
+            "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+            "name": "Extra Sambal",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_MANY",
+                    "required": false,
+                    "min_quantity": 0,
+                    "max_quantity": null
+                }
+            },
+            "variants": [
+                {
+                    "id": "f08a7cc9-e6ad-46ce-a429-c4ae19b41861",
+                    "variant_category_id": "4ffdb683-1e0a-41dc-8906-67353a10b89b",
+                    "master_variant_id": "85b4c8f0-346c-4acd-a797-ae0a2df5b598",
+                    "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+                    "name": "Normal",
+                    "active": true,
+                    "price": 4000,
+                    "weight": 1,
+                    "in_stock": true
+                },
+                {
+                    "id": "ddff4008-2f88-4bc3-ba66-a1299ee08adc",
+                    "variant_category_id": "4ffdb683-1e0a-41dc-8906-67353a10b89b",
+                    "master_variant_id": "ee62d299-0269-4455-a5c9-a6b3215f964a",
+                    "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+                    "name": "Sedang",
+                    "active": true,
+                    "price": 6000,
+                    "weight": 2,
+                    "in_stock": true
+                },
+                {
+                    "id": "193ca104-0493-4cfa-8040-63474d35cc11",
+                    "variant_category_id": "4ffdb683-1e0a-41dc-8906-67353a10b89b",
+                    "master_variant_id": "26f71fbb-5d13-40e6-8d6b-088fa40d1f29",
+                    "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+                    "name": "Pedas",
+                    "active": true,
+                    "price": 8000,
+                    "weight": 3,
+                    "in_stock": true
+                }
+            ]
+        },
+        {
+            "id": "5067a8ba-4bf2-448f-8b62-970306467f95",
+            "master_variant_category_id": "8705dc8c-a579-418f-a909-630f95926d21",
+            "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+            "name": "Jenis Ayam Bakar",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_MANY",
+                    "required": false,
+                    "min_quantity": 0,
+                    "max_quantity": null
+                }
+            },
+            "variants": [
+                {
+                    "id": "2cde45b5-fea4-4517-9602-283fce6b5735",
+                    "variant_category_id": "5067a8ba-4bf2-448f-8b62-970306467f95",
+                    "master_variant_id": "397ebdf7-e18d-44d7-9b06-02300c76d07f",
+                    "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+                    "name": "Paha Bawah",
+                    "active": true,
+                    "price": 0,
+                    "weight": 1,
+                    "in_stock": true
+                },
+                {
+                    "id": "c15ba0dc-3a1b-4cae-8fe5-f0c1b7fa6f51",
+                    "variant_category_id": "5067a8ba-4bf2-448f-8b62-970306467f95",
+                    "master_variant_id": "9d78016e-2700-4ad3-8b3e-e6c1743287c0",
+                    "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+                    "name": "Dada",
+                    "active": true,
+                    "price": 0,
+                    "weight": 2,
+                    "in_stock": false
+                }
+            ]
+        },
+        {
+            "id": "50896cdb-a14f-4106-9552-3920fd3fb705",
+            "master_variant_category_id": "db2379c6-8766-4916-b2fe-e998823bd929",
+            "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+            "name": "Jenis Ayam Geprek",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_MANY",
+                    "required": false,
+                    "min_quantity": 0,
+                    "max_quantity": null
+                }
+            },
+            "variants": [
+                {
+                    "id": "a47d64c8-79de-4f13-87c8-e379cb94ba9f",
+                    "variant_category_id": "50896cdb-a14f-4106-9552-3920fd3fb705",
+                    "master_variant_id": "9048558c-dfa4-4276-b3a2-76c5853c7f1a",
+                    "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+                    "name": "Paha",
+                    "active": true,
+                    "price": 0,
+                    "weight": 1,
+                    "in_stock": false
+                },
+                {
+                    "id": "7403fe27-8bf3-4d0e-854f-482ec1c4596a",
+                    "variant_category_id": "50896cdb-a14f-4106-9552-3920fd3fb705",
+                    "master_variant_id": "37369325-ba63-493e-b032-98b5f5d11be1",
+                    "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+                    "name": "Dada",
+                    "active": true,
+                    "price": 0,
+                    "weight": 2,
+                    "in_stock": true
+                }
+            ]
+        },
+        {
+            "id": "62412729-b63c-4210-a54d-9fb3ab408381",
+            "master_variant_category_id": "8f2fb3a7-3deb-4673-b659-7de3fa1d9ca8",
+            "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+            "name": "Packing",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_MANY",
+                    "required": true,
+                    "min_quantity": 1,
+                    "max_quantity": null
+                }
+            },
+            "variants": [
+                {
+                    "id": "cf847baf-8e78-4c0c-a429-fd6f43ec3f09",
+                    "variant_category_id": "62412729-b63c-4210-a54d-9fb3ab408381",
+                    "master_variant_id": "8b8bcdc4-fec8-448c-b196-eb9dfd457bc6",
+                    "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+                    "name": "Thinwall",
+                    "active": true,
+                    "price": 3000,
+                    "weight": 1,
+                    "in_stock": false
+                },
+                {
+                    "id": "072b9422-153f-4178-83a3-d3f3696232a0",
+                    "variant_category_id": "62412729-b63c-4210-a54d-9fb3ab408381",
+                    "master_variant_id": "967147be-0354-4111-b9b8-0f0a77e574ad",
+                    "restaurant_id": "b9163b96-1e14-4ee8-8403-11368a11d073",
+                    "name": "Sterofoam",
+                    "active": true,
+                    "price": 1000,
+                    "weight": 3,
+                    "in_stock": true
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,1765 @@
+{
+    "menus": [
+        {
+            "id": "e289deb9-8d13-473a-bd85-724041de4def",
+            "common_id": "d9e2d97b-cbd5-4000-b0e1-16fdb461f0bf",
+            "name": "Nasi Ayam Goreng",
+            "sku": "NASI_AYAM_GORENG",
+            "active": true,
+            "weight": 5,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 5,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Nasi hangat dengan ayam goreng berbumbu dan bayam segar yang gurih, lengkap, serta mengenyangkan untuk dinikmati kapan saja.",
+                    "id": "1a1db6db-9a1b-489a-8e9a-a087770ca7e9",
+                    "image_id": "481de536-69ee-44d3-985d-5cd7ff327316",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/95bf653e-e352-48f1-a978-0d58e171940c_menu-item-image_1784349050768.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/95bf653e-e352-48f1-a978-0d58e171940c_menu-item-image_1784349050768.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "e289deb9-8d13-473a-bd85-724041de4def",
+                    "name": "Nasi + Ayam Goreng + Bayam (Tanpa Sambal)",
+                    "price": "34143.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMjM5NDMsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145827781,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "536b539d-976a-40f3-973f-01cb433c2b1e"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, ayam goreng gurih, bayam segar, dan sambal bawang pedas gurih dengan sensasi nendang yang bikin nagih.",
+                    "id": "5a888e9c-5bdf-4931-aed7-24fa5a6a9e6b",
+                    "image_id": "719db0ed-2695-4ed3-9ace-e9a7fb608b5b",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/1de7c0d9-ada5-4aef-ade2-848c17f3c191_menu-item-image_1784350168175.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/1de7c0d9-ada5-4aef-ade2-848c17f3c191_menu-item-image_1784350168175.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "e289deb9-8d13-473a-bd85-724041de4def",
+                    "name": "Nasi + Ayam Goreng + Bayam + Sambal Bawang",
+                    "price": "23900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145828713,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "f059ce86-6733-419f-a170-9e79e4790f82"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, ayam goreng gurih, bayam segar, dan sambal tomat pedas segar dengan rasa asam manis yang pas.",
+                    "id": "1efc9acd-5bbf-419d-a1c1-5931aa7ff829",
+                    "image_id": "9de64250-3c52-4f1c-8031-f26045567193",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/a023dfaa-794d-4e9f-bb4d-2264e7748b2a_menu-item-image_1784350282067.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/a023dfaa-794d-4e9f-bb4d-2264e7748b2a_menu-item-image_1784350282067.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "e289deb9-8d13-473a-bd85-724041de4def",
+                    "name": "Nasi + Ayam Goreng + Bayam + Sambal Tomat",
+                    "price": "23900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145828842,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "a7b9cd95-9294-42a7-9de4-5052404f8037"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, ayam goreng gurih, bayam segar, dan sambal hijau pedas khas dengan cita rasa yang kaya.",
+                    "id": "76809c8f-16c6-442a-bd7f-6e6ffad41204",
+                    "image_id": "318b47fa-976a-4d58-aeaa-512e66febee1",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/53663fb6-efdf-4418-b1e7-51f83ea4446f_menu-item-image_1784349205629.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/53663fb6-efdf-4418-b1e7-51f83ea4446f_menu-item-image_1784349205629.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "e289deb9-8d13-473a-bd85-724041de4def",
+                    "name": "Nasi + Ayam Goreng + Bayam + Sambal Hijau",
+                    "price": "23900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145827915,
+                    "signature": false,
+                    "weight": 4,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "60713a78-694c-4d0f-a423-6271dda8e907"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, ayam goreng gurih, bayam segar, dan sambal matah segar dengan aroma khas yang menggugah selera.",
+                    "id": "9453394c-cb59-4633-9c9f-558c1c048471",
+                    "image_id": "b8dace04-2f80-4823-9c4d-154095a2db2e",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/09acd769-f0e4-433a-b5d8-ab355b84b347_menu-item-image_1784349148043.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/09acd769-f0e4-433a-b5d8-ab355b84b347_menu-item-image_1784349148043.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "e289deb9-8d13-473a-bd85-724041de4def",
+                    "name": "Nasi + Ayam Goreng + Bayam + Sambal Matah",
+                    "price": "35571.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMjQ5NzEsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145827888,
+                    "signature": false,
+                    "weight": 5,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "dee8fd9b-ebae-4a40-a5be-98e9fbc3e80a"
+                }
+            ]
+        },
+        {
+            "id": "6011bb90-144a-4196-83a1-583f2cc2c14e",
+            "common_id": "0984f6ec-4048-4427-9991-3dbfd660e923",
+            "name": "Paket Promo Spesial",
+            "sku": "PAKET_PROMO_SPESIAL",
+            "active": true,
+            "weight": 6,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 3,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Perpaduan 2 porsi nasi hangat, ayam goreng gurih, telur, bayam segar, dan sambal pilihan dalam paket lengkap yang bikin kenyang.",
+                    "id": "0ab58d1a-adb7-438a-970b-dc48366d42f9",
+                    "image_id": "0a710efc-fb30-4bc4-99eb-b4f3ae25e278",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/7d6d6348-aff1-49e7-9556-c29af54f6de1_menu-item-image_1784350577905.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/7d6d6348-aff1-49e7-9556-c29af54f6de1_menu-item-image_1784350577905.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "6011bb90-144a-4196-83a1-583f2cc2c14e",
+                    "name": "2x Nasi + Ayam Goreng + Telur + Bayam + Sambal",
+                    "price": "35900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145829084,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "cda99d25-22dc-4291-a32a-59c7e7eee9bf",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "d0bd0c27-03c3-445f-a917-265c68ee4e54"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan 2 porsi nasi hangat, telur pilihan, bayam segar, dan sambal pilihan dalam paket hemat yang pas dinikmati berdua.",
+                    "id": "fc06a6b0-390f-42af-859e-4306912a4d9a",
+                    "image_id": "ad908827-fb11-4d71-98e4-233df0a23962",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/470cbf85-f602-4e13-9a60-190ef9d95dcd_menu-item-image_1784532660893.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/470cbf85-f602-4e13-9a60-190ef9d95dcd_menu-item-image_1784532660893.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "6011bb90-144a-4196-83a1-583f2cc2c14e",
+                    "name": "2x Nasi + Telur + Bayam + Sambal",
+                    "price": "47900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145931967,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "cda99d25-22dc-4291-a32a-59c7e7eee9bf",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "b0cce152-76fd-4094-8c9f-b979aca4d8ea"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan 2 porsi nasi hangat, ayam goreng gurih, bayam segar, dan sambal pilihan dalam paket hemat yang pas dinikmati berdua.",
+                    "id": "dcde61e7-1a12-4ee6-a67b-e050e6a8e2f8",
+                    "image_id": "76747a3e-ed6f-4a62-9a18-abb8e60c4633",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/086656b8-1830-404a-bd03-fa0992d84535_menu-item-image_1784532826696.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/086656b8-1830-404a-bd03-fa0992d84535_menu-item-image_1784532826696.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "6011bb90-144a-4196-83a1-583f2cc2c14e",
+                    "name": "2x Nasi + Ayam Goreng + Bayam + Sambal",
+                    "price": "55700.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145932080,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "cda99d25-22dc-4291-a32a-59c7e7eee9bf",
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "6819b0cc-40a5-4690-812f-99ecad82c5da"
+                }
+            ]
+        },
+        {
+            "id": "da5a9f9a-9d56-4eca-b339-b28f2bde4aa8",
+            "common_id": "cd1a3331-d6f1-4275-aecb-92cf618b469a",
+            "name": "Nasi Kulit Ayam Goreng",
+            "sku": "NASI_KULIT_AYAM_GORENG",
+            "active": true,
+            "weight": 7,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 5,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Nasi dengan kulit ayam goreng renyah, sayur bayam, dan sambal matah dengan aroma bawang serta rasa segar.",
+                    "id": "24e1292f-a8ae-4496-bb08-e716deee2644",
+                    "image_id": "2dcdb0eb-4888-439f-bf95-0f97a53043ab",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/ca226e47-c733-4693-bc7d-057306cc1417_menu-item-image_1784350783883.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/ca226e47-c733-4693-bc7d-057306cc1417_menu-item-image_1784350783883.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "da5a9f9a-9d56-4eca-b339-b28f2bde4aa8",
+                    "name": "Nasi Kulit Ayam Goreng + Bayam + Sambal Matah",
+                    "price": "35571.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMjQ5NzEsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145829513,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "c99aa8ce-32e3-4230-8a8e-f26075a780e4"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan kulit ayam goreng renyah, sayur bayam, dan sambal tomat dengan rasa pedas gurih.",
+                    "id": "8fc7e17e-8030-46ad-a1f0-ebcd47f43fdd",
+                    "image_id": "136f2bb6-1a29-4a48-840f-6803a2a6b7e9",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/b5ac8b23-df5d-404d-8d93-6d4f5f19cf12_menu-item-image_1784350857881.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/b5ac8b23-df5d-404d-8d93-6d4f5f19cf12_menu-item-image_1784350857881.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "da5a9f9a-9d56-4eca-b339-b28f2bde4aa8",
+                    "name": "Nasi Kulit Ayam Goreng + Bayam + Sambal Tomat",
+                    "price": "23900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145829535,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "e2495094-6472-4622-a293-500da0bfccc7"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan kulit ayam goreng renyah, sayur bayam, dan sambal hijau dengan rasa pedas segar.",
+                    "id": "009be7bf-cbe4-4a78-8c73-e9f54d96a15e",
+                    "image_id": "7feb0720-cadf-4319-9ab0-3bd79c2a0352",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/8a6f5eb6-8074-4b9b-8ce9-00e6b6c5d23f_menu-item-image_1784350905818.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/8a6f5eb6-8074-4b9b-8ce9-00e6b6c5d23f_menu-item-image_1784350905818.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "da5a9f9a-9d56-4eca-b339-b28f2bde4aa8",
+                    "name": "Nasi Kulit Ayam Goreng + Bayam + Sambal Hijau",
+                    "price": "23900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145829557,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "d422a25e-9633-4f5b-b61e-1cef01d0c900"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan kulit ayam goreng renyah, sayur bayam, dan sambal bawang yang gurih pedas.",
+                    "id": "ed4f8b37-5cd7-4f3e-8647-89e2c7847293",
+                    "image_id": "f1e86523-87a0-44aa-896e-be4150615d47",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/433d2ecc-bffd-4255-9834-3af78286a9f7_menu-item-image_1784350954586.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/433d2ecc-bffd-4255-9834-3af78286a9f7_menu-item-image_1784350954586.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "da5a9f9a-9d56-4eca-b339-b28f2bde4aa8",
+                    "name": "Nasi Kulit Ayam Goreng + Bayam + Sambal Bawang",
+                    "price": "23900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145829574,
+                    "signature": false,
+                    "weight": 4,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "ddf2bbd3-6712-47e4-bdaf-92647043b860"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan kulit ayam goreng renyah dan sayur bayam sebagai pelengkap yang sederhana dan nikmat.",
+                    "id": "73c8081a-0667-412f-a9ec-0ca5c260cfbd",
+                    "image_id": "ac994758-ebaf-4138-a1ea-e0a852e9a082",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/6e9dd331-8038-43af-aa80-4cbcb7070942_menu-item-image_1784351007771.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/6e9dd331-8038-43af-aa80-4cbcb7070942_menu-item-image_1784351007771.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "da5a9f9a-9d56-4eca-b339-b28f2bde4aa8",
+                    "name": "Nasi Kulit Ayam Goreng + Bayam (Tanpa Sambal)",
+                    "price": "34143.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMjM5NDMsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145829628,
+                    "signature": false,
+                    "weight": 5,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "9d199411-e950-45a2-8d2e-56c46d2c6bb5"
+                }
+            ]
+        },
+        {
+            "id": "875b0170-67a5-4fbc-acb1-1ed19e6cf13b",
+            "common_id": "43f8d647-a4ab-47d8-bd0f-4456d160078e",
+            "name": "Nasi Pentung Ayam Goreng",
+            "sku": "NASI_PENTUNG_AYAM_GORENG",
+            "active": true,
+            "weight": 8,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 5,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Nasi dengan pentung ayam goreng renyah, sayur bayam segar sebagai pelengkap, cocok dinikmati dengan cita rasa asli ayam goreng.",
+                    "id": "f93becb6-0776-4d7d-a606-eb53889cf656",
+                    "image_id": "f442a2c9-921e-4e24-b0f4-fe4befcaf69a",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/0f2f2cff-49f5-4f22-89cf-6d9017ab6b82_menu-item-image_1784529205267.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/0f2f2cff-49f5-4f22-89cf-6d9017ab6b82_menu-item-image_1784529205267.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "875b0170-67a5-4fbc-acb1-1ed19e6cf13b",
+                    "name": "Nasi Pentung Ayam Goreng + Bayam (Tanpa Sambal)",
+                    "price": "29857.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMjA5NTcsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145918267,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "af931d19-28f4-4931-81d8-25d836436f75"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan pentung ayam goreng renyah, sayur bayam segar, dan sambal bawang pedas gurih yang bikin makan makin nikmat.",
+                    "id": "8d04965a-47ad-4818-ab79-40cf701a06b7",
+                    "image_id": "95cc6306-8ae9-4db0-96e0-b0182a90e0f6",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/068203f0-a8b6-4ede-9251-dc7d75b8608f_menu-item-image_1784529285895.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/068203f0-a8b6-4ede-9251-dc7d75b8608f_menu-item-image_1784529285895.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "875b0170-67a5-4fbc-acb1-1ed19e6cf13b",
+                    "name": "Nasi Pentung Ayam Goreng + Bayam + Sambal Bawang",
+                    "price": "20900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145918326,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "2dc050dc-834f-48e5-bb02-8f3f59a90518"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan pentung ayam goreng renyah, sayur bayam segar, dan sambal hijau pedas segar dengan cita rasa yang menggugah selera.",
+                    "id": "28bbed06-9327-4c4a-8762-bdb47b83e627",
+                    "image_id": "badfc36c-9c36-46af-841c-c0f5eb61fca8",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/eca38339-9fbc-40ca-8986-1fd2b6540705_menu-item-image_1784529319641.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/eca38339-9fbc-40ca-8986-1fd2b6540705_menu-item-image_1784529319641.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "875b0170-67a5-4fbc-acb1-1ed19e6cf13b",
+                    "name": "Nasi Pentung Ayam Goreng + Bayam + Sambal Hijau",
+                    "price": "20900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145918437,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "8faf3b2c-1900-483e-b810-618ec30d35b4"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan pentung ayam goreng renyah, sayur bayam segar, dan sambal tomat pedas dengan sentuhan rasa asam manis yang pas.",
+                    "id": "e443c88a-f0b0-4a5e-aaaf-13cda886fdf9",
+                    "image_id": "ba68e2f3-5697-45b0-9448-cc8a36e56d41",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/2212e0ea-a7c7-4730-83a7-613a1e44be14_menu-item-image_1784529357697.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/2212e0ea-a7c7-4730-83a7-613a1e44be14_menu-item-image_1784529357697.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "875b0170-67a5-4fbc-acb1-1ed19e6cf13b",
+                    "name": "Nasi Pentung Ayam Goreng + Bayam + Sambal Tomat",
+                    "price": "20900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145918717,
+                    "signature": false,
+                    "weight": 4,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "6330f286-f4cf-4a0a-968f-3ce902152f99"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan pentung ayam goreng renyah, sayur bayam segar, dan sambal matah segar dengan aroma khas yang bikin makin lahap.",
+                    "id": "0b94ae07-bd29-4455-b8d6-8cd639dbbfd5",
+                    "image_id": "6a6bf266-4b9d-4a3b-aae3-133cfdabd137",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/00e16ae6-f8d3-4c5b-a8a3-ac88fdadb32b_menu-item-image_1784529412973.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/00e16ae6-f8d3-4c5b-a8a3-ac88fdadb32b_menu-item-image_1784529412973.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "875b0170-67a5-4fbc-acb1-1ed19e6cf13b",
+                    "name": "Nasi Pentung Ayam Goreng + Bayam + Sambal Matah",
+                    "price": "31286.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMjE5ODYsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145918760,
+                    "signature": false,
+                    "weight": 5,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "8574b849-009e-459d-9fe3-e08550b1ddff"
+                }
+            ]
+        },
+        {
+            "id": "ad3c67ee-de0d-401b-aa37-d4e73bb4be5b",
+            "common_id": "0f769bf2-fde4-46c3-a15f-c8c11de68154",
+            "name": "Nasi Sayap Ayam Goreng",
+            "sku": "NASI_SAYAP_AYAM_GORENG",
+            "active": true,
+            "weight": 9,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 5,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Nasi dengan sayap ayam goreng gurih, sayur bayam segar sebagai pelengkap, cocok dinikmati dengan cita rasa asli ayam goreng.",
+                    "id": "4dc3368a-9756-4721-a773-010f6c771a33",
+                    "image_id": "037373b6-b275-486f-b5d3-6dff9ec41163",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/1ba3e44c-89c1-475e-a2e0-51a23b3232e7_menu-item-image_1784529447503.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/1ba3e44c-89c1-475e-a2e0-51a23b3232e7_menu-item-image_1784529447503.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "ad3c67ee-de0d-401b-aa37-d4e73bb4be5b",
+                    "name": "Nasi Sayap Ayam Goreng + Bayam + (Tanpa Sambal)",
+                    "price": "27000.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMTg5MDAsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145918836,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "11a75947-fbf7-4110-8828-3db7ea7d1f97"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan sayap ayam goreng gurih, sayur bayam segar, dan sambal bawang pedas gurih yang bikin makan makin nikmat.",
+                    "id": "fb6c5065-3dd1-40cf-ace9-58f7a466b1f9",
+                    "image_id": "1792bf31-17d5-4fb0-a94f-bdd04beb6ba9",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/9fa071fc-88ee-498c-b6c2-e39a5f8616b5_menu-item-image_1784529475212.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/9fa071fc-88ee-498c-b6c2-e39a5f8616b5_menu-item-image_1784529475212.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "ad3c67ee-de0d-401b-aa37-d4e73bb4be5b",
+                    "name": "Nasi Sayap Ayam Goreng + Bayam + Sambal Bawang",
+                    "price": "18900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145918888,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "3b0cab97-f1a1-4d4f-980c-a7528e0a2997"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan sayap ayam goreng gurih, sayur bayam segar, dan sambal hijau pedas segar yang memberikan sensasi rasa semakin mantap.",
+                    "id": "d879c951-fe46-4744-8947-c1dc4b7a6799",
+                    "image_id": "c417af3e-d263-43ae-ad6a-167d453ada40",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/611f6d46-a49e-4b46-a19e-5583285c6e92_menu-item-image_1784529509275.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/611f6d46-a49e-4b46-a19e-5583285c6e92_menu-item-image_1784529509275.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "ad3c67ee-de0d-401b-aa37-d4e73bb4be5b",
+                    "name": "Nasi Sayap Ayam Goreng + Bayam + Sambal Hijau",
+                    "price": "18900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145918916,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "8270a7cf-27ca-452d-97ea-b5586939c139"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan sayap ayam goreng gurih, sayur bayam segar, dan sambal tomat pedas dengan perpaduan rasa asam manis yang pas.",
+                    "id": "b7224c92-5268-4677-90bc-b4c86e445d92",
+                    "image_id": "2f659bd0-b473-4558-9857-d8b8b688f3e9",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/218a497e-d69f-4869-88c1-4bc488409fb6_menu-item-image_1784529540995.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/218a497e-d69f-4869-88c1-4bc488409fb6_menu-item-image_1784529540995.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "ad3c67ee-de0d-401b-aa37-d4e73bb4be5b",
+                    "name": "Nasi Sayap Ayam Goreng + Bayam + Sambal Tomat",
+                    "price": "18900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145918965,
+                    "signature": false,
+                    "weight": 4,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "1fba4bf7-86c0-4e94-a98b-30b52e909e9c"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi dengan sayap ayam goreng gurih, sayur bayam segar, dan sambal matah segar beraroma khas yang menggugah selera.",
+                    "id": "4cf12226-716d-4849-af51-42a2ab834ee7",
+                    "image_id": "59bd3d08-08e4-4f00-b5f3-ef549c07e90d",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/82336520-ae66-49ae-bedb-dda764b9a057_menu-item-image_1784529636316.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/82336520-ae66-49ae-bedb-dda764b9a057_menu-item-image_1784529636316.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "ad3c67ee-de0d-401b-aa37-d4e73bb4be5b",
+                    "name": "Nasi Sayap Ayam Goreng + Bayam + Sambal Matah",
+                    "price": "28429.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMTk5MjksICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919004,
+                    "signature": false,
+                    "weight": 5,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "0f2f478f-5aee-4f21-ae18-3063eb832e76"
+                }
+            ]
+        },
+        {
+            "id": "139a4917-3d0d-4b82-982c-9c02960ffcea",
+            "common_id": "c9e0c4df-5a7b-40ca-9816-295c72cd0f1f",
+            "name": "Nasi Telur Goreng",
+            "sku": "NASI_TELUR_GORENG",
+            "active": true,
+            "weight": 10,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 5,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, telur, dan bayam segar yang sederhana namun tetap lezat dan mengenyangkan untuk dinikmati kapan saja.",
+                    "id": "1be3f58e-17cd-4533-832b-739e89cb38e6",
+                    "image_id": "2200b8ec-58f9-4ca6-a46d-21e37143173f",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/d34a35ed-1481-47d5-bc73-dc083f8b77f1_menu-item-image_1784529676800.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/d34a35ed-1481-47d5-bc73-dc083f8b77f1_menu-item-image_1784529676800.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "139a4917-3d0d-4b82-982c-9c02960ffcea",
+                    "name": "Nasi + Telur + Bayam (Tanpa Sambal)",
+                    "price": "25571.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919093,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "f41de571-d7b5-41c2-8035-5c0c6eacd988"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, telur, bayam segar, dan sambal hijau pedas khas yang kaya rasa.",
+                    "id": "e0c6b9e6-140e-45dd-9773-2234d18ed7e5",
+                    "image_id": "253f8c29-0057-4a31-89c9-508c2a0b3fc2",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/71c9da5e-1e56-4b10-ad67-0585158c3f0d_menu-item-image_1784530104779.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/71c9da5e-1e56-4b10-ad67-0585158c3f0d_menu-item-image_1784530104779.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "139a4917-3d0d-4b82-982c-9c02960ffcea",
+                    "name": "Nasi + Telur + Bayam + Sambal Hijau",
+                    "price": "17900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919133,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "c5377767-c599-459c-9f19-a26ab11839d8"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, telur, bayam segar, dan sambal bawang pedas gurih yang bikin makin lahap.",
+                    "id": "c77d6260-1637-4e92-a322-34469e84ed9c",
+                    "image_id": "ac7828a5-1705-4e01-b719-7120b0c5f868",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/e6e1d434-d356-4de1-8331-e34679fad0b6_menu-item-image_1784530148138.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/e6e1d434-d356-4de1-8331-e34679fad0b6_menu-item-image_1784530148138.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "139a4917-3d0d-4b82-982c-9c02960ffcea",
+                    "name": "Nasi + Telur + Bayam + Sambal Bawang",
+                    "price": "17900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919172,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "3e060632-0e3b-40ab-9e25-21d8f863cdcf"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, telur, bayam segar, dan sambal tomat pedas segar dengan rasa yang pas.",
+                    "id": "3a914549-d782-473b-ae3d-c879c8de6316",
+                    "image_id": "fc93c762-f9f2-4318-a2fd-ed96993d1554",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/c1ac2106-bd29-413d-84c9-c8852be7646c_menu-item-image_1784530277327.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/c1ac2106-bd29-413d-84c9-c8852be7646c_menu-item-image_1784530277327.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "139a4917-3d0d-4b82-982c-9c02960ffcea",
+                    "name": "Nasi + Telur + Bayam + Sambal Tomat",
+                    "price": "17900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919230,
+                    "signature": false,
+                    "weight": 4,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "0585cb2f-d2a1-4115-ab41-94c183ee5c9a"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, telur, bayam segar, dan sambal matah segar yang harum menggoda.",
+                    "id": "65c5f3aa-f1c3-47d1-9fbb-fcc0cca62110",
+                    "image_id": "b83071bc-0a67-443d-87bb-69c8cffd5360",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/7f5095f0-53fd-44ea-a500-5e365bf5f6ce_menu-item-image_1784530316542.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/7f5095f0-53fd-44ea-a500-5e365bf5f6ce_menu-item-image_1784530316542.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "139a4917-3d0d-4b82-982c-9c02960ffcea",
+                    "name": "Nasi + Telur + Bayam + Sambal Matah",
+                    "price": "27000.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919268,
+                    "signature": false,
+                    "weight": 5,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "3adab0f0-5682-497d-b4d8-c263b7ac9962"
+                }
+            ]
+        },
+        {
+            "id": "c6d1eba4-9292-410d-babb-4b5d13f815b6",
+            "common_id": "b2cf8e27-50a7-4448-a89a-fce422416014",
+            "name": "Nasi Bayam Goreng",
+            "sku": "NASI_BAYAM_GORENG",
+            "active": true,
+            "weight": 11,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 5,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Nasi hangat dengan sayur bayam segar sebagai pilihan sederhana yang tetap nikmat dan mengenyangkan.",
+                    "id": "1f12eb97-e044-4a0b-bc83-d19ce757786c",
+                    "image_id": "8a2bfc8d-0c82-4b34-8176-a3dbff78c026",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/7449fa46-0ed0-4ee3-af19-5a51aea47d37_menu-item-image_1784530379828.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/7449fa46-0ed0-4ee3-af19-5a51aea47d37_menu-item-image_1784530379828.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c6d1eba4-9292-410d-babb-4b5d13f815b6",
+                    "name": "Nasi + Bayam (Tanpa Sambal)",
+                    "price": "15571.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMTA5NzEsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919319,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "102c653d-3dc0-435f-a51d-a42f76d154c8"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi hangat, bayam segar, dan sambal bawang pedas gurih yang memberikan sensasi rasa semakin mantap.",
+                    "id": "e25a127b-2a2b-4695-9e69-9d63dc99a50b",
+                    "image_id": "8c9984bc-a246-4a1f-a1b6-bee81e829dbe",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/dbd55081-2eea-4c54-a272-e7f2c73a079c_menu-item-image_1784530349204.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/dbd55081-2eea-4c54-a272-e7f2c73a079c_menu-item-image_1784530349204.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c6d1eba4-9292-410d-babb-4b5d13f815b6",
+                    "name": "Nasi + Bayam + Sambal Bawang",
+                    "price": "10900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919349,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "b7d49be4-53b8-4263-b39c-7b84514b75a5"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi hangat dipadukan bayam segar dan sambal hijau pedas segar yang kaya rasa dan menggugah selera.",
+                    "id": "a23fb9e2-06c8-4ac4-9c9a-5e995561bc2e",
+                    "image_id": "6f8cac3b-a687-4be0-b42c-57be50f1f516",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/98b426ed-2676-4239-9f33-b5429d9c7ce4_menu-item-image_1784530217094.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/98b426ed-2676-4239-9f33-b5429d9c7ce4_menu-item-image_1784530217094.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c6d1eba4-9292-410d-babb-4b5d13f815b6",
+                    "name": "Nasi + Bayam + Sambal Hijau",
+                    "price": "10900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919405,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "399d8130-bf30-4508-939b-8f646107fce6"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi hangat dengan bayam segar dan sambal tomat pedas dengan perpaduan rasa asam manis yang pas.",
+                    "id": "ed0e59e6-7822-4720-b1bd-425f8dc2d472",
+                    "image_id": "58026a9b-3e24-4d5d-abe5-f55f95b17d9c",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/721ed9f1-7151-4010-aaa0-ed1a4a47fc25_menu-item-image_1784530179550.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/721ed9f1-7151-4010-aaa0-ed1a4a47fc25_menu-item-image_1784530179550.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c6d1eba4-9292-410d-babb-4b5d13f815b6",
+                    "name": "Nasi + Bayam + Sambal Tomat",
+                    "price": "10900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919559,
+                    "signature": false,
+                    "weight": 4,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "53ff14ce-187f-4c0b-adc3-4e7e44892ec0"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi hangat, bayam segar, dan sambal matah dengan aroma bawang khas yang membuat selera makan meningkat.",
+                    "id": "ad1be4e2-6c06-466d-b992-d5b96d00509f",
+                    "image_id": "0f0787b3-8f7a-445d-80b8-59f74a9b7b15",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/73169574-0f22-4e5d-bb57-3ee258760d7d_menu-item-image_1784530060698.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/73169574-0f22-4e5d-bb57-3ee258760d7d_menu-item-image_1784530060698.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c6d1eba4-9292-410d-babb-4b5d13f815b6",
+                    "name": "Nasi + Bayam + Sambal Matah",
+                    "price": "17000.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMTE5MDAsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919596,
+                    "signature": false,
+                    "weight": 5,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "d875b3f7-83ac-4845-805b-96960a7788cf"
+                }
+            ]
+        },
+        {
+            "id": "3b8d5f1f-94f4-4ba1-9769-f48cbcd2be18",
+            "common_id": "c9db7944-1f9e-42fb-9305-349a641ea547",
+            "name": "Nasi Ayam Goreng Komplit",
+            "sku": "NASI_AYAM_GORENG_KOMPLIT",
+            "active": true,
+            "weight": 12,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 5,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, ayam goreng gurih, telur, dan bayam segar yang lengkap, mengenyangkan, dan cocok dinikmati kapan saja.",
+                    "id": "7dfc3c6e-4058-481a-a830-5f203bed9632",
+                    "image_id": "28436b1f-f519-4173-a652-8c54b3cfe942",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/b5075314-dd77-4709-9890-008e239c031b_menu-item-image_1784530033048.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/b5075314-dd77-4709-9890-008e239c031b_menu-item-image_1784530033048.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "3b8d5f1f-94f4-4ba1-9769-f48cbcd2be18",
+                    "name": "Nasi + Ayam Goreng + Telur + Bayam (Tanpa Sambal)",
+                    "price": "39714.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMjc4MTQsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919704,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "012f7a7f-3432-4628-a9ed-6cb3bd29c9d8"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, ayam goreng gurih, telur, bayam segar, dan sambal bawang pedas gurih yang bikin makin lahap.",
+                    "id": "fc42880f-5e67-4f03-9491-9b83e00c76d1",
+                    "image_id": "4d1e8f66-6f90-4f7f-b2b2-cb76b14cea73",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/f2221167-1b42-431c-ba35-8a6ac0cae4c2_menu-item-image_1784530004867.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/f2221167-1b42-431c-ba35-8a6ac0cae4c2_menu-item-image_1784530004867.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "3b8d5f1f-94f4-4ba1-9769-f48cbcd2be18",
+                    "name": "Nasi + Ayam Goreng + Telur + Bayam + Sambal Bawang",
+                    "price": "27800.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919755,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "9ab291ae-8b11-41ab-8b1b-3563582e8571"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, ayam goreng gurih, telur, bayam segar, dan sambal tomat pedas segar dengan rasa yang pas.",
+                    "id": "eff1e55e-8d32-4386-a7a3-c269e9f9ba49",
+                    "image_id": "3290f644-14bf-437f-b413-60d92f8be4f6",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/24107fc6-d1b7-4312-b8b5-e7e1407b754d_menu-item-image_1784529974862.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/24107fc6-d1b7-4312-b8b5-e7e1407b754d_menu-item-image_1784529974862.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "3b8d5f1f-94f4-4ba1-9769-f48cbcd2be18",
+                    "name": "Nasi + Ayam Goreng + Telur + Bayam + Sambal Tomat",
+                    "price": "27800.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919789,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca"
+                    ],
+                    "common_id": "e5beaacf-95b6-4b14-9943-04ecc3474c55"
+                },
+                {
+                    "active": true,
+                    "description": "Perpaduan nasi hangat, ayam goreng gurih, telur, bayam segar, dan sambal hijau pedas khas yang kaya rasa.",
+                    "id": "79de08bf-db05-4e9a-901d-6acacca6ca26",
+                    "image_id": "cdff687a-c2aa-48cf-8b5e-671b67fdc334",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/006b384f-b6e8-45fc-8584-d27b9c26e330_menu-item-image_1784529931740.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/006b384f-b6e8-45fc-8584-d27b9c26e330_menu-item-image_1784529931740.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "3b8d5f1f-94f4-4ba1-9769-f48cbcd2be18",
+                    "name": "Nasi + Ayam Goreng + Telur + Bayam + Sambal Hijau",
+                    "price": "27800.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919846,
+                    "signature": false,
+                    "weight": 4,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "16b91905-2097-4fff-8560-2a5eaf612bdd"
+                },
+                {
+                    "active": true,
+                    "description": "Pilihan Nasi, Pilihan Telur, Tambah Penyegar, Alat Makan, Tebus Murah",
+                    "id": "e0278c31-47da-4af1-a7a6-0ceb88eac48b",
+                    "image_id": "909cb5d0-8f3c-48cc-b6a8-ccff948de59a",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/8a7b5810-9fca-4db9-b37a-072163fa1aff_menu-item-image_1784529907303.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/8a7b5810-9fca-4db9-b37a-072163fa1aff_menu-item-image_1784529907303.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "3b8d5f1f-94f4-4ba1-9769-f48cbcd2be18",
+                    "name": "Nasi + Ayam Goreng + Telur + Bayam + Sambal Matah",
+                    "price": "41143.00",
+                    "promotion": "eyJpZCI6ICJjOWUzNWM3Ny0wNmFhLTRhYjUtYTgyYy1lYzFlZDU0MGEyNTYiLCAidGFncyI6IFsiR09CSVoiLCAiU0tVIl0sICJjYXRlZ29yeSI6ICJEaXNjb3VudCIsICJlbmRfdGltZSI6ICIyMzo1OTowMCIsICJmbGFzaF9zYWxlIjogZmFsc2UsICJwcm9tb190eXBlIjogIlBlcmNlbnRhZ2VEaXNjb3VudCIsICJkZXNjcmlwdGlvbiI6ICJQcm9tbyIsICJzZWxsaW5nX3ByaWNlIjogMjg4NDMsICJhY3RpdmF0ZV9pdGVtcyI6IGZhbHNlLCAiYmFkZ2VfaW1hZ2VfdXJsIjogeyJiaWciOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtZW5sYXJnZS12My5wbmciLCAic21hbGwiOiAiaHR0cHM6Ly9pLmdvamVrYXBpLmNvbS9kYXJrcm9vbS9nb2Zvb2QtaW5kb25lc2lhL3YyL2ltYWdlcy91cGxvYWRzL3Byb21vLWRpc2gtdjMucG5nIn0sICJza3VfY2F0ZWdvcnlfbmFtZSI6ICJQcm9tbyIsICJkaXNjb3VudF9wZXJjZW50YWdlIjogMzAsICJ1c2VyX21heF9za3VfcXVhbnRpdHkiOiBudWxsLCAib3JkZXJfbWF4X3NrdV9xdWFudGl0eSI6IG51bGwsICJ1c2VyX21heF9za3VfcXVhbnRpdHlfcGVyX2RheSI6IG51bGx9",
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919874,
+                    "signature": false,
+                    "weight": 5,
+                    "brand_id": null,
+                    "variant_category_ids": [
+                        "51e74076-cb1f-4c4d-861d-da8acdb4aeed",
+                        "60b4b5ba-f4a9-440c-82da-2486b85ed994",
+                        "e7bfa4e2-7f37-44f1-9d9e-35b68359fbe8",
+                        "12bf0b82-d1e6-4aa9-8343-5f25d248c8ca",
+                        "697c9ff4-2d49-45dd-9b8d-7f1d7d1a8c79"
+                    ],
+                    "common_id": "27c839e8-baee-4149-b611-4b0b3052f84c"
+                }
+            ]
+        },
+        {
+            "id": "eb680a58-54f2-4b90-b4ab-6d492bbae356",
+            "common_id": "df9a37d5-2ed0-4939-b8d5-80502ccbf74c",
+            "name": "Nasi Tambahan",
+            "sku": "NASI_TAMBAHAN",
+            "active": true,
+            "weight": 13,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 4,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Nasi putih hangat dengan tekstur pulen dan lembut",
+                    "id": "a48b5dcf-65a5-49d0-86eb-da1d27f0d26b",
+                    "image_id": "7f00a0fb-fe98-4310-b2d3-ac1ad48fc7b8",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/dbb36049-5a48-4476-a94d-69918050ba7b_menu-item-image_1784529872738.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/dbb36049-5a48-4476-a94d-69918050ba7b_menu-item-image_1784529872738.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "eb680a58-54f2-4b90-b4ab-6d492bbae356",
+                    "name": "Nasi Putih (400g)",
+                    "price": "5900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919905,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "7ed77812-c99e-4540-b6f7-5242736bd809"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi kuning gurih dengan aroma rempah yang harum.",
+                    "id": "68bb804e-ef17-4cb8-af5a-dbefe429a44b",
+                    "image_id": "2a0c6b8e-596e-44a6-a719-17c46b4db1d2",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/b40ac7ce-fdfc-496e-8e55-3aab27ba8b2b_menu-item-image_1784529841156.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/b40ac7ce-fdfc-496e-8e55-3aab27ba8b2b_menu-item-image_1784529841156.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "eb680a58-54f2-4b90-b4ab-6d492bbae356",
+                    "name": "Nasi Kuning (400g)",
+                    "price": "8900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919934,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "b62689bc-e61d-4d8e-9635-9a2ae03a77ae"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi pulen dengan aroma segar daun jeruk yang khas.",
+                    "id": "36a51d58-9c21-4572-ba54-3a6b881ccda1",
+                    "image_id": "b1e40e03-0372-48dd-ac91-ab00bd189699",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/1b206403-7d45-4e20-9c47-b583521c6699_menu-item-image_1784529770473.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/1b206403-7d45-4e20-9c47-b583521c6699_menu-item-image_1784529770473.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "eb680a58-54f2-4b90-b4ab-6d492bbae356",
+                    "name": "Nasi Daun Jeruk (400g)",
+                    "price": "8900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919965,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "9dc9de44-6452-4041-978e-c7421c766336"
+                },
+                {
+                    "active": true,
+                    "description": "Nasi uduk gurih dengan aroma santan dan rempah yang harum.",
+                    "id": "632bf33f-306d-4491-bf94-ad6623df9947",
+                    "image_id": "f0b84de4-c61f-4d0f-8c6f-f4993f07ce9d",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/2e099ef9-5aa3-4d33-bf32-38dc90cdff3e_menu-item-image_1784529727852.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/2e099ef9-5aa3-4d33-bf32-38dc90cdff3e_menu-item-image_1784529727852.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "eb680a58-54f2-4b90-b4ab-6d492bbae356",
+                    "name": "Nasi Uduk (400g)",
+                    "price": "8900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145919982,
+                    "signature": false,
+                    "weight": 4,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "c4af4519-e441-4fae-8828-53a03aab83a4"
+                }
+            ]
+        },
+        {
+            "id": "c3d1f7ba-3a59-499e-9567-d6896945f725",
+            "common_id": "e65c9ca4-e39c-43b3-92ee-8a8b11eea901",
+            "name": "Tambahan Lauk",
+            "sku": "TAMBAHAN_LAUK",
+            "active": true,
+            "weight": 14,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 7,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Telur ceplok gurih dengan tekstur lembut dan matang sempurna sebagai pelengkap santapan.",
+                    "id": "2cb650c5-5946-4301-aa9e-132621b35f19",
+                    "image_id": "14736dba-da9e-495f-b4a4-5766f02ea710",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/119fcae8-214d-467b-b93e-1379ace6ccc7_menu-item-image_1784530414819.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/119fcae8-214d-467b-b93e-1379ace6ccc7_menu-item-image_1784530414819.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c3d1f7ba-3a59-499e-9567-d6896945f725",
+                    "name": "Telur Ceplok",
+                    "price": "4900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920029,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "935b599d-8940-4a8f-8d5c-a84fe1006652"
+                },
+                {
+                    "active": true,
+                    "description": "Telur dadar gurih dengan tekstur lembut yang cocok disantap kapan saja.",
+                    "id": "ff376b96-34c5-433f-9462-b4923b0cba81",
+                    "image_id": "816ae4d4-928f-47b7-8e9e-e67401c8eb95",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/4521aa22-f8cd-4bec-a784-5d00e8582d2e_menu-item-image_1784530821346.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/4521aa22-f8cd-4bec-a784-5d00e8582d2e_menu-item-image_1784530821346.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c3d1f7ba-3a59-499e-9567-d6896945f725",
+                    "name": "Telur Dadar",
+                    "price": "4900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920062,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "c9a1d08b-9174-4523-a366-90c929a5f817"
+                },
+                {
+                    "active": true,
+                    "description": "",
+                    "id": "38de2f47-7b03-4f02-aa68-866c9fb4c6e4",
+                    "image_id": "2fdc62f1-4ec8-48b2-ae56-34688e85abe8",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/f50d83e0-c8d0-404e-b21a-e108adbfbaab_menu-item-image_1784530795955.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/f50d83e0-c8d0-404e-b21a-e108adbfbaab_menu-item-image_1784530795955.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c3d1f7ba-3a59-499e-9567-d6896945f725",
+                    "name": "Bayam Goreng (20g)",
+                    "price": "5900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920091,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "cdfd9593-fc1e-457a-8637-bc21dcd1353d"
+                },
+                {
+                    "active": true,
+                    "description": "Kulit ayam goreng renyah dengan cita rasa gurih yang pas, cocok dinikmati sebagai camilan atau pelengkap hidangan favorit.",
+                    "id": "77678c3f-33f7-4620-b9b5-9aed6cf81980",
+                    "image_id": "b77307b9-9290-4297-afff-04b9e6e51aab",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/feb2496d-0f1b-42cf-8fdd-b6f25c4a1892_menu-item-image_1784530750531.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/feb2496d-0f1b-42cf-8fdd-b6f25c4a1892_menu-item-image_1784530750531.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c3d1f7ba-3a59-499e-9567-d6896945f725",
+                    "name": "Kulit Goreng (50g)",
+                    "price": "8900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920173,
+                    "signature": false,
+                    "weight": 4,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "ac9fe46f-2db8-498e-a472-f73f59d86629"
+                },
+                {
+                    "active": true,
+                    "description": "Kulit ayam goreng renyah dengan porsi lebih besar, menghadirkan rasa gurih yang bikin puas di setiap gigitan.",
+                    "id": "e1816691-b81e-4bd3-8456-06d231cd5e84",
+                    "image_id": "519fa00a-374d-4915-90b5-bf06f90fcd44",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/ff389edf-e9fa-48fb-a17e-5776ec53b62d_menu-item-image_1784530726202.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/ff389edf-e9fa-48fb-a17e-5776ec53b62d_menu-item-image_1784530726202.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c3d1f7ba-3a59-499e-9567-d6896945f725",
+                    "name": "Kulit Goreng (100g)",
+                    "price": "15900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920198,
+                    "signature": false,
+                    "weight": 5,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "5a0e1b7e-ce5a-4c36-83f9-6bc0a73ba328"
+                },
+                {
+                    "active": true,
+                    "description": "Pentung ayam goreng berbumbu dengan daging yang juicy dan kulit renyah, nikmat disantap kapan saja.",
+                    "id": "421dafb9-b3f5-46f2-915b-4c5349ede50f",
+                    "image_id": "0e3a4a87-170a-48e6-80bc-03e3bdbd87b3",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/e0af303f-0cda-4e0f-93f7-0974ac79747f_menu-item-image_1784530700123.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/e0af303f-0cda-4e0f-93f7-0974ac79747f_menu-item-image_1784530700123.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c3d1f7ba-3a59-499e-9567-d6896945f725",
+                    "name": "Pentung Goreng",
+                    "price": "16900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920340,
+                    "signature": false,
+                    "weight": 6,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "13bd21ba-dfa3-4156-aa74-46c6f7292d65"
+                },
+                {
+                    "active": true,
+                    "description": "Ayam goreng gurih dengan bumbu meresap sempurna, renyah di luar dan juicy di setiap gigitan.",
+                    "id": "4c6f721a-b1d7-43e3-9743-bd395af2d2ea",
+                    "image_id": "be5415e8-a702-4d86-aec3-1dac6a90215e",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/2274a5af-a389-4a23-940f-481f2688a581_menu-item-image_1784530670747.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/2274a5af-a389-4a23-940f-481f2688a581_menu-item-image_1784530670747.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "c3d1f7ba-3a59-499e-9567-d6896945f725",
+                    "name": "Ayam Goreng",
+                    "price": "18900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920362,
+                    "signature": false,
+                    "weight": 7,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "fa5fefc3-2c2c-47ed-b262-ef00545fa738"
+                }
+            ]
+        },
+        {
+            "id": "5660a6e5-a3a2-4bfa-ac5f-e1b0a7b7b5a0",
+            "common_id": "2635910b-7219-4d8f-bd34-6709dd869866",
+            "name": "Sambal Juara",
+            "sku": "SAMBAL_JUARA",
+            "active": true,
+            "weight": 15,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 4,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Sambal bawang pedas gurih dengan sensasi nendang.",
+                    "id": "b90cf3f8-93f6-401b-9af8-52e01b74158f",
+                    "image_id": "8946d2eb-250a-41dd-8aa0-e322f21369e7",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/7df71e89-bf7b-4b55-a677-ad21457afd6d_menu-item-image_1784530626024.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/7df71e89-bf7b-4b55-a677-ad21457afd6d_menu-item-image_1784530626024.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "5660a6e5-a3a2-4bfa-ac5f-e1b0a7b7b5a0",
+                    "name": "Sambal Bawang (25g)",
+                    "price": "3900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920396,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "07a1f39b-f5b8-4229-a507-a9c2aef8fdbc"
+                },
+                {
+                    "active": true,
+                    "description": "Sambal tomat pedas segar dengan perpaduan rasa gurih dan sedikit asam.",
+                    "id": "94878a2b-9fd7-4d29-b14c-a7fad40bf134",
+                    "image_id": "d246cba8-4a55-4fcf-b1af-1059986eaff5",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/0fd5873a-2671-4fc4-9bea-ec8847c2ee52_menu-item-image_1784530596994.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/0fd5873a-2671-4fc4-9bea-ec8847c2ee52_menu-item-image_1784530596994.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "5660a6e5-a3a2-4bfa-ac5f-e1b0a7b7b5a0",
+                    "name": "Sambal Tomat (25g)",
+                    "price": "3900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920415,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "acf01ed9-88ea-46c4-9d5e-e7719dd5a567"
+                },
+                {
+                    "active": true,
+                    "description": "Sambal hijau pedas khas dengan cita rasa gurih yang kaya dan menggoda.",
+                    "id": "816f000b-ced5-4668-84cf-83ba2cd459c7",
+                    "image_id": "03b21b13-f14c-4802-a137-0009424f7ee6",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/5b0ea1b3-f696-4457-a8a5-54f71dce671a_menu-item-image_1784530541893.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/5b0ea1b3-f696-4457-a8a5-54f71dce671a_menu-item-image_1784530541893.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "5660a6e5-a3a2-4bfa-ac5f-e1b0a7b7b5a0",
+                    "name": "Sambal Hijau (25g)",
+                    "price": "3900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920435,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "9bac7b4c-bb99-48bd-981c-0a82dbdc9bd0"
+                },
+                {
+                    "active": true,
+                    "description": "Sambal matah segar dengan aroma khas bawang.",
+                    "id": "919da648-4f86-4e41-8f8f-0c5cf003e9ac",
+                    "image_id": "aaa66af5-00e0-4e04-819e-8d11ecfcf7a1",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/abe85244-4136-4b87-bebf-1e5911e7882d_menu-item-image_1784530515046.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/abe85244-4136-4b87-bebf-1e5911e7882d_menu-item-image_1784530515046.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "5660a6e5-a3a2-4bfa-ac5f-e1b0a7b7b5a0",
+                    "name": "Sambal Matah (25g)",
+                    "price": "4900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920457,
+                    "signature": false,
+                    "weight": 4,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "061a2850-c1c5-4aa4-bf0b-e07ba1488464"
+                }
+            ]
+        },
+        {
+            "id": "ca4605d7-93b0-482d-9cb4-5fd5184bc02a",
+            "common_id": "5104c2e0-4452-47fd-b395-491cb31f6c57",
+            "name": "Minuman Segar",
+            "sku": "MINUMAN_SEGAR",
+            "active": true,
+            "weight": 16,
+            "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+            "master_menu_category_id": "",
+            "menu_items_count": 3,
+            "menu_items": [
+                {
+                    "active": true,
+                    "description": "Teh dingin tawar yang segar dan ringan.",
+                    "id": "4a08c141-51fa-4efe-bacc-47e74bf2fc1b",
+                    "image_id": "b4de31f1-d747-4706-a4b4-87f780cbb9e5",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/77134db3-c330-4ead-9ef9-a35b362293c8_menu-item-image_1784530489763.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/77134db3-c330-4ead-9ef9-a35b362293c8_menu-item-image_1784530489763.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "ca4605d7-93b0-482d-9cb4-5fd5184bc02a",
+                    "name": "Es Teh Tawar",
+                    "price": "4900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920473,
+                    "signature": false,
+                    "weight": 1,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "c8569cce-f47f-491b-a4c6-ed0fc1e2563d"
+                },
+                {
+                    "active": true,
+                    "description": "Teh manis dingin dengan rasa manis yang pas dan sensasi segar.",
+                    "id": "accf1475-7d89-425c-b95f-5c7782a4726b",
+                    "image_id": "478b1a18-6abd-4753-945c-8b044bcffe32",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/b626abae-a9b2-4370-a6cf-10d800fd8fd5_menu-item-image_1784530465921.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/b626abae-a9b2-4370-a6cf-10d800fd8fd5_menu-item-image_1784530465921.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "ca4605d7-93b0-482d-9cb4-5fd5184bc02a",
+                    "name": "Es Teh Manis",
+                    "price": "5900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920481,
+                    "signature": false,
+                    "weight": 2,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "e10d8c2c-874f-4d17-b269-8eea3f78d592"
+                },
+                {
+                    "active": true,
+                    "description": "Air mineral segar pilihan",
+                    "id": "000c933b-687f-47e8-9e6d-47098bd99e56",
+                    "image_id": "c2e168d1-7acb-465e-8cff-2e83dc525e1d",
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/fe3b5270-ec2c-45f5-983b-5aceba97914c_menu-item-image_1784530443795.jpg",
+                    "image_cover": {
+                        "url": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/fe3b5270-ec2c-45f5-983b-5aceba97914c_menu-item-image_1784530443795.jpg"
+                    },
+                    "in_stock": true,
+                    "stock": null,
+                    "stock_limit": null,
+                    "master_menu_item_id": "",
+                    "menu_id": "ca4605d7-93b0-482d-9cb4-5fd5184bc02a",
+                    "name": "Air Mineral Aquviva",
+                    "price": "5900.00",
+                    "promotion": null,
+                    "restaurant_id": "dd79244d-52ae-4b52-9512-54bf22ac63f5",
+                    "shopping_item_id": 145920496,
+                    "signature": false,
+                    "weight": 3,
+                    "brand_id": null,
+                    "variant_category_ids": [],
+                    "common_id": "42cc4e07-1646-403f-9c3f-8aea9c8bccea"
+                }
+            ]
+        }
+    ]
+}

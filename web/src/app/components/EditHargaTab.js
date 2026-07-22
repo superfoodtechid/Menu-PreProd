@@ -334,15 +334,14 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
   };
 
   const [pushing, setPushing] = useState(false);
-  const [pushSuccess, setPushSuccess] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const pushToOFD = () => {
     setPushing(true);
-    setPushSuccess(false);
+    setShowSuccessModal(false);
     setTimeout(() => {
       setPushing(false);
-      setPushSuccess(true);
-      setTimeout(() => setPushSuccess(false), 3500);
+      setShowSuccessModal(true);
     }, 1500);
   };
 
@@ -488,14 +487,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
       {preview.length > 0 && (
         <section className="bg-white rounded-xl border border-zinc-100 shadow-sm p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-4 mb-1">
-              <StepLabel number={4} label="Sesuaikan Semua" active={true} done={false} className="mb-0" />
-              <button type="button" onClick={resetAll}
-                className="text-[10px] font-semibold text-rose-500 hover:text-rose-600 underline transition-colors"
-              >
-                Reset Semua Harga
-              </button>
-            </div>
+            <StepLabel number={4} label="Sesuaikan Semua" active={true} done={false} className="mb-1" />
             <p className="text-[10px] text-zinc-400 ml-7">
               Terapkan ke <strong>{preview.length} cabang</strong> sekaligus.
             </p>
@@ -503,9 +495,14 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           <div className="shrink-0 bg-zinc-50/50 p-2.5 rounded-lg border border-zinc-100 flex flex-col gap-2.5">
             <AdjustBar onApply={(m, t, v) => bulkAdj([], m, t, v)} buttonText="Terapkan untuk Semua" />
 
-            <div className="pt-2 border-t border-zinc-200/80 flex flex-col gap-1.5">
+            <div className="pt-2 border-t border-zinc-200/80 flex items-center gap-2">
+              <button type="button" onClick={resetAll}
+                className="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-md transition-colors shrink-0"
+              >
+                Reset Harga
+              </button>
               <button type="button" onClick={pushToOFD} disabled={pushing}
-                className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-all shadow-sm disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-all shadow-sm disabled:opacity-50"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -513,11 +510,6 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 </svg>
                 {pushing ? "Memproses Push ke OFD..." : `Push Update Harga ke OFD (${preview.length} Cabang)`}
               </button>
-              {pushSuccess && (
-                <p className="text-[10px] font-semibold text-emerald-600 text-center">
-                  ✓ Harga berhasil di-update ke OFD!
-                </p>
-              )}
             </div>
           </div>
         </section>
@@ -556,6 +548,34 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           </div>
         )}
       </section>
+
+      {/* ── Pop-up Success Modal ── */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in"
+          onClick={() => setShowSuccessModal(false)}
+        >
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-zinc-100 text-center space-y-4 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-zinc-800">Update Harga Berhasil!</h3>
+              <p className="text-xs text-zinc-500 mt-1">
+                Perubahan harga telah sukses diproses dan di-update ke OFD untuk <strong>{preview.length} cabang</strong>.
+              </p>
+            </div>
+            <button type="button" onClick={() => setShowSuccessModal(false)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 rounded-xl transition-colors shadow-md"
+            >
+              OK, Mengerti
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

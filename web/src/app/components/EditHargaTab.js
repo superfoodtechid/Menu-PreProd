@@ -271,7 +271,7 @@ function BranchCard({ branch, edits, onChange, onBulkAdj, onReset, onSave, onApp
       <div className="px-4 py-2.5 bg-zinc-50/50 dark:bg-zinc-900/50 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => onReset(branch.id, items)}
-            className="text-[10px] text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 px-2 py-0.5 rounded transition-all shadow-sm"
           >Reset</button>
           {totalBranches > 1 && (
             <button type="button" onClick={() => onApplyToAll(branch.id)}

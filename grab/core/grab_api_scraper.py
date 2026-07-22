@@ -88,12 +88,15 @@ class GrabAPI:
         self.password = password
         self.base_url = "https://merchant.grab.com"
 
-    async def call_api(self, url, method="GET", params=None):
+    async def call_api(self, url, method="GET", params=None, headers=None, body=None):
         """Call Grab API from within the page context to reuse session/headers"""
         full_url = url
         if params and method == "GET":
             query = "&".join([f"{k}={v}" for k, v in params.items()])
             full_url = f"{url}?{query}" if "?" not in url else f"{url}&{query}"
+        
+        headers_js = json.dumps(headers or {})
+        body_js = json.dumps(body) if body is not None else "null"
         
         js_code = f"""
         async () => {{
@@ -101,14 +104,25 @@ class GrabAPI:
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000);
                 
-                const response = await fetch("{full_url}", {{
+                const extraHeaders = {headers_js};
+                const bodyObj = {body_js};
+                
+                const fetchOptions = {{
                     method: "{method}",
                     signal: controller.signal,
                     headers: {{
                         "Accept": "application/json",
-                        "Content-Type": "application/json"
-                    }}
-                }});
+                        "Content-Type": "application/json",
+                        ...extraHeaders
+                    }},
+                    credentials: "include"
+                }};
+                
+                if (bodyObj !== null) {{
+                    fetchOptions.body = JSON.stringify(bodyObj);
+                }}
+                
+                const response = await fetch("{full_url}", fetchOptions);
                 clearTimeout(timeoutId);
                 const status = response.status;
                 const text = await response.text();
@@ -566,6 +580,157 @@ class GrabAPI:
                 await asyncio.sleep(2)
                 
         return None, "Failed to retrieve menu after 3 attempts"
+
+    async def create_category(self, group_id, store_id, name, selling_time_id):
+        """POST /food/merchant/v2/categories"""
+        url = f"{self.base_url}/food/merchant/v2/categories"
+        headers = {
+            "merchantgroupid": group_id,
+            "merchantid": store_id,
+            "requestsource": "troyPortal",
+            "x-client-id": "GrabMerchant-Portal",
+            "x-grabkit-clientid": "grabmerchant-portal"
+        }
+        body = {
+            "name": name,
+            "categoryID": "",
+            "sectionID": "",
+            "sellingTimeID": selling_time_id
+        }
+        res = await self.call_api(url, method="POST", headers=headers, body=body)
+        if res.get("status") == 200:
+            return res.get("data", {}), None
+        return None, res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
+
+    async def edit_category(self, group_id, store_id, category_id, name, selling_time_id):
+        """PUT /food/merchant/v3/categories/{category_id}"""
+        url = f"{self.base_url}/food/merchant/v3/categories/{category_id}"
+        headers = {
+            "merchantgroupid": group_id,
+            "merchantid": store_id,
+            "requestsource": "troyPortal",
+            "x-client-id": "GrabMerchant-Portal",
+            "x-grabkit-clientid": "grabmerchant-portal"
+        }
+        body = {
+            "name": name,
+            "categoryID": category_id,
+            "sectionID": "",
+            "sellingTimeID": selling_time_id
+        }
+        res = await self.call_api(url, method="PUT", headers=headers, body=body)
+        if res.get("status") in (200, 204):
+            return True, None
+        return False, res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
+
+    async def delete_category(self, group_id, store_id, category_id):
+        """DELETE /food/merchant/v2/categories/{category_id}"""
+        url = f"{self.base_url}/food/merchant/v2/categories/{category_id}"
+        headers = {
+            "merchantgroupid": group_id,
+            "merchantid": store_id,
+            "requestsource": "troyPortal",
+            "x-client-id": "GrabMerchant-Portal",
+            "x-grabkit-clientid": "grabmerchant-portal"
+        }
+        body = {
+            "menuGroupID": "",
+            "categoryID": category_id
+        }
+        res = await self.call_api(url, method="DELETE", headers=headers, body=body)
+        if res.get("status") in (200, 204):
+            return True, None
+        return False, res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
+
+    async def sort_categories(self, group_id, store_id, sorted_category_ids):
+        """PUT /food/merchant/categories-sort"""
+        url = f"{self.base_url}/food/merchant/categories-sort"
+        headers = {
+            "merchantgroupid": group_id,
+            "merchantid": store_id,
+            "requestsource": "troyPortal",
+            "x-client-id": "GrabMerchant-Portal",
+            "x-grabkit-clientid": "grabmerchant-portal"
+        }
+        sorts = []
+        for idx, cat_id in enumerate(sorted_category_ids):
+            sorts.append({
+                "resourceID": cat_id,
+                "sortOrder": idx + 1
+            })
+        body = {
+            "sectionSorts": [
+                {
+                    "sectionID": "",
+                    "sorts": sorts
+                }
+            ]
+        }
+        res = await self.call_api(url, method="PUT", headers=headers, body=body)
+        if res.get("status") in (200, 204):
+            return True, None
+        return False, res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
+
+    async def validate_item(self, group_id, store_id, category_id, item_data):
+        """POST /food/merchant/v2/item-validation"""
+        url = f"{self.base_url}/food/merchant/v2/item-validation"
+        headers = {
+            "merchantgroupid": group_id,
+            "merchantid": store_id,
+            "requestsource": "troyPortal",
+            "x-client-id": "GrabMerchant-Portal",
+            "x-grabkit-clientid": "grabmerchant-portal"
+        }
+        if "categoryID" not in item_data:
+            item_data["categoryID"] = category_id
+        body = {
+            "categoryID": category_id,
+            "item": item_data
+        }
+        res = await self.call_api(url, method="POST", headers=headers, body=body)
+        if res.get("status") in (200, 204):
+            return True, None
+        return False, res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
+
+    async def upsert_item(self, group_id, store_id, category_id, item_data):
+        """POST /food/merchant/v2/upsert-item"""
+        url = f"{self.base_url}/food/merchant/v2/upsert-item"
+        headers = {
+            "merchantgroupid": group_id,
+            "merchantid": store_id,
+            "requestsource": "troyPortal",
+            "x-client-id": "GrabMerchant-Portal",
+            "x-grabkit-clientid": "grabmerchant-portal"
+        }
+        if "categoryID" not in item_data:
+            item_data["categoryID"] = category_id
+        body = {
+            "categoryID": category_id,
+            "item": item_data
+        }
+        res = await self.call_api(url, method="POST", headers=headers, body=body)
+        if res.get("status") == 200:
+            return res.get("data", {}), None
+        return None, res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
+
+    async def delete_item(self, group_id, store_id, item_id):
+        """DELETE /food/merchant/v2/items/{item_id}"""
+        url = f"{self.base_url}/food/merchant/v2/items/{item_id}"
+        headers = {
+            "merchantgroupid": group_id,
+            "merchantid": store_id,
+            "requestsource": "troyPortal",
+            "x-client-id": "GrabMerchant-Portal",
+            "x-grabkit-clientid": "grabmerchant-portal"
+        }
+        body = {
+            "itemID": item_id,
+            "menuGroupID": ""
+        }
+        res = await self.call_api(url, method="DELETE", headers=headers, body=body)
+        if res.get("status") in (200, 204):
+            return True, None
+        return False, res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
 
 async def perform_login(page, user, pwd):
     """Robust login steps — clears cookies on mismatch and handles sticky 'Welcome back' pages."""

@@ -1,33 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-// ─── Dummy data ───────────────────────────────────────────────────────────────
-const DUMMY_MENU = {
-  "AGSA – Ayam Geprek Suroboyo Ampel": [
-    { id: "m1", category: "Ayam", name: "Ayam Geprek Original", price: 25000 },
-    { id: "m2", category: "Ayam", name: "Ayam Geprek Keju", price: 28000 },
-    { id: "m3", category: "Ayam", name: "Ayam Geprek Mozarella", price: 32000 },
-    { id: "m4", category: "Minuman", name: "Es Teh Manis", price: 5000 },
-    { id: "m5", category: "Minuman", name: "Es Jeruk", price: 7000 },
-    { id: "m6", category: "Tambahan", name: "Nasi Putih", price: 5000 },
-    { id: "m7", category: "Tambahan", name: "Tempe Goreng", price: 4000 },
-  ],
-  "Ayam Bakar Ori": [
-    { id: "m8",  category: "Ayam Bakar", name: "Ayam Bakar Madu", price: 30000 },
-    { id: "m9",  category: "Ayam Bakar", name: "Ayam Bakar Kecap", price: 28000 },
-    { id: "m10", category: "Ayam Bakar", name: "Paket Hemat", price: 35000 },
-    { id: "m11", category: "Minuman", name: "Es Teh Manis", price: 5000 },
-    { id: "m12", category: "Minuman", name: "Jus Alpukat", price: 12000 },
-  ],
-  default: [
-    { id: "d1", category: "Menu Utama", name: "Paket Nasi Ayam", price: 25000 },
-    { id: "d2", category: "Menu Utama", name: "Paket Nasi Ikan", price: 22000 },
-    { id: "d3", category: "Minuman", name: "Es Teh Manis", price: 5000 },
-    { id: "d4", category: "Minuman", name: "Air Mineral", price: 4000 },
-    { id: "d5", category: "Snack", name: "Kentang Goreng", price: 10000 },
-  ],
-};
+import { useState, useEffect, useRef } from "react";
 
 const fmt = (v) => (!v && v !== 0) ? "" : Number(v).toLocaleString("id-ID");
 const parse = (s) => parseInt(String(s).replace(/\D/g, ""), 10) || 0;
@@ -111,9 +84,8 @@ function AdjustBar({ onApply, buttonText = "OK" }) {
 }
 
 // ─── Branch Card ──────────────────────────────────────────────────────────────
-function BranchCard({ branch, edits, onChange, onBulkAdj, onReset, onSave, onApplyToAll, totalBranches, saving, saved }) {
+function BranchCard({ branch, items = [], edits, onChange, onBulkAdj, onReset, onSave, onApplyToAll, totalBranches, saving, saved }) {
   const label = branch.brand || branch.nama_resto_final || branch.merchant_name;
-  const items = DUMMY_MENU[label] || DUMMY_MENU["default"];
   const groups = group(items);
   const changed = items.filter((i) => (edits[i.id] ?? i.price) !== i.price).length;
   const [showAdj, setShowAdj] = useState(false);
@@ -157,55 +129,66 @@ function BranchCard({ branch, edits, onChange, onBulkAdj, onReset, onSave, onApp
 
       {/* menu items */}
       <div className="flex-1 overflow-y-auto max-h-64 px-4 pb-2">
-        {Object.entries(groups).map(([cat, items]) => (
-          <div key={cat} className="mt-3 first:mt-0">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-300 mb-1.5">{cat}</p>
-            <div className="space-y-1">
-              {items.map((item) => {
-                const cur = edits[item.id] ?? item.price;
-                const diff = cur !== item.price;
-                const pct = item.price > 0 ? ((cur - item.price) / item.price) * 100 : 0;
-                const pctFmt = (pct > 0 ? "+" : "") + (Number.isInteger(pct) ? pct.toFixed(0) : pct.toFixed(1)) + "%";
-
-                return (
-                  <div key={item.id}
-                    className={`flex items-center justify-between py-1.5 px-2 rounded-lg transition-colors ${
-                      diff ? "bg-amber-50" : "hover:bg-zinc-50"
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1 mr-3">
-                      <p className="text-xs text-zinc-700 truncate font-medium">{item.name}</p>
-                      {diff && (
-                        <p className="text-[10px] font-medium text-amber-700 flex items-center gap-1 mt-0.5 flex-wrap">
-                          <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.price)}</span>
-                          <span className="text-amber-500 font-bold">»</span>
-                          <span className="font-semibold text-amber-700">Rp {fmt(cur)}</span>
-                          <span className={`text-[9px] font-bold px-1 rounded ${
-                            pct > 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
-                          }`}>
-                            ({pctFmt})
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-[10px] text-zinc-400">Rp</span>
-                      <input type="text" inputMode="numeric"
-                        value={fmt(cur)}
-                        onChange={(e) => onChange(branch.id, item.id, e.target.value)}
-                        className={`w-20 text-right text-xs font-semibold rounded-md px-2 py-1 border transition-colors focus:outline-none focus:ring-1 ${
-                          diff
-                            ? "border-amber-300 text-amber-700 bg-white focus:ring-amber-300"
-                            : "border-zinc-200 text-zinc-700 bg-zinc-50 focus:ring-zinc-400 focus:bg-white"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+        {items.length === 0 ? (
+          branch.last_sync_at ? (
+            <p className="text-center text-xs text-zinc-300 py-6">Tidak ada item menu ditemukan.</p>
+          ) : (
+            <div className="text-center py-6 px-3 bg-amber-50/50 rounded-lg border border-dashed border-amber-200">
+              <p className="text-xs font-semibold text-amber-800">⚠️ Menu belum di-sync</p>
+              <p className="text-[10px] text-amber-600 mt-1">Silakan lakukan tarik menu pada tab "Menu Pull" terlebih dahulu.</p>
             </div>
-          </div>
-        ))}
+          )
+        ) : (
+          Object.entries(groups).map(([cat, items]) => (
+            <div key={cat} className="mt-3 first:mt-0">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-300 mb-1.5">{cat}</p>
+              <div className="space-y-1">
+                {items.map((item) => {
+                  const cur = edits[item.id] ?? item.price;
+                  const diff = cur !== item.price;
+                  const pct = item.price > 0 ? ((cur - item.price) / item.price) * 100 : 0;
+                  const pctFmt = (pct > 0 ? "+" : "") + (Number.isInteger(pct) ? pct.toFixed(0) : pct.toFixed(1)) + "%";
+
+                  return (
+                    <div key={item.id}
+                      className={`flex items-center justify-between py-1.5 px-2 rounded-lg transition-colors ${
+                        diff ? "bg-amber-50" : "hover:bg-zinc-50"
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1 mr-3">
+                        <p className="text-xs text-zinc-700 truncate font-medium">{item.name}</p>
+                        {diff && (
+                          <p className="text-[10px] font-medium text-amber-700 flex items-center gap-1 mt-0.5 flex-wrap">
+                            <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.price)}</span>
+                            <span className="text-amber-500 font-bold">»</span>
+                            <span className="font-semibold text-amber-700">Rp {fmt(cur)}</span>
+                            <span className={`text-[9px] font-bold px-1 rounded ${
+                              pct > 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                            }`}>
+                              ({pctFmt})
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-[10px] text-zinc-400">Rp</span>
+                        <input type="text" inputMode="numeric"
+                          value={fmt(cur)}
+                          onChange={(e) => onChange(branch.id, item.id, e.target.value)}
+                          className={`w-20 text-right text-xs font-semibold rounded-md px-2 py-1 border transition-colors focus:outline-none focus:ring-1 ${
+                            diff
+                              ? "border-amber-300 text-amber-700 bg-white focus:ring-amber-300"
+                              : "border-zinc-200 text-zinc-700 bg-zinc-50 focus:ring-zinc-400 focus:bg-white"
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* footer */}
@@ -265,19 +248,26 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
   const [selectedParent, setSelectedParent] = useState("");
   const [branches, setBranches] = useState([]);
   const [checkedIds, setCheckedIds] = useState([]);
+  const [branchMenus, setBranchMenus] = useState({});
   const [edits, setEdits] = useState({});
   const [saveState, setSaveState] = useState({});
+  
+  const [pushing, setPushing] = useState(false);
+  const [pushSuccess, setPushSuccess] = useState(false);
+  const [activeJobs, setActiveJobs] = useState([]);
+  
+  const pollingIntervalsRef = useRef({});
 
   // fetch outlets
   useEffect(() => {
     if (!platform) {
       setAllOutlets([]); setUniqueParents([]); setSelectedParent("");
-      setBranches([]); setCheckedIds([]); setSearch(""); setEdits({});
+      setBranches([]); setCheckedIds([]); setSearch(""); setEdits({}); setBranchMenus({});
       return;
     }
     setLoading(true);
     setAllOutlets([]); setUniqueParents([]); setSelectedParent("");
-    setBranches([]); setCheckedIds([]); setSearch(""); setEdits({});
+    setBranches([]); setCheckedIds([]); setSearch(""); setEdits({}); setBranchMenus({});
     const url = platform === "all" ? `${API_BASE_URL}/api/outlets` : `${API_BASE_URL}/api/outlets?platform=${platform}`;
     fetch(url).then(r => r.json())
       .then(data => {
@@ -288,21 +278,45 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
       .finally(() => setLoading(false));
   }, [platform, API_BASE_URL]);
 
+  const fetchMenus = async (filteredBranches = branches) => {
+    setLoading(true);
+    const menusMap = {};
+    const editsMap = {};
+    await Promise.all(filteredBranches.map(async (b) => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/outlets/${b.id}/menu-items`);
+        if (res.ok) {
+          const items = await res.json();
+          menusMap[b.id] = items;
+          editsMap[b.id] = {};
+          items.forEach(i => { editsMap[b.id][i.id] = i.price; });
+        } else {
+          menusMap[b.id] = [];
+        }
+      } catch (err) {
+        menusMap[b.id] = [];
+      }
+    }));
+    setBranchMenus(menusMap);
+    setEdits(editsMap);
+    setLoading(false);
+  };
+
   // update branches when parent changes
   useEffect(() => {
-    if (!selectedParent) { setBranches([]); setCheckedIds([]); return; }
+    if (!selectedParent) { setBranches([]); setCheckedIds([]); setBranchMenus({}); setEdits({}); return; }
     const filtered = allOutlets.filter(o => o.nama_outlet === selectedParent);
     setBranches(filtered);
     setCheckedIds(filtered.map(b => b.id));
-    const e = {};
-    filtered.forEach(b => {
-      const l = b.brand || b.nama_resto_final || b.merchant_name;
-      const items = DUMMY_MENU[l] || DUMMY_MENU["default"];
-      e[b.id] = {};
-      items.forEach(i => { e[b.id][i.id] = i.price; });
-    });
-    setEdits(e);
+    fetchMenus(filtered);
   }, [selectedParent, allOutlets]);
+
+  // Clean up polling intervals on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(pollingIntervalsRef.current).forEach(clearInterval);
+    };
+  }, []);
 
   const filtered = uniqueParents.filter(n => n.toLowerCase().includes(search.toLowerCase()));
   const preview = branches.filter(b => checkedIds.includes(b.id));
@@ -321,9 +335,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setEdits(p => {
       const n = { ...p };
       targets.forEach(bid => {
-        const b = branches.find(x => x.id === bid); if (!b) return;
-        const l = b.brand || b.nama_resto_final || b.merchant_name;
-        const items = DUMMY_MENU[l] || DUMMY_MENU["default"];
+        const items = branchMenus[bid] || [];
         const be = { ...(p[bid] || {}) };
         items.forEach(i => { be[i.id] = applyAdj(be[i.id] ?? i.price, mode, type, val); });
         n[bid] = be;
@@ -333,17 +345,115 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setSaveState(p => { const n = { ...p }; targets.forEach(id => { n[id] = null; }); return n; });
   };
 
-  const [pushing, setPushing] = useState(false);
-  const [pushSuccess, setPushSuccess] = useState(false);
+  const startPollingJob = (jobId, branchName) => {
+    if (pollingIntervalsRef.current[jobId]) {
+      clearInterval(pollingIntervalsRef.current[jobId]);
+    }
 
-  const pushToOFD = () => {
+    pollingIntervalsRef.current[jobId] = setInterval(() => {
+      fetch(`${API_BASE_URL}/api/jobs/${jobId}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch job");
+          return res.json();
+        })
+        .then((job) => {
+          setActiveJobs((prevJobs) =>
+            prevJobs.map((j) =>
+              j.id === jobId
+                ? {
+                    ...j,
+                    status: job.status,
+                    progress_pct: job.progress_pct,
+                    current_step: job.current_step,
+                    error_message: job.error_message,
+                  }
+                : j
+            )
+          );
+
+          if (job.status === "SUCCESS" || job.status === "FAILED") {
+            clearInterval(pollingIntervalsRef.current[jobId]);
+            delete pollingIntervalsRef.current[jobId];
+            
+            // Refresh menu items list to show the new prices
+            fetchMenus();
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          clearInterval(pollingIntervalsRef.current[jobId]);
+          delete pollingIntervalsRef.current[jobId];
+        });
+    }, 2000);
+  };
+
+  const triggerPriceUpdate = async (bidsToUpdate) => {
     setPushing(true);
     setPushSuccess(false);
-    setTimeout(() => {
-      setPushing(false);
-      setPushSuccess(true);
-      setTimeout(() => setPushSuccess(false), 3500);
-    }, 1500);
+
+    const targets = Array.isArray(bidsToUpdate) ? bidsToUpdate : [bidsToUpdate];
+    const newJobsList = [];
+
+    for (const bid of targets) {
+      const branch = branches.find(x => x.id === bid);
+      if (!branch) continue;
+      const label = branch.brand || branch.nama_resto_final || branch.merchant_name;
+
+      const branchEdits = edits[bid] || {};
+      const branchItems = branchMenus[bid] || [];
+      const updates = [];
+
+      branchItems.forEach(i => {
+        const curPrice = branchEdits[i.id];
+        if (curPrice !== undefined && curPrice !== i.price) {
+          updates.push({
+            item_id: i.id,
+            category_id: i.category_id || "",
+            new_price: curPrice
+          });
+        }
+      });
+
+      if (updates.length === 0) continue;
+
+      try {
+        setSaveState(p => ({ ...p, [bid]: "saving" }));
+        const res = await fetch(`${API_BASE_URL}/api/jobs/push-price`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            outlet_id: bid,
+            updates: updates
+          })
+        });
+
+        if (res.ok) {
+          const job = await res.json();
+          newJobsList.push({
+            id: job.id,
+            name: label,
+            platform: branch.platform,
+            status: job.status,
+            progress_pct: job.progress_pct,
+            current_step: job.current_step,
+            error_message: null
+          });
+          startPollingJob(job.id, label);
+          setSaveState(p => ({ ...p, [bid]: "saved" }));
+        } else {
+          setSaveState(p => ({ ...p, [bid]: null }));
+          alert(`Gagal memicu update harga untuk ${label}`);
+        }
+      } catch (err) {
+        setSaveState(p => ({ ...p, [bid]: null }));
+        console.error(err);
+      }
+    }
+
+    if (newJobsList.length > 0) {
+      setActiveJobs(p => [...newJobsList, ...p]);
+    }
+    setPushing(false);
   };
 
   const resetOne = (bid, items) => {
@@ -376,18 +486,12 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setEdits(p => {
       const n = { ...p };
       preview.forEach(b => {
-        const l = b.brand || b.nama_resto_final || b.merchant_name;
-        const items = DUMMY_MENU[l] || DUMMY_MENU["default"];
+        const items = branchMenus[b.id] || [];
         const r = {}; items.forEach(i => { r[i.id] = i.price; }); n[b.id] = r;
       });
       return n;
     });
     setSaveState({});
-  };
-
-  const save = (bid) => {
-    setSaveState(p => ({ ...p, [bid]: "saving" }));
-    setTimeout(() => setSaveState(p => ({ ...p, [bid]: "saved" })), 1200);
   };
 
   return (
@@ -504,7 +608,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
             <AdjustBar onApply={(m, t, v) => bulkAdj([], m, t, v)} buttonText="Terapkan untuk Semua" />
 
             <div className="pt-2 border-t border-zinc-200/80 flex flex-col gap-1.5">
-              <button type="button" onClick={pushToOFD} disabled={pushing}
+              <button type="button" onClick={() => triggerPriceUpdate(checkedIds)} disabled={pushing}
                 className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-all shadow-sm disabled:opacity-50"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -513,12 +617,53 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 </svg>
                 {pushing ? "Memproses Push ke OFD..." : `Push Update Harga ke OFD (${preview.length} Cabang)`}
               </button>
-              {pushSuccess && (
-                <p className="text-[10px] font-semibold text-emerald-600 text-center">
-                  ✓ Harga berhasil di-update ke OFD!
-                </p>
-              )}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Active Jobs Section ── */}
+      {activeJobs.length > 0 && (
+        <section className="bg-white rounded-xl border border-zinc-100 shadow-sm p-5 space-y-4">
+          <h3 className="text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+            Status Pembaruan Harga ke Merchant Portal
+          </h3>
+          <div className="space-y-3 max-h-60 overflow-y-auto">
+            {activeJobs.map(job => (
+              <div key={job.id} className="border border-zinc-150 p-4 rounded-lg flex flex-col gap-2.5 bg-zinc-50/40">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-xs font-semibold text-zinc-700">{job.name}</div>
+                    <div className="text-[9px] font-mono text-zinc-400">
+                      JOB ID: {job.id} · PLATFORM: {job.platform?.toUpperCase()}
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                    job.status === "SUCCESS" ? "bg-emerald-100 text-emerald-700" :
+                    job.status === "FAILED" ? "bg-rose-100 text-rose-700" :
+                    "bg-amber-100 text-amber-700"
+                  }`}>{job.status}</span>
+                </div>
+                
+                {/* progress bar */}
+                <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
+                  <div className={`h-full transition-all duration-500 ${
+                    job.status === "SUCCESS" ? "bg-emerald-500" :
+                    job.status === "FAILED" ? "bg-rose-500" :
+                    "bg-amber-500"
+                  }`} style={{ width: `${job.progress_pct}%` }} />
+                </div>
+                
+                <div className="text-[10px] text-zinc-500 font-medium">
+                  {job.current_step || "Mengantre..."}
+                </div>
+                {job.error_message && (
+                  <div className="text-[10px] text-rose-500 font-mono">
+                    Error: {job.error_message}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </section>
       )}
@@ -544,9 +689,10 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           }`}>
             {preview.map(branch => (
               <BranchCard key={branch.id} branch={branch}
+                items={branchMenus[branch.id] || []}
                 edits={edits[branch.id] || {}}
                 onChange={changePrice} onBulkAdj={bulkAdj}
-                onReset={resetOne} onSave={save}
+                onReset={resetOne} onSave={triggerPriceUpdate}
                 onApplyToAll={applyBranchToAll}
                 totalBranches={preview.length}
                 saving={saveState[branch.id] === "saving"}

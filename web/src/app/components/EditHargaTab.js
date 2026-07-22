@@ -504,6 +504,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           const job = await res.json();
           newJobsList.push({
             id: job.id,
+            outlet_id: bid,
             name: label,
             platform: branch.platform,
             status: job.status,
@@ -527,6 +528,11 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
       setActiveJobs(p => [...newJobsList, ...p]);
     }
     setPushing(false);
+  };
+
+  const handleRerunPushJob = async (jobToRerun) => {
+    if (!jobToRerun.outlet_id) return;
+    await triggerPriceUpdate([jobToRerun.outlet_id]);
   };
 
   const checkAndPushToOFD = () => {
@@ -845,6 +851,20 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 {job.error_message && (
                   <div className="text-[10px] text-rose-500 font-mono">
                     Error: {job.error_message}
+                  </div>
+                )}
+                {job.status === "FAILED" && (
+                  <div className="pt-2 border-t border-zinc-150 dark:border-zinc-800 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleRerunPushJob(job)}
+                      className="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Coba Lagi (Re-run)
+                    </button>
                   </div>
                 )}
               </div>

@@ -508,7 +508,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 setOpenOutletDropdown(false);
                 setOpenBranchDropdown(false);
               }}
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-xs text-left font-medium text-zinc-700 bg-white flex items-center justify-between hover:border-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all shadow-sm"
+              className="w-full border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs text-left font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 flex items-center justify-between hover:border-zinc-300 dark:hover:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all shadow-sm"
             >
               <span className="truncate flex items-center gap-1.5">
                 {platform ? (
@@ -525,7 +525,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
             {openPlatformDropdown && (
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setOpenPlatformDropdown(false)} />
-                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-xl shadow-xl border border-zinc-100 p-1.5 space-y-0.5 animate-scale-up">
+                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-100 dark:border-zinc-800 p-1.5 space-y-0.5 animate-scale-up">
                   {[
                     ["shopee", "ShopeeFood"],
                     ["gofood", "GoFood"],
@@ -539,8 +539,8 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                       }}
                       className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs flex items-center justify-between transition-all ${
                         platform === val
-                          ? "bg-zinc-800 text-white font-medium"
-                          : "text-zinc-600 hover:bg-zinc-50"
+                          ? "bg-zinc-800 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium"
+                          : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                       }`}
                     >
                       <PlatformBadge platform={val === "all" ? "Semua Aplikator" : val} dark={platform === val} />

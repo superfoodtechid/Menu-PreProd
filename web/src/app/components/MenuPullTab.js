@@ -248,21 +248,21 @@ export default function MenuPullTab({ API_BASE_URL }) {
   return (
     <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Left Form: Selectors */}
-      <section className="lg:col-span-1 bg-brand-white border border-brand-red p-6 rounded-md h-fit space-y-6">
-        <h2 className="text-base font-semibold text-brand-dark pb-2 border-b border-brand-red">
+      <section className="lg:col-span-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl shadow-sm h-fit space-y-6 transition-colors">
+        <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100 pb-3 border-b border-zinc-100 dark:border-zinc-800">
           Menu Pull
         </h2>
         
         <form onSubmit={handleTriggerPull} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-brand-muted uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
               Aplikator
             </label>
             <select
               value={platform}
               onChange={(e) => setPlatform(e.target.value)}
               disabled={triggering}
-              className="w-full bg-brand-white border border-brand-red rounded px-3 py-2 text-sm text-brand-dark focus:outline-none focus:ring-1 focus:ring-brand-red disabled:opacity-50"
+              className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs font-medium text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 disabled:opacity-50 transition-colors shadow-sm"
             >
               <option value="">Pilih Aplikator</option>
               <option value="shopee">ShopeeFood</option>
@@ -275,13 +275,13 @@ export default function MenuPullTab({ API_BASE_URL }) {
           {/* Checklist Selection of Parent Outlets (Multi-select) */}
           {platform && (
             <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs font-semibold text-brand-muted uppercase tracking-wider mb-1">
+              <div className="flex justify-between items-center text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">
                 <span>Outlet ({checkedParentNames.length}/{uniqueParentNames.length})</span>
                 <button
                   type="button"
                   onClick={handleSelectAllParents}
                   disabled={loadingOutlets || triggering}
-                  className="text-brand-red hover:text-brand-red-hover underline normal-case font-normal disabled:opacity-50 text-xs"
+                  className="text-indigo-600 dark:text-indigo-400 hover:underline normal-case font-semibold disabled:opacity-50 text-xs transition-colors"
                 >
                   {filteredParents.every((name) => checkedParentNames.includes(name)) ? "Batal Semua" : "Pilih Semua"}
                 </button>
@@ -294,25 +294,25 @@ export default function MenuPullTab({ API_BASE_URL }) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 disabled={loadingOutlets || triggering}
-                className="w-full bg-brand-white border border-brand-red rounded px-2.5 py-1.5 text-xs text-brand-dark focus:outline-none focus:ring-1 focus:ring-brand-red placeholder-brand-muted/60"
+                className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 shadow-sm transition-colors"
               />
 
-              <div className="max-h-48 overflow-y-auto border border-brand-red bg-brand-white rounded p-3 space-y-2">
+              <div className="max-h-48 overflow-y-auto border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/60 rounded-lg p-2.5 space-y-1.5">
                 {loadingOutlets ? (
-                  <div className="text-xs text-brand-muted font-mono">Memuat daftar outlet...</div>
+                  <div className="text-xs text-zinc-400 font-mono text-center py-2">Memuat daftar outlet...</div>
                 ) : filteredParents.length === 0 ? (
-                  <div className="text-xs text-brand-muted font-mono">Tidak ada outlet yang cocok.</div>
+                  <div className="text-xs text-zinc-400 font-mono text-center py-2">Tidak ada outlet yang cocok.</div>
                 ) : (
                   filteredParents.map((name) => (
-                    <label key={name} className="flex items-center space-x-2 text-sm text-brand-dark cursor-pointer hover:text-brand-red">
+                    <label key={name} className="flex items-center space-x-2 text-xs text-zinc-700 dark:text-zinc-200 cursor-pointer hover:text-zinc-900 dark:hover:text-white p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors">
                       <input
                         type="checkbox"
                         checked={checkedParentNames.includes(name)}
                         onChange={() => handleParentCheck(name)}
                         disabled={triggering}
-                        className="accent-brand-red"
+                        className="accent-zinc-800 dark:accent-zinc-100"
                       />
-                      <span>{name}</span>
+                      <span className="font-medium truncate">{name}</span>
                     </label>
                   ))
                 )}
@@ -323,33 +323,33 @@ export default function MenuPullTab({ API_BASE_URL }) {
           {/* Checklist Selection of Branches (Multi-select) */}
           {availableBranches.length > 0 && (
             <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs font-semibold text-brand-muted uppercase tracking-wider mb-1">
+              <div className="flex justify-between items-center text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">
                 <span>Cabang / Brand ({checkedBranchIds.length}/{availableBranches.length})</span>
                 <button
                   type="button"
                   onClick={handleSelectAllBranches}
                   disabled={triggering}
-                  className="text-brand-red hover:text-brand-red-hover underline normal-case font-normal disabled:opacity-50 text-xs"
+                  className="text-indigo-600 dark:text-indigo-400 hover:underline normal-case font-semibold disabled:opacity-50 text-xs transition-colors"
                 >
                   {checkedBranchIds.length === availableBranches.length ? "Batal Semua" : "Pilih Semua"}
                 </button>
               </div>
               
-              <div className="max-h-60 overflow-y-auto border border-brand-red bg-brand-white rounded p-3 space-y-2">
+              <div className="max-h-60 overflow-y-auto border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/60 rounded-lg p-2.5 space-y-1.5">
                 {availableBranches.map((b) => {
                   const branchLabel = b.brand || b.nama_resto_final || b.merchant_name;
                   return (
-                    <label key={b.id} className="flex items-start space-x-2 text-sm text-brand-dark cursor-pointer hover:text-brand-red">
+                    <label key={b.id} className="flex items-start space-x-2 text-xs text-zinc-700 dark:text-zinc-200 cursor-pointer hover:text-zinc-900 dark:hover:text-white p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors">
                       <input
                         type="checkbox"
                         checked={checkedBranchIds.includes(b.id)}
                         onChange={() => handleBranchCheck(b.id)}
                         disabled={triggering}
-                        className="mt-1 accent-brand-red"
+                        className="mt-0.5 accent-zinc-800 dark:accent-zinc-100"
                       />
-                      <div className="leading-tight">
-                        <div>{branchLabel}</div>
-                        <div className="text-[10px] text-brand-muted font-mono">
+                      <div className="leading-tight min-w-0 flex-1">
+                        <div className="font-medium truncate">{branchLabel}</div>
+                        <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">
                           ID: {b.store_id || "No Store ID"} | {b.platform?.toUpperCase()}
                         </div>
                       </div>
@@ -363,7 +363,7 @@ export default function MenuPullTab({ API_BASE_URL }) {
           <button
             type="submit"
             disabled={checkedBranchIds.length === 0 || triggering}
-            className="w-full bg-brand-red hover:bg-brand-red-hover text-brand-white text-sm font-semibold py-2 px-4 rounded transition-colors disabled:opacity-50"
+            className="w-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50 shadow-sm"
           >
             {triggering ? "Menjalankan..." : `Tarik ${checkedBranchIds.length} Menu`}
           </button>
@@ -372,62 +372,62 @@ export default function MenuPullTab({ API_BASE_URL }) {
 
       {/* Right Status Panel: Active/Completed Jobs List */}
       <section className="lg:col-span-2 space-y-6">
-        <div className="bg-brand-white border border-brand-red p-6 rounded-md min-h-[350px] flex flex-col">
-          <h2 className="text-base font-semibold text-brand-dark pb-2 border-b border-brand-red mb-4">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl shadow-sm min-h-[350px] flex flex-col transition-colors">
+          <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100 pb-3 border-b border-zinc-100 dark:border-zinc-800 mb-4">
             Status Penarikan Menu
           </h2>
 
           {activeJobs.length === 0 ? (
-            <div className="text-brand-muted text-sm py-16 text-center my-auto">
+            <div className="text-zinc-400 dark:text-zinc-500 text-xs py-16 text-center my-auto">
               Belum ada penarikan menu yang aktif. Silakan pilih outlet dan jalankan.
             </div>
           ) : (
             <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
               {activeJobs.map((job) => (
-                <div key={job.id} className="bg-brand-white border border-brand-red/40 p-4 rounded-md space-y-3">
+                <div key={job.id} className="bg-white dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 p-4 rounded-xl space-y-3 shadow-sm">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="text-sm font-semibold text-brand-dark">{job.name}</div>
-                      <div className="text-[10px] font-mono text-brand-muted">
+                      <div className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">{job.name}</div>
+                      <div className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 mt-0.5">
                         PLATFORM: {job.platform.toUpperCase()} | ID: {job.id}
                       </div>
                     </div>
-                    <span className={`text-xs font-semibold uppercase ${
-                      job.status === "SUCCESS" ? "text-emerald-600" :
-                      job.status === "FAILED" ? "text-rose-600" :
-                      "text-amber-600"
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                      job.status === "SUCCESS" ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300" :
+                      job.status === "FAILED" ? "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300" :
+                      "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
                     }`}>
                       {job.status}
                     </span>
                   </div>
 
                   <div className="space-y-1">
-                    <div className="flex justify-between items-center text-[10px] text-brand-muted">
+                    <div className="flex justify-between items-center text-[10px] text-zinc-400 dark:text-zinc-500">
                       <span>Langkah: {job.current_step}</span>
                       <span>{job.progress_pct}%</span>
                     </div>
-                    <div className="w-full bg-zinc-100 rounded-full h-1 overflow-hidden">
+                    <div className="w-full bg-zinc-100 dark:bg-zinc-700 rounded-full h-1 overflow-hidden">
                       <div
-                        className="bg-brand-red h-1 transition-all duration-300"
+                        className="bg-red-600 dark:bg-rose-500 h-1 transition-all duration-300"
                         style={{ width: `${job.progress_pct}%` }}
                       ></div>
                     </div>
                   </div>
 
                   {job.error_message && (
-                    <div className="text-[11px] text-rose-750 bg-rose-50 border border-rose-200 p-2 rounded">
+                    <div className="text-[11px] text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 p-2 rounded-lg">
                       {job.error_message}
                     </div>
                   )}
 
                   {job.status === "SUCCESS" && (
-                    <div className="pt-2 border-t border-zinc-100 flex justify-end gap-2">
+                    <div className="pt-2 border-t border-zinc-100 dark:border-zinc-700/60 flex justify-end gap-2">
                       {job.result_metadata?.gspread_url && (
                         <a
                           href={job.result_metadata.gspread_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-green-700 hover:bg-green-800 text-white text-[11px] font-semibold py-1.5 px-3 rounded transition-colors flex items-center gap-1.5"
+                          className="bg-green-700 hover:bg-green-800 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
                         >
                           <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 14H6v-2h6v2zm8-4H6v-2h14v2zm0-4H6V7h14v2z" />
@@ -439,7 +439,7 @@ export default function MenuPullTab({ API_BASE_URL }) {
                         href={`${API_BASE_URL}/api/jobs/download/${job.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded transition-colors"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition-colors shadow-sm"
                       >
                         Unduh Excel C5
                       </a>

@@ -30,11 +30,13 @@ const TABS = [
   },
 ];
 
-export default function NavHeader({ activeTab, onTabChange }) {
+export default function NavHeader({ activeTab, onTabChange, theme = "light", onToggleTheme }) {
+  const isDark = theme === "dark";
+
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-200 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors duration-200">
       <div className="max-w-6xl mx-auto px-6">
-        {/* Top row: branding */}
+        {/* Top row: branding + theme toggle */}
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-brand-red flex items-center justify-center shadow-md">
@@ -43,22 +45,46 @@ export default function NavHeader({ activeTab, onTabChange }) {
               </svg>
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-brand-dark leading-none">
+              <h1 className="text-lg font-bold tracking-tight text-brand-dark dark:text-zinc-100 leading-none">
                 FoodMaster Menu Portal
               </h1>
-              <p className="text-[11px] text-brand-muted mt-0.5">
+              <p className="text-[11px] text-brand-muted dark:text-zinc-400 mt-0.5">
                 Kelola menu ShopeeFood, GoFood & GrabFood
               </p>
             </div>
           </div>
 
-          {/* Connection status indicator */}
-          <div className="hidden sm:flex items-center gap-2 text-xs text-brand-muted">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            Backend terhubung
+          <div className="flex items-center gap-3">
+            {/* Connection status indicator */}
+            <div className="hidden sm:flex items-center gap-2 text-xs text-brand-muted dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              Backend terhubung
+            </div>
+
+            {/* Day / Night Mode Toggle Button */}
+            <button type="button" onClick={onToggleTheme}
+              title={isDark ? "Beralih ke Mode Siang (Light)" : "Beralih ke Mode Malam (Dark)"}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full border transition-all shadow-sm bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-amber-400 dark:border-zinc-700"
+            >
+              {isDark ? (
+                <>
+                  <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span>Siang</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                  <span>Malam</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -72,19 +98,19 @@ export default function NavHeader({ activeTab, onTabChange }) {
                 group flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg
                 transition-all duration-200 relative
                 ${activeTab === tab.id
-                  ? "text-brand-red bg-white border border-zinc-200 border-b-white -mb-px"
-                  : "text-brand-muted hover:text-brand-dark hover:bg-zinc-50"
+                  ? "text-brand-red dark:text-rose-400 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 border-b-white dark:border-b-zinc-900 -mb-px"
+                  : "text-brand-muted dark:text-zinc-400 hover:text-brand-dark dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                 }
               `}
             >
               <span className={`transition-colors duration-200 ${
-                activeTab === tab.id ? "text-brand-red" : "text-brand-muted group-hover:text-brand-dark"
+                activeTab === tab.id ? "text-brand-red dark:text-rose-400" : "text-brand-muted dark:text-zinc-400 group-hover:text-brand-dark dark:group-hover:text-zinc-100"
               }`}>
                 {tab.icon}
               </span>
               {tab.label}
               {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-brand-red rounded-full"></span>
+                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-brand-red dark:bg-rose-500 rounded-full"></span>
               )}
             </button>
           ))}

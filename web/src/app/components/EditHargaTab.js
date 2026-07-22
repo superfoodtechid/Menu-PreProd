@@ -116,8 +116,8 @@ function AdjustBar({ onApply, buttonText = "OK" }) {
             onClick={() => { setVal(String(v)); fire(mode, type, v); }}
             className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
               mode === "add"
-                ? "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
-                : "border-rose-200 text-rose-600 hover:bg-rose-50"
+                ? "border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/60"
+                : "border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/60"
             }`}
           >{mode === "add" ? "+" : "−"}{type === "nominal" ? fmt(v) : `${v}%`}</button>
         ))}
@@ -129,21 +129,21 @@ function AdjustBar({ onApply, buttonText = "OK" }) {
 function PlatformBadge({ platform, storeId, dark = false, className = "" }) {
   const p = (platform || "").toLowerCase();
   let dotColor = "bg-zinc-400";
-  let labelColor = dark ? "text-zinc-300" : "text-zinc-600";
-  let storeColor = dark ? "text-zinc-400" : "text-zinc-500";
+  let labelColor = dark ? "text-zinc-300" : "text-zinc-700 dark:text-zinc-200";
+  let storeColor = dark ? "text-zinc-400" : "text-zinc-400 dark:text-zinc-400";
 
-  if (p === "gofood" || p === "go") {
+  if (p.includes("gofood") || p.includes("go")) {
     dotColor = "bg-rose-500";
-    labelColor = dark ? "text-rose-400" : "text-rose-600";
-  } else if (p === "grab" || p === "grabfood" || p === "gr") {
+    labelColor = dark ? "text-rose-400" : "text-rose-600 dark:text-rose-400";
+  } else if (p.includes("grab")) {
     dotColor = "bg-emerald-500";
-    labelColor = dark ? "text-emerald-400" : "text-emerald-600";
-  } else if (p === "shopee" || p === "shopeefood" || p === "s") {
+    labelColor = dark ? "text-emerald-400" : "text-emerald-600 dark:text-emerald-400";
+  } else if (p.includes("shopee")) {
     dotColor = "bg-orange-500";
-    labelColor = dark ? "text-orange-400" : "text-orange-600";
-  } else if (p === "all" || p === "semua") {
+    labelColor = dark ? "text-orange-400" : "text-orange-600 dark:text-orange-400";
+  } else if (p.includes("all") || p.includes("semua")) {
     dotColor = "bg-indigo-500";
-    labelColor = dark ? "text-indigo-300" : "text-indigo-600";
+    labelColor = dark ? "text-indigo-300" : "text-indigo-600 dark:text-indigo-400";
   }
 
   return (
@@ -304,11 +304,11 @@ function StepLabel({ number, label, active, done, className = "mb-2.5" }) {
     <div className={`flex items-center gap-2 ${className}`}>
       <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 transition-colors ${
         done ? "bg-emerald-500 text-white"
-        : active ? "bg-zinc-800 text-white"
-        : "bg-zinc-100 text-zinc-400"
+        : active ? "bg-zinc-800 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
+        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500"
       }`}>{done ? "✓" : number}</span>
-      <span className={`text-xs font-semibold uppercase tracking-wider transition-colors ${
-        active || done ? "text-zinc-700" : "text-zinc-300"
+      <span className={`text-xs font-bold uppercase tracking-wider transition-colors ${
+        active || done ? "text-zinc-700 dark:text-zinc-200" : "text-zinc-400 dark:text-zinc-500"
       }`}>{label}</span>
     </div>
   );

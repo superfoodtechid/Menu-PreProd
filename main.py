@@ -134,7 +134,8 @@ class AuditTrailResponse(BaseModel):
 
 class PriceUpdateItem(BaseModel):
     item_id: str
-    category_id: str
+    category_id: Optional[str] = ""
+    item_name: Optional[str] = ""
     new_price: float
 
 class PriceUpdateRequest(BaseModel):
@@ -661,6 +662,9 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
         if not job:
             return
 
+        platform = (job.platform or "").lower()
+        logger.info(f"🚀 run_push_price_job starting for job {job_id}, platform {platform}. updates_list: {updates_list}")
+
         job.status = "RUNNING"
         job.started_at = datetime.utcnow()
         job.progress_pct = 10
@@ -673,6 +677,8 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
         total_updates = len(updates_list)
         success_count = 0
         fail_count = 0
+
+        logger.info(f"📋 Total updates to process: {total_updates}")
 
         if platform == "shopee":
             # Add project root to sys.path
@@ -732,143 +738,248 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 db.commit()
 
         elif platform == "grab":
-            from playwright.sync_api import sync_playwright
+            from playwright.async_api import async_playwright
             from grab.core.grab_api_scraper import GrabAPI, perform_login, SESSION_DIR
 
             username = account.username
             password = account.password
             store_id = outlet.store_id
 
-            job.progress_pct = 30
-            job.current_step = "Meluncurkan browser Grab..."
+            job.progress_pct = 20
+            job.current_step = "Meluncurkan browser Grab & login portal..."
             db.commit()
 
-            with sync_playwright() as p:
-                session_path = os.path.join(SESSION_DIR, f"{username}.json")
-                storage_state = session_path if os.path.exists(session_path) else None
-                
-                browser = p.chromium.launch(headless=True)
-                context = browser.new_context(
-                    storage_state=storage_state,
-                    user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-                )
-                page = context.new_page()
+            async def grab_async_flow():
+                nonlocal success_count, fail_count
+                async with async_playwright() as p:
+                    session_path = os.path.join(SESSION_DIR, f"{username}.json")
+                    storage_state = session_path if os.path.exists(session_path) else None
+                    
+                    browser = await p.chromium.launch(headless=True)
+                    context = await browser.new_context(
+                        storage_state=storage_state,
+                        user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                    )
+                    page = await context.new_page()
 
-                try:
-                    page.goto("https://merchant.grab.com/dashboard", wait_until="domcontentloaded", timeout=30000)
-                except Exception as e:
-                    logger.warning(f"Grab dashboard navigate warning: {e}")
+                    try:
+                        await page.goto("https://merchant.grab.com/dashboard", wait_until="domcontentloaded", timeout=30000)
+                    except Exception as e:
+                        logger.warning(f"Grab dashboard navigate warning: {e}")
 
-                async def grab_async_flow():
-                    nonlocal success_count, fail_count
                     api = GrabAPI(page, username, password)
                     mgid = await api.get_merchant_group_id()
                     if not mgid:
+                        logger.info("Session state invalid or expired, running perform_login...")
                         if await perform_login(page, username, password):
                             mgid = await api.get_merchant_group_id()
                             if mgid:
                                 await context.storage_state(path=session_path)
                             else:
+                                await browser.close()
                                 return "Failed to retrieve Grab merchant group ID after login."
                         else:
+                            await browser.close()
                             return "Grab login failed."
+
+                    # Navigasi ke store-specific menu page untuk mengaktifkan konteks sesi store di Grab
+                    try:
+                        menu_tab_url = f"https://merchant.grab.com/food/menu/{store_id}"
+                        logger.info(f"Navigating to Grab store menu page: {menu_tab_url}")
+                        await page.goto(menu_tab_url, wait_until="domcontentloaded", timeout=30000)
+                        await page.wait_for_timeout(3000)
+                    except Exception as e:
+                        logger.warning(f"Grab store menu page navigate warning: {e}")
 
                     menu_data, err = await api.fetch_menu(mgid, store_id, is_menu_group=False)
                     if err or not menu_data:
+                        await browser.close()
                         return f"Failed to fetch Grab menu: {err}"
 
                     grab_items_by_id = {}
+                    grab_items_by_name = {}
                     for cat in menu_data.get("categories", []):
                         items_list = cat.get("items") or cat.get("menuItems") or []
                         selling_time_id = cat.get("sellingTimeID")
                         for item in items_list:
-                            grab_items_by_id[str(item.get("itemID"))] = {
+                            info = {
                                 "item": item,
                                 "category_id": cat.get("categoryID"),
                                 "sellingTimeID": selling_time_id
                             }
+                            grab_items_by_id[str(item.get("itemID"))] = info
+                            item_name_key = (item.get("itemName") or "").strip().lower()
+                            if item_name_key:
+                                grab_items_by_name[item_name_key] = info
 
-                    for idx, update in enumerate(updates_list):
-                        item_id = update["item_id"]
-                        new_price = update["new_price"]
+                    thread_db = SessionLocal()
+                    try:
+                        items_breakdown = []
+                        # FASE 1: Push Perubahan Harga
+                        for idx, update in enumerate(updates_list):
+                            item_id = str(update["item_id"])
+                            new_price = float(update["new_price"])
+                            item_name_req = (update.get("item_name") or "").strip().lower()
 
-                        item_info = grab_items_by_id.get(item_id)
-                        if not item_info:
-                            fail_count += 1
+                            item_info = grab_items_by_id.get(item_id)
+                            if not item_info and item_name_req:
+                                item_info = grab_items_by_name.get(item_name_req)
+
+                            if not item_info:
+                                fail_count += 1
+                                item_label = update.get("item_name") or item_id
+                                trail = AuditTrail(
+                                    job_id=job.id,
+                                    outlet_id=outlet.id,
+                                    item_id=item_id,
+                                    item_name=item_label,
+                                    change_type="PRICE_UPDATE",
+                                    field_changed="price",
+                                    old_value=None,
+                                    new_value=str(new_price),
+                                    status="FAILED",
+                                    error_message=f"Item '{item_label}' (ID: {item_id}) tidak ditemukan di menu Grab aktif."
+                                )
+                                thread_db.add(trail)
+                                thread_db.commit()
+                                items_breakdown.append({
+                                    "item_id": item_id,
+                                    "item_name": item_label,
+                                    "old_price": None,
+                                    "requested_price": new_price,
+                                    "verified_price": None,
+                                    "status": "FAILED",
+                                    "error_message": f"Item '{item_label}' tidak ditemukan di menu Grab aktif."
+                                })
+                                continue
+
+                            orig_item = item_info["item"]
+                            real_item_id = str(orig_item.get("itemID"))
+                            category_id = item_info["category_id"]
+                            selling_time_id = item_info["sellingTimeID"]
+                            old_p = float(orig_item.get("priceInMin", 0)) / 100.0
+                            
+                            item_data = {
+                                "itemID": real_item_id,
+                                "itemName": orig_item.get("itemName"),
+                                "description": orig_item.get("description", ""),
+                                "priceInMin": int(new_price * 100),
+                                "availableStatus": orig_item.get("availableStatus", 1),
+                                "sellingTimeID": selling_time_id,
+                                "advancedPricing": orig_item.get("advancedPricing") or {},
+                                "purchasability": orig_item.get("purchasability") or {},
+                                "imageURL": orig_item.get("imageURL") or "",
+                                "imageURLs": orig_item.get("imageURLs") or [],
+                                "weight": orig_item.get("weight"),
+                                "itemAttributeValues": orig_item.get("itemAttributeValues") or []
+                            }
+
+                            val_ok, val_err = await api.validate_item(mgid, store_id, category_id, item_data)
+                            if val_err:
+                                logger.warning(f"Grab validation warning for item {real_item_id}: {val_err}")
+
+                            upsert_res, upsert_err = await api.upsert_item(mgid, store_id, category_id, item_data)
+                            if upsert_res and not upsert_err:
+                                success_count += 1
+                                status_str = "SUCCESS"
+                                err_msg = None
+                            else:
+                                fail_count += 1
+                                status_str = "FAILED"
+                                err_msg = upsert_err or "Unknown Grab API error."
+
                             trail = AuditTrail(
                                 job_id=job.id,
                                 outlet_id=outlet.id,
-                                item_id=item_id,
-                                item_name=item_id,
+                                item_id=real_item_id,
+                                item_name=orig_item.get("itemName", real_item_id),
                                 change_type="PRICE_UPDATE",
                                 field_changed="price",
-                                old_value=None,
+                                old_value=str(old_p),
                                 new_value=str(new_price),
-                                status="FAILED",
-                                error_message="Item ID not found in current Grab menu."
+                                status=status_str,
+                                error_message=err_msg
                             )
-                            db.add(trail)
-                            db.commit()
-                            continue
+                            thread_db.add(trail)
+                            thread_db.commit()
 
-                        orig_item = item_info["item"]
-                        category_id = item_info["category_id"]
-                        selling_time_id = item_info["sellingTimeID"]
-                        
-                        item_data = {
-                            "itemID": item_id,
-                            "itemName": orig_item.get("itemName"),
-                            "description": orig_item.get("description", ""),
-                            "priceInMin": int(new_price * 100),
-                            "availableStatus": orig_item.get("availableStatus", 1),
-                            "sellingTimeID": selling_time_id,
-                            "advancedPricing": orig_item.get("advancedPricing") or {},
-                            "purchasability": orig_item.get("purchasability") or {},
-                            "imageURL": orig_item.get("imageURL") or "",
-                            "imageURLs": orig_item.get("imageURLs") or [],
-                            "weight": orig_item.get("weight"),
-                            "itemAttributeValues": orig_item.get("itemAttributeValues") or []
-                        }
+                            items_breakdown.append({
+                                "item_id": real_item_id,
+                                "item_name": orig_item.get("itemName", real_item_id),
+                                "old_price": old_p,
+                                "requested_price": new_price,
+                                "verified_price": new_price if status_str == "SUCCESS" else None,
+                                "status": status_str,
+                                "error_message": err_msg
+                            })
 
-                        val_ok, val_err = await api.validate_item(mgid, store_id, category_id, item_data)
-                        if val_err:
-                            logger.warning(f"Grab validation warning for item {item_id}: {val_err}")
+                        # FASE 2: Memverifikasi perubahan harga dengan penarikan menu real-time
+                        if success_count > 0:
+                            logger.info("Executing Phase 2: Live re-fetch menu verification from Grab...")
+                            await page.wait_for_timeout(3000)
+                            re_menu, _ = await api.fetch_menu(mgid, store_id, is_menu_group=False)
+                            if re_menu:
+                                re_items = {}
+                                for cat in re_menu.get("categories", []):
+                                    for item in (cat.get("items") or cat.get("menuItems") or []):
+                                        re_items[str(item.get("itemID"))] = item
+                                        n_key = (item.get("itemName") or "").strip().lower()
+                                        if n_key:
+                                            re_items[n_key] = item
 
-                        upsert_res, upsert_err = await api.upsert_item(mgid, store_id, category_id, item_data)
-                        if upsert_res and not upsert_err:
-                            success_count += 1
-                            status_str = "SUCCESS"
-                            err_msg = None
-                        else:
-                            fail_count += 1
-                            status_str = "FAILED"
-                            err_msg = upsert_err or "Unknown Grab API error."
+                                for b_item in items_breakdown:
+                                    if b_item["status"] == "SUCCESS":
+                                        bid = b_item["item_id"]
+                                        bname = (b_item["item_name"] or "").strip().lower()
+                                        live_item = re_items.get(bid) or re_items.get(bname)
+                                        if live_item:
+                                            live_p = float(live_item.get("priceInMin", 0)) / 100.0
+                                            b_item["verified_price"] = live_p
+                                            if abs(live_p - b_item["requested_price"]) > 0.01:
+                                                b_item["status"] = "UNVERIFIED"
+                                                b_item["error_message"] = f"Verification mismatch: requested Rp {b_item['requested_price']}, live Rp {live_p}"
 
-                        trail = AuditTrail(
-                            job_id=job.id,
-                            outlet_id=outlet.id,
-                            item_id=item_id,
-                            item_name=orig_item.get("itemName", item_id),
-                            change_type="PRICE_UPDATE",
-                            field_changed="price",
-                            old_value=str(float(orig_item.get("priceInMin", 0)) / 100.0),
-                            new_value=str(new_price),
-                            status=status_str,
-                            error_message=err_msg
-                        )
-                        db.add(trail)
-                        db.commit()
+                        # Store items_breakdown in job.result_metadata
+                        job_record = thread_db.query(Job).filter(Job.id == job.id).first()
+                        if job_record:
+                            job_record.result_metadata = {
+                                "total_updates": total_updates,
+                                "success_count": success_count,
+                                "fail_count": fail_count,
+                                "items_breakdown": items_breakdown,
+                                "completed_at": datetime.utcnow().isoformat()
+                            }
+                            thread_db.commit()
+                    finally:
+                        thread_db.close()
 
+                    await browser.close()
                     return None
 
+            import threading
+            err_msg = None
+            def run_in_thread():
+                nonlocal err_msg
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-                err_msg = loop.run_until_complete(grab_async_flow())
-                loop.close()
-                browser.close()
+                try:
+                    err_msg = loop.run_until_complete(grab_async_flow())
+                except Exception as e:
+                    import traceback
+                    err_msg = str(e)
+                    traceback.print_exc()
+                finally:
+                    try:
+                        loop.close()
+                    except:
+                        pass
 
-                if err_msg:
-                    raise Exception(err_msg)
+            t = threading.Thread(target=run_in_thread)
+            t.start()
+            t.join()
+
+            if err_msg:
+                raise Exception(err_msg)
 
         elif platform == "gofood":
             from playwright.sync_api import sync_playwright
@@ -1048,20 +1159,52 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
 
                 browser.close()
 
-        if fail_count > 0 and success_count == 0:
+        if total_updates == 0:
+            job.status = "FAILED"
+            job.error_message = "Tidak ada item yang dipilih untuk dipublikasikan."
+            job.current_step = "Gagal: tidak ada item dipublikasikan."
+        elif success_count == total_updates and success_count > 0:
+            job.status = "SUCCESS"
+            job.error_message = None
+            job.current_step = f"Pembaruan harga sukses & terverifikasi! ({success_count}/{total_updates} item berhasil)."
+        elif success_count > 0 and fail_count > 0:
+            job.status = "PARTIAL_SUCCESS"
+            job.error_message = f"Sebagian item gagal: {success_count} sukses, {fail_count} gagal dari {total_updates} item."
+            job.current_step = f"Sebagian item gagal diperbarui ({success_count} sukses, {fail_count} gagal)."
+        else:
             job.status = "FAILED"
             job.error_message = f"Pembaruan harga gagal! 0 dari {total_updates} item berhasil diperbarui."
-        elif fail_count > 0 and success_count > 0:
-            job.status = "PARTIAL_SUCCESS"
-            job.error_message = f"Sebagian item gagal diperbarui ({success_count} sukses, {fail_count} gagal)."
-        else:
-            job.status = "SUCCESS"
+            job.current_step = f"Gagal memperbarui harga! (0/{total_updates} berhasil)."
+
+        trails = db.query(AuditTrail).filter(AuditTrail.job_id == job.id).all()
+        breakdown_list = []
+        for t in trails:
+            old_p = None
+            try:
+                if t.old_value: old_p = float(t.old_value)
+            except: pass
+            
+            new_p = None
+            try:
+                if t.new_value: new_p = float(t.new_value)
+            except: pass
+
+            breakdown_list.append({
+                "item_id": t.item_id,
+                "item_name": t.item_name or t.item_id,
+                "old_price": old_p,
+                "requested_price": new_p,
+                "verified_price": new_p if t.status == "SUCCESS" else None,
+                "status": t.status,
+                "error_message": t.error_message
+            })
 
         job.progress_pct = 100
-        job.current_step = f"Pembaruan harga selesai! {success_count} sukses, {fail_count} gagal."
         job.result_metadata = {
+            "total_updates": total_updates,
             "success_count": success_count,
             "fail_count": fail_count,
+            "items_breakdown": breakdown_list,
             "completed_at": datetime.utcnow().isoformat()
         }
         job.completed_at = datetime.utcnow()
@@ -1096,7 +1239,8 @@ def trigger_push_price_job(request: PriceUpdateRequest, background_tasks: Backgr
     for item in request.updates:
         updates_payload.append({
             "item_id": item.item_id,
-            "category_id": item.category_id,
+            "category_id": item.category_id or "",
+            "item_name": item.item_name or "",
             "new_price": item.new_price
         })
 
@@ -1305,13 +1449,22 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
             desc = str(row[header_map['Description']]).strip() if 'Description' in header_map and row[header_map['Description']] is not None else ""
             
             p_val = row[header_map['Current Real Price (Rp)']]
+            fake_p_val = row[header_map['Current Fake Price (Rp)']] if 'Current Fake Price (Rp)' in header_map else None
             try:
                 price_val = int(float(p_val)) if p_val is not None else 0
             except:
                 price_val = 0
+
+            try:
+                fake_price_val = int(float(fake_p_val)) if fake_p_val is not None else 0
+            except:
+                fake_price_val = 0
                 
             avail_val = str(row[header_map['Availability']]).strip() if 'Availability' in header_map and row[header_map['Availability']] is not None else "Available"
             
+            is_promo_col = str(row[header_map['Sedang promo']]).strip().lower() if 'Sedang promo' in header_map and row[header_map['Sedang promo']] is not None else ""
+            is_in_promo = (is_promo_col in ("ya", "yes", "true", "1")) or (fake_price_val > price_val and fake_price_val > 0)
+
             if item_id and item_name:
                 items.append({
                     "id": item_id,
@@ -1320,7 +1473,8 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
                     "name": item_name,
                     "description": desc,
                     "price": price_val,
-                    "availability": avail_val
+                    "availability": avail_val,
+                    "is_in_promo": is_in_promo
                 })
         return items
     except Exception as e:

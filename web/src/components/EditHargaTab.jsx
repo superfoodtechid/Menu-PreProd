@@ -206,8 +206,13 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                             />
                           )}
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               <p className="text-[15px] truncate font-medium text-zinc-700">{item.name}</p>
+                              {item.is_in_promo && (
+                                <span title="Item sedang dalam promo aktif di portal. Harga dasar dikunci." className="inline-flex items-center gap-1 rounded bg-purple-100 border border-purple-200 px-1.5 py-0.5 text-[11px] font-bold text-purple-800 shrink-0">
+                                  ⚡ PROMO AKTIF
+                                </span>
+                              )}
                               {isViolation && (
                                 <span title={violationMsg} className="inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full bg-red-600 text-[13px] font-bold text-white shadow-sm">!</span>
                               )}
@@ -227,10 +232,14 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                         <div className="flex items-center gap-1 shrink-0">
                           <span className="text-[13px] text-zinc-400">Rp</span>
                           <input type="text" inputMode="numeric"
+                            disabled={item.is_in_promo}
+                            title={item.is_in_promo ? "Harga dikunci oleh portal karena menu sedang dalam promo aktif" : ""}
                             value={fmt(cur)}
                             onChange={(e) => onChange(branch.id, item.id, e.target.value)}
                             className={`w-24 text-right text-[15px] font-semibold rounded-md px-2 py-1 border transition-colors focus:outline-none focus:ring-1 ${
-                              isViolation
+                              item.is_in_promo
+                                ? "border-purple-200 bg-purple-50/50 text-purple-900 cursor-not-allowed opacity-80"
+                                : isViolation
                                 ? "border-red-400 bg-white text-red-700 focus:border-red-500 focus:ring-red-200"
                                 : diff
                                 ? "border-amber-300 bg-white text-slate-700 focus:ring-amber-200"
@@ -670,21 +679,20 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                     progress_pct: job.progress_pct,
                     current_step: job.current_step,
                     error_message: job.error_message,
+                    result_metadata: job.result_metadata
                   }
                 : j
             )
           );
 
-          if (job.status === "SUCCESS" || job.status === "FAILED") {
+          if (job.status === "SUCCESS" || job.status === "FAILED" || job.status === "PARTIAL_SUCCESS") {
             clearInterval(pushPollingIntervalsRef.current[jobId]);
             delete pushPollingIntervalsRef.current[jobId];
 
-            if (job.status === "SUCCESS") {
-              // Trigger Auto-Pull & Compare verification automatically upon push completion
-              const targetBranch = branches.filter(b => b.id === branchId);
-              if (targetBranch.length > 0) {
-                triggerAutoPull(targetBranch);
-              }
+            // Refresh local menu data for target branch quietly without secondary loading card
+            const targetBranch = branches.filter(b => b.id === branchId);
+            if (targetBranch.length > 0) {
+              fetchMenusAndVerify(targetBranch, intendedPushPrices);
             }
           }
         })
@@ -718,6 +726,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           updates.push({
             item_id: i.id,
             category_id: i.category_id || "",
+            item_name: i.name || "",
             new_price: curPrice
           });
           branchIntendedMap[i.id] = curPrice;
@@ -1243,50 +1252,146 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
         </section>
       )}
 
-      {/* ── Active Push Price Jobs Section ── */}
+      {/* ── Active Push Price Jobs & Real-Time Verification Section (Single Unified Loading Process) ── */}
       {activeJobs.length > 0 && (
-        <section className="surface-card space-y-4 p-5">
-          <h3 className="text-[15px] font-semibold text-zinc-700 uppercase tracking-wider">
-            Status Pembaruan Harga ke Merchant Portal
-          </h3>
-          <div className="space-y-3 max-h-60 overflow-y-auto">
-            {activeJobs.map(job => (
-              <div key={job.id} className="border border-red-100 p-4 rounded-lg flex flex-col gap-2.5 bg-red-50/30">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="text-[15px] font-semibold text-zinc-700">{job.name}</div>
-                    <div className="text-[13px] text-zinc-400">
-                      JOB ID: {job.id} · PLATFORM: {job.platform?.toUpperCase()}
+        <section className="surface-card space-y-4 p-5 shadow-sm border border-zinc-200/80 rounded-2xl">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[14px] font-bold text-zinc-800 uppercase tracking-wider flex items-center gap-2">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-red-600 animate-pulse" />
+              Proses Pembaruan Harga & Verifikasi Real-Time
+            </h3>
+            <span className="text-[12px] text-zinc-400 font-medium">Satu Proses Terpadu</span>
+          </div>
+          <div className="space-y-3.5 max-h-[400px] overflow-y-auto pr-1">
+            {activeJobs.map(job => {
+              const isRunning = job.status === "PENDING" || job.status === "RUNNING";
+              const isSuccess = job.status === "SUCCESS";
+              const isFailed = job.status === "FAILED";
+              const isPartial = job.status === "PARTIAL_SUCCESS";
+
+              return (
+                <div 
+                  key={job.id} 
+                  className={`p-4 rounded-xl border transition-all flex flex-col gap-3 ${
+                    isSuccess ? "bg-emerald-50/40 border-emerald-200" :
+                    isFailed ? "bg-red-50/50 border-red-200" :
+                    isPartial ? "bg-amber-50/40 border-amber-200" :
+                    "bg-white border-zinc-200 shadow-sm"
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="text-[15px] font-bold text-zinc-800 flex items-center gap-2">
+                        {job.name}
+                        {isRunning && (
+                          <span className="inline-flex items-center gap-1 text-[12px] text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                            <svg className="animate-spin h-3 w-3 text-amber-600" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Memproses...
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[12px] text-zinc-400 font-mono mt-0.5">
+                        JOB ID: {job.id} · PLATFORM: {job.platform?.toUpperCase()}
+                      </div>
+                    </div>
+                    <span className={`text-[12px] font-bold uppercase px-3 py-1 rounded-full ${
+                      isSuccess ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                      isFailed ? "bg-red-100 text-red-800 border border-red-200" :
+                      isPartial ? "bg-amber-100 text-amber-800 border border-amber-200" :
+                      "bg-blue-100 text-blue-800 border border-blue-200"
+                    }`}>
+                      {job.status}
+                    </span>
+                  </div>
+                  
+                  {/* Progress Bar & Percentage */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[12px] font-semibold text-zinc-600">
+                      <span>Proses Push & Verifikasi</span>
+                      <span>{job.progress_pct || 0}%</span>
+                    </div>
+                    <div className="w-full bg-zinc-100 rounded-full h-2 overflow-hidden border border-zinc-200/60">
+                      <div 
+                        className={`h-full transition-all duration-500 rounded-full ${
+                          isSuccess ? "bg-emerald-500" :
+                          isFailed ? "bg-red-500" :
+                          isPartial ? "bg-amber-500" :
+                          "bg-gradient-to-r from-red-500 to-amber-500"
+                        }`} 
+                        style={{ width: `${job.progress_pct || 0}%` }} 
+                      />
                     </div>
                   </div>
-                  <span className={`text-[13px] font-bold uppercase px-2.5 py-1 rounded-full ${
-                    job.status === "SUCCESS" ? "bg-emerald-100 text-emerald-700" :
-                    job.status === "FAILED" ? "bg-red-100 text-red-700" :
-                    job.status === "PARTIAL_SUCCESS" ? "bg-amber-100 text-amber-700" :
-                    "bg-amber-100 text-amber-700"
-                  }`}>{job.status}</span>
-                </div>
-                
-                {/* progress bar */}
-                <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
-                  <div className={`h-full transition-all duration-500 ${
-                    job.status === "SUCCESS" ? "bg-emerald-500" :
-                    job.status === "FAILED" ? "bg-red-500" :
-                    job.status === "PARTIAL_SUCCESS" ? "bg-amber-500" :
-                    "bg-red-600"
-                  }`} style={{ width: `${job.progress_pct}%` }} />
-                </div>
-                
-                <div className="text-[13px] text-zinc-500 font-medium">
-                  {job.current_step || "Mengantre..."}
-                </div>
-                {job.error_message && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-[13px] text-red-700">
-                    Error: {job.error_message}
+                  
+                  {/* Live Step Description */}
+                  <div className="text-[13px] text-zinc-700 font-medium flex items-center gap-2 bg-white/70 p-2.5 rounded-lg border border-zinc-100">
+                    <span className="text-zinc-400">ℹ️</span>
+                    <span>{job.current_step || "Mengantrekan tugas..."}</span>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* Explicit Error Banner when Failed or Partial */}
+                  {(job.error_message || isFailed) && (
+                    <div className="rounded-xl border border-red-200 bg-red-50/90 p-3 flex items-start gap-2 text-[13px] text-red-800 font-medium shadow-sm">
+                      <span className="text-base">⚠️</span>
+                      <div className="flex-1">
+                        <div className="font-bold text-red-900 mb-0.5">Detail Kesalahan Pembaruan:</div>
+                        <div>{job.error_message || "Pembaruan harga tidak dapat diselesaikan atau 0 item terverifikasi."}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rincian Verifikasi Hasil Per Item */}
+                  {job.result_metadata?.items_breakdown && job.result_metadata.items_breakdown.length > 0 && (
+                    <div className="mt-1 space-y-2">
+                      <div className="text-[12px] font-bold text-zinc-700 uppercase tracking-wider flex items-center justify-between">
+                        <span>📋 Rincian Hasil Verifikasi Per Item ({job.result_metadata.items_breakdown.length} Menu)</span>
+                      </div>
+                      <div className="overflow-x-auto border border-zinc-200/80 rounded-xl bg-white shadow-xs">
+                        <table className="w-full text-left text-[12px]">
+                          <thead className="bg-zinc-50 border-b border-zinc-200/80 font-semibold text-zinc-600">
+                            <tr>
+                              <th className="py-2 px-3">Nama Menu</th>
+                              <th className="py-2 px-3">Harga Asli</th>
+                              <th className="py-2 px-3">Harga Diminta</th>
+                              <th className="py-2 px-3">Verified Live</th>
+                              <th className="py-2 px-3">Status</th>
+                              <th className="py-2 px-3">Keterangan / Error</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-100">
+                            {job.result_metadata.items_breakdown.map((item, idx) => (
+                              <tr key={idx} className={item.status === 'SUCCESS' ? 'bg-emerald-50/20' : 'bg-red-50/20'}>
+                                <td className="py-2 px-3 font-semibold text-zinc-800">{item.item_name}</td>
+                                <td className="py-2 px-3 text-zinc-500">{item.old_price ? `Rp ${Number(item.old_price).toLocaleString('id-ID')}` : '-'}</td>
+                                <td className="py-2 px-3 font-medium text-zinc-800">{item.requested_price ? `Rp ${Number(item.requested_price).toLocaleString('id-ID')}` : '-'}</td>
+                                <td className="py-2 px-3 font-medium text-emerald-700">{item.verified_price ? `Rp ${Number(item.verified_price).toLocaleString('id-ID')}` : '-'}</td>
+                                <td className="py-2 px-3">
+                                  <span className={`inline-flex px-2 py-0.5 font-bold rounded-md text-[11px] ${
+                                    item.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {item.status === 'SUCCESS' ? 'SUKSES' : 'GAGAL'}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 text-[11px] text-zinc-500">
+                                  {item.error_message ? (
+                                    <span className="text-red-700 font-medium">{item.error_message}</span>
+                                  ) : (
+                                    <span className="text-emerald-700 font-medium">Terverifikasi di portal</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

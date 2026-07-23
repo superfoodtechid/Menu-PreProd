@@ -54,7 +54,7 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
     # 2. Run Playwright Grab download flow
     print(f"[*] Meluncurkan browser untuk menarik menu dari portal Grab Merchant...")
     try:
-        json_path, error_msg = run_async(run_api_download_for_portal(username, password))
+        json_path, error_msg = run_async(run_api_download_for_portal(username, password, target_store_id=store_id))
         if error_msg or not json_path or not os.path.exists(json_path):
             print(f"[!] Gagal menarik menu GrabFood: {error_msg}")
             return False, f"Gagal menarik menu GrabFood: {error_msg}"

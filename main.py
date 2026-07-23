@@ -1394,8 +1394,8 @@ def get_menu_cache_status(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
 
     job = db.query(Job).filter(
         Job.outlet_id == outlet_id,
-        Job.job_type == "PULL",
-        Job.status == "SUCCESS"
+        Job.job_type.in_(["PULL", "PUSH_UPDATE"]),
+        Job.status.in_(["SUCCESS", "PARTIAL_SUCCESS"])
     ).order_by(Job.completed_at.desc()).first()
 
     last_pulled_at = None
@@ -1418,7 +1418,9 @@ def get_menu_cache_status(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
         if excel_files:
             excel_exists = True
             mtime = datetime.fromtimestamp(os.path.getmtime(excel_files[0]))
-            if not last_pulled_at or mtime > last_pulled_at:
+            mtime_naive = mtime.replace(tzinfo=None) if mtime.tzinfo else mtime
+            last_pulled_naive = last_pulled_at.replace(tzinfo=None) if last_pulled_at and last_pulled_at.tzinfo else last_pulled_at
+            if not last_pulled_at or mtime_naive > last_pulled_naive:
                 last_pulled_at = mtime
 
     if not last_pulled_at or not excel_exists:
@@ -1465,8 +1467,8 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
     """Retrieve the menu items list of an outlet from the latest pulled Excel sheet catalog."""
     job = db.query(Job).filter(
         Job.outlet_id == outlet_id,
-        Job.job_type == "PULL",
-        Job.status == "SUCCESS"
+        Job.job_type.in_(["PULL", "PUSH_UPDATE"]),
+        Job.status.in_(["SUCCESS", "PARTIAL_SUCCESS"])
     ).order_by(Job.completed_at.desc()).first()
     
     excel_path = None

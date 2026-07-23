@@ -34,7 +34,7 @@ function checkViolation(platform, oldPrice, newPrice) {
 const CHIPS_NOM = [500, 1000, 2000, 5000];
 const CHIPS_PCT = [5, 10, 15, 20];
 
-function AdjustBar({ onApply, buttonText = "OK" }) {
+function AdjustBar({ onApply, buttonText = "OK", extraActions = null }) {
   const [mode, setMode] = useState("add");
   const [type, setType] = useState("nominal");
   const [val, setVal] = useState("");
@@ -103,14 +103,22 @@ function AdjustBar({ onApply, buttonText = "OK" }) {
         >{buttonText}</button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-0.5 text-[13px] text-slate-400">Nilai cepat:</span>
-        {chips.map((v) => (
-          <button key={v} type="button"
-            onClick={() => setVal(String(v))}
-            className={`rounded-full border bg-white px-2.5 py-0.5 text-[13px] font-semibold transition-colors ${mode === "add" ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50" : "border-red-200 text-red-700 hover:bg-red-50"}`}
-          >{mode === "add" ? "+" : "−"}{type === "nominal" ? fmt(v) : `${v}%`}</button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-0.5 text-[13px] text-slate-400 font-medium">Nilai cepat:</span>
+          {chips.map((v) => (
+            <button key={v} type="button"
+              onClick={() => setVal(String(v))}
+              className={`rounded-full border bg-white px-2.5 py-0.5 text-[13px] font-semibold transition-colors ${mode === "add" ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50" : "border-red-200 text-red-700 hover:bg-red-50"}`}
+            >{mode === "add" ? "+" : "−"}{type === "nominal" ? fmt(v) : `${v}%`}</button>
+          ))}
+        </div>
+
+        {extraActions && (
+          <div className="flex items-center gap-2 shrink-0">
+            {extraActions}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1221,87 +1229,32 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 Terapkan ke <strong>{preview.length} brand</strong> terpilih. Saat ini ada <strong className="text-red-700">{totalChanges} perubahan</strong>.
               </p>
             </div>
-
-            {/* Mode Switcher Tabs */}
-            <div className="flex items-center gap-2 self-start lg:self-auto">
-              <span className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Mode Edit:</span>
-              <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                <button type="button" onClick={() => setItemEditMode("single")}
-                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all ${
-                    itemEditMode === "single" ? "bg-red-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                >Single Select Item</button>
-                <button type="button" onClick={() => setItemEditMode("multi")}
-                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all ${
-                    itemEditMode === "multi" ? "bg-red-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                >Multi Select Item ({selectedItemIds.length})</button>
-                <button type="button" onClick={() => setItemEditMode("all")}
-                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all ${
-                    itemEditMode === "all" ? "bg-red-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                >Apply to All Item</button>
-              </div>
-            </div>
           </div>
 
-          {/* Sub-bar for Multi Select Item */}
-          {itemEditMode === "multi" && (
-            <div className="flex items-center justify-between bg-amber-50/80 border border-amber-200 rounded-xl p-3 text-[13px]">
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={() => selectAllVisibleItems(preview)} className="font-bold text-red-700 hover:underline">
-                  ✓ Pilih Semua Item ({preview.reduce((acc, b) => acc + (branchMenus[b.id] || []).length, 0)})
-                </button>
-                <span className="text-amber-300">|</span>
-                <button type="button" onClick={deselectAllItems} className="font-medium text-slate-600 hover:underline">
-                  Batal Pilih
-                </button>
-              </div>
-              <span className="font-bold text-amber-800">{selectedItemIds.length} item terpilih</span>
-            </div>
-          )}
-
           {/* Adjust Bar & Actions */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-1">
-            <div className="flex-1 min-w-0">
-              <AdjustBar
-                onApply={(m, t, v) => {
-                  if (itemEditMode === "multi") {
-                    if (selectedItemIds.length === 0) {
-                      alert("Pilih setidaknya 1 item terlebih dahulu.");
-                      return;
-                    }
-                    bulkAdj([], m, t, v, selectedItemIds);
-                  } else {
-                    bulkAdj([], m, t, v);
-                  }
-                }}
-                buttonText={
-                  itemEditMode === "multi"
-                    ? `Terapkan ke ${selectedItemIds.length} Item Terpilih`
-                    : itemEditMode === "all"
-                    ? "Terapkan ke Semua Item"
-                    : "Terapkan Perubahan"
-                }
-              />
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0 pt-2 lg:pt-0">
-              <button type="button" onClick={resetAll}
-                className="px-3.5 py-2 text-[14px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors shrink-0"
-              >
-                Reset Harga
-              </button>
-              <button type="button" onClick={() => openPushConfirmationModal(checkedIds)} disabled={pushing || totalChanges === 0}
-                className="primary-action gap-2 px-5 py-2 text-[14px]"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                {pushing ? "Mengirim job..." : `Push ${totalChanges} Perubahan`}
-              </button>
-            </div>
+          <div className="pt-1">
+            <AdjustBar
+              onApply={(m, t, v) => bulkAdj([], m, t, v)}
+              buttonText="Terapkan Perubahan"
+              extraActions={
+                <>
+                  <button type="button" onClick={resetAll}
+                    className="px-3.5 py-1.5 text-[13px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors shrink-0 cursor-pointer"
+                  >
+                    Reset Harga
+                  </button>
+                  <button type="button" onClick={() => openPushConfirmationModal(checkedIds)} disabled={pushing || totalChanges === 0}
+                    className="primary-action gap-2 px-4 py-1.5 text-[13px] font-bold shrink-0"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    {pushing ? "Mengirim job..." : `Push ${totalChanges} Perubahan`}
+                  </button>
+                </>
+              }
+            />
           </div>
         </section>
       )}

@@ -588,6 +588,18 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
   }, [API_BASE_URL, clearSyncPolling, fetchMenusAndVerify, intendedPushPrices]);
 
+  const [cacheInfo, setCacheInfo] = useState(null);
+
+  const fetchCacheStatus = (branchId) => {
+    if (!branchId) return;
+    fetch(`${API_BASE_URL}/api/outlets/${branchId}/menu-cache-status`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) setCacheInfo(data);
+      })
+      .catch(err => console.error("Error fetching cache status:", err));
+  };
+
   // When selected parent (Outlet) changes
   const handleSelectOutlet = (name) => {
     setSelectedParent(name);
@@ -597,6 +609,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setSelectedBrandId("");
     setCheckedIds([]);
     setSyncPhase("idle");
+    setCacheInfo(null);
     triggerGSheetSync();
   };
 
@@ -606,6 +619,8 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setCheckedIds([branchId]);
     setOpenBranchDropdown(false);
     setSyncPhase("idle");
+    setCacheInfo(null);
+    fetchCacheStatus(branchId);
     triggerGSheetSync();
   };
 
@@ -1072,22 +1087,61 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
         </div>
 
-        {/* Start Pull Button */}
+        {/* Pull Actions & 24h Cache Section */}
         {selectedBrandId && (
-          <div className="pt-2 border-t border-red-100 flex justify-end">
-            <button
-              type="button"
-              disabled={syncPhase === "syncing"}
-              onClick={handleStartPullAndEdit}
-              className="primary-action gap-2 px-6 py-2.5 text-[15px]"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              {syncPhase === "syncing"
-                ? "Sedang Menarik Menu Real-Time..."
-                : `Tarik Real-Time Menu & Edit Harga`}
-            </button>
+          <div className="pt-3 border-t border-red-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-[13px] text-zinc-600 font-medium flex items-center gap-2">
+              {cacheInfo?.has_cache ? (
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${
+                  cacheInfo.is_valid_24h 
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
+                    : "bg-amber-50 text-amber-800 border-amber-200"
+                }`}>
+                  <span>{cacheInfo.is_valid_24h ? "✅" : "⚠️"}</span>
+                  <span>
+                    Terakhir ditarik: <strong>{cacheInfo.human_age}</strong>
+                    {!cacheInfo.is_valid_24h && " (>24 jam)"}
+                  </span>
+                </span>
+              ) : (
+                <span className="text-zinc-400 font-normal">Belum ada cache menu lokal.</span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* Existing Pull / Fast Load Cached Button */}
+              {cacheInfo?.has_cache && (
+                <button
+                  type="button"
+                  disabled={syncPhase === "syncing"}
+                  onClick={handleSkipSync}
+                  className="px-4 py-2.5 rounded-xl font-bold text-[14px] bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+                  title="Tampilkan data menu cached tanpa membuka browser"
+                >
+                  <span>⚡ Buka Menu Cached ({cacheInfo.human_age})</span>
+                </button>
+              )}
+
+              {/* Fresh Pull Button (Always Live Syncs) */}
+              <button
+                type="button"
+                disabled={syncPhase === "syncing"}
+                onClick={handleStartPullAndEdit}
+                className={`primary-action gap-2 px-5 py-2.5 text-[14px] ${
+                  cacheInfo?.has_cache ? "bg-red-800 hover:bg-red-900" : ""
+                }`}
+                title="Meluncurkan browser untuk tarik menu ter-fresh dari portal merchant"
+              >
+                <svg className={`w-4 h-4 ${syncPhase === "syncing" ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {syncPhase === "syncing"
+                  ? "Sedang Menarik Menu Real-Time..."
+                  : cacheInfo?.has_cache
+                  ? "🔄 Tarik Ulang Menu Fresh (Live)"
+                  : "Tarik Real-Time Menu & Edit Harga"}
+              </button>
+            </div>
           </div>
         )}
       </section>

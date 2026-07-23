@@ -1385,6 +1385,81 @@ def get_pricing_quota(outlet_id: uuid.UUID, item_id: str, db: Session = Depends(
         "max_increase_pct": max_increase_pct
     }
 
+@app.get("/api/outlets/{outlet_id}/menu-cache-status")
+def get_menu_cache_status(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
+    """Check whether a valid menu pull cache exists for an outlet within 24 hours."""
+    outlet = db.query(Outlet).filter(Outlet.id == outlet_id).first()
+    if not outlet:
+        raise HTTPException(status_code=404, detail="Outlet not found")
+
+    job = db.query(Job).filter(
+        Job.outlet_id == outlet_id,
+        Job.job_type == "PULL",
+        Job.status == "SUCCESS"
+    ).order_by(Job.completed_at.desc()).first()
+
+    last_pulled_at = None
+    excel_exists = False
+    
+    if job:
+        last_pulled_at = job.completed_at or job.created_at
+        excel_path = job.result_metadata.get("excel_path") if job.result_metadata else None
+        if excel_path and os.path.exists(excel_path):
+            excel_exists = True
+
+    if not excel_exists:
+        # Fallback check file mtime on exports folder
+        import re
+        raw_outlet = outlet.nama_outlet or outlet.nama_resto_final or outlet.merchant_name or 'unknown'
+        clean_outlet = "".join(c for c in raw_outlet if c.isalnum() or c in (' ', '_', '-')).strip()
+        clean_outlet = re.sub(r'\s+', ' ', clean_outlet).lower()
+        exports_dir = BASE_DIR / "data" / "exports" / outlet.platform / clean_outlet
+        excel_files = list(exports_dir.glob("*.xlsx")) if exports_dir.exists() else []
+        if excel_files:
+            excel_exists = True
+            mtime = datetime.fromtimestamp(os.path.getmtime(excel_files[0]))
+            if not last_pulled_at or mtime > last_pulled_at:
+                last_pulled_at = mtime
+
+    if not last_pulled_at or not excel_exists:
+        return {
+            "has_cache": False,
+            "is_valid_24h": False,
+            "last_pulled_at": None,
+            "cache_age_hours": None,
+            "human_age": "Belum pernah ditarik"
+        }
+
+    now = datetime.utcnow()
+    if hasattr(last_pulled_at, "tzinfo") and last_pulled_at.tzinfo is not None:
+        last_pulled_at_naive = last_pulled_at.replace(tzinfo=None)
+    else:
+        last_pulled_at_naive = last_pulled_at
+
+    age_seconds = (now - last_pulled_at_naive).total_seconds()
+    age_hours = round(age_seconds / 3600.0, 1)
+    is_valid_24h = age_hours <= 24.0
+
+    if age_seconds < 60:
+        human_age = "Baru saja"
+    elif age_seconds < 3600:
+        mins = int(age_seconds // 60)
+        human_age = f"{mins} menit lalu"
+    elif age_seconds < 86400:
+        hrs = int(age_seconds // 3600)
+        human_age = f"{hrs} jam lalu"
+    else:
+        days = int(age_seconds // 86400)
+        human_age = f"{days} hari lalu"
+
+    return {
+        "has_cache": excel_exists,
+        "is_valid_24h": is_valid_24h,
+        "last_pulled_at": last_pulled_at.isoformat(),
+        "cache_age_hours": age_hours,
+        "human_age": human_age
+    }
+
 @app.get("/api/outlets/{outlet_id}/menu-items")
 def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
     """Retrieve the menu items list of an outlet from the latest pulled Excel sheet catalog."""
@@ -1416,6 +1491,19 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
 
     if not excel_path or not os.path.exists(excel_path):
         return []
+
+    # Query AuditTrail to detect items locked by promo constraints from recent jobs
+    promo_item_ids = set()
+    try:
+        promo_trails = db.query(AuditTrail).filter(
+            AuditTrail.outlet_id == outlet_id,
+            (AuditTrail.error_message.ilike("%promo%") | AuditTrail.error_message.ilike("%campaign%"))
+        ).all()
+        for pt in promo_trails:
+            if pt.item_id:
+                promo_item_ids.add(str(pt.item_id))
+    except Exception as ex:
+        logger.warning(f"Error querying promo audit trails: {ex}")
 
     try:
         import openpyxl
@@ -1463,7 +1551,7 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
             avail_val = str(row[header_map['Availability']]).strip() if 'Availability' in header_map and row[header_map['Availability']] is not None else "Available"
             
             is_promo_col = str(row[header_map['Sedang promo']]).strip().lower() if 'Sedang promo' in header_map and row[header_map['Sedang promo']] is not None else ""
-            is_in_promo = (is_promo_col in ("ya", "yes", "true", "1")) or (fake_price_val > price_val and fake_price_val > 0)
+            is_in_promo = (is_promo_col in ("ya", "yes", "true", "1")) or (fake_price_val > price_val and fake_price_val > 0) or (item_id in promo_item_ids)
 
             if item_id and item_name:
                 items.append({

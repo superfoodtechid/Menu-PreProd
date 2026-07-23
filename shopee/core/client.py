@@ -171,9 +171,14 @@ class ShopeeModifyClient:
         params = {"dish_id": dish_id}
         try:
             resp = self.session.get(url, headers=self._seller_headers(override_entity_id=store_id), params=params, timeout=15)
-            data = resp.json()
-            if data.get("code") == 0:
-                return data.get("data", {}).get("dish")
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("code") == 0:
+                    return data.get("data", {}).get("dish")
+                else:
+                    self.last_error = f"API error: code={data.get('code')} msg={data.get('msg')}"
+            else:
+                self.last_error = f"HTTP {resp.status_code}: Item ID {dish_id} tidak ditemukan di portal Shopee."
         except Exception as e:
             self.last_error = str(e)
         return None

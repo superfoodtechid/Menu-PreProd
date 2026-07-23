@@ -117,38 +117,12 @@ function AdjustBar({ onApply, buttonText = "OK" }) {
 }
 
 // ─── Branch Card ──────────────────────────────────────────────────────────────
-function BranchCard({ branch, items = [], edits, verification = {}, onChange, onBulkAdj, onReset, onSave, onApplyToAll, totalBranches, saving, saved }) {
+// ─── Branch Card ──────────────────────────────────────────────────────────────
+function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode = "single", selectedItemIds = [], onToggleSelectItem, onChange, onBulkAdj, onReset, onSave, onApplyToAll, totalBranches, saving, saved }) {
   const label = branch.brand || branch.nama_resto_final || branch.merchant_name;
   const groups = group(items);
   const changed = items.filter((i) => (edits[i.id] ?? i.price) !== i.price).length;
   const [showAdj, setShowAdj] = useState(false);
-
-  // Item Selection Edit Controls
-  const [itemEditMode, setItemEditMode] = useState("single"); // "single" | "multi" | "all"
-  const [selectedItemIds, setSelectedItemIds] = useState([]);
-
-  const toggleItemSelect = (id) => {
-    setSelectedItemIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  };
-
-  const handleSelectAllItems = () => {
-    setSelectedItemIds(items.map(i => i.id));
-  };
-
-  const handleDeselectAllItems = () => {
-    setSelectedItemIds([]);
-  };
-
-  const handleApplySelectedAdj = (m, t, v) => {
-    if (selectedItemIds.length === 0) return;
-    onBulkAdj([branch.id], m, t, v, selectedItemIds);
-  };
-
-  const handleApplyAllAdj = (m, t, v) => {
-    onBulkAdj([branch.id], m, t, v);
-  };
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-red-100 bg-white shadow-[0_14px_35px_-28px_rgba(127,29,29,0.5)] transition-all hover:border-red-200">
@@ -185,57 +159,8 @@ function BranchCard({ branch, items = [], edits, verification = {}, onChange, on
         </div>
       </div>
 
-      {/* Mode Switcher Header */}
-      <div className="px-4 py-2 border-y border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap text-[12px]">
-        <span className="font-semibold text-slate-500 uppercase tracking-wider text-[11px]">Pemilihan Item:</span>
-        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
-          <button type="button" onClick={() => setItemEditMode("single")}
-            className={`px-2.5 py-1 rounded-md font-semibold transition-colors ${
-              itemEditMode === "single" ? "bg-red-700 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >Single Select</button>
-          <button type="button" onClick={() => setItemEditMode("multi")}
-            className={`px-2.5 py-1 rounded-md font-semibold transition-colors ${
-              itemEditMode === "multi" ? "bg-red-700 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >Multi Select ({selectedItemIds.length})</button>
-          <button type="button" onClick={() => setItemEditMode("all")}
-            className={`px-2.5 py-1 rounded-md font-semibold transition-colors ${
-              itemEditMode === "all" ? "bg-red-700 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >Apply to All</button>
-        </div>
-      </div>
-
-      {/* Sub-bar for Multi Select */}
-      {itemEditMode === "multi" && (
-        <div className="px-4 py-3 bg-amber-50/60 border-b border-amber-200/60 space-y-2">
-          <div className="flex items-center justify-between text-[12px]">
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={handleSelectAllItems} className="font-bold text-red-700 hover:underline">
-                Pilih Semua ({items.length})
-              </button>
-              <span className="text-slate-300">|</span>
-              <button type="button" onClick={handleDeselectAllItems} className="font-medium text-slate-500 hover:underline">
-                Batal Pilih
-              </button>
-            </div>
-            <span className="font-bold text-amber-800">{selectedItemIds.length} item terpilih</span>
-          </div>
-          <AdjustBar onApply={handleApplySelectedAdj} buttonText={`Terapkan ke ${selectedItemIds.length} Item`} />
-        </div>
-      )}
-
-      {/* Sub-bar for Apply to All */}
-      {itemEditMode === "all" && (
-        <div className="px-4 py-3 bg-red-50/60 border-b border-red-200/60 space-y-2">
-          <p className="text-[12px] font-bold text-red-800">Ubah Semua Item Dalam Brand ({items.length} Item)</p>
-          <AdjustBar onApply={handleApplyAllAdj} buttonText="Terapkan ke Semua Item" />
-        </div>
-      )}
-
-      {/* legacy per-card adjust (toggle) */}
-      {showAdj && itemEditMode === "single" && (
+      {/* Quick per-card adjust (toggle) */}
+      {showAdj && (
         <div className="px-4 pb-3 border-b border-zinc-100 pt-3 bg-slate-50/50">
           <AdjustBar onApply={(m, t, v) => onBulkAdj([branch.id], m, t, v)} buttonText="Terapkan" />
         </div>
@@ -276,7 +201,7 @@ function BranchCard({ branch, items = [], edits, verification = {}, onChange, on
                           {itemEditMode === "multi" && (
                             <input type="checkbox"
                               checked={isChecked}
-                              onChange={() => toggleItemSelect(item.id)}
+                              onChange={() => onToggleSelectItem && onToggleSelectItem(item.id)}
                               className="h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer shrink-0"
                             />
                           )}
@@ -418,6 +343,29 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
   const [activeJobs, setActiveJobs] = useState([]);
   const pushPollingIntervalsRef = useRef({});
+
+  // Item Selection Edit Controls state in Step 4
+  const [itemEditMode, setItemEditMode] = useState("single"); // "single" | "multi" | "all"
+  const [selectedItemIds, setSelectedItemIds] = useState([]);
+
+  const toggleSelectItem = (itemId) => {
+    setSelectedItemIds(prev =>
+      prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+    );
+  };
+
+  const selectAllVisibleItems = (previewBranches) => {
+    const allIds = [];
+    previewBranches.forEach(b => {
+      const items = branchMenus[b.id] || [];
+      items.forEach(i => allIds.push(i.id));
+    });
+    setSelectedItemIds(allIds);
+  };
+
+  const deselectAllItems = () => {
+    setSelectedItemIds([]);
+  };
 
   // Trigger GSheet sync from backend POST /api/sync-sheets
   const triggerGSheetSync = useCallback(async () => {
@@ -1200,28 +1148,91 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
         </section>
       )}
 
-      {/* ── Middle: Global Bulk Adjust (only when syncPhase === "done") ── */}
+      {/* ── Middle: Global Bulk Adjust & Mode Switcher (Step 4: Sesuaikan Harga) ── */}
       {syncPhase === "done" && preview.length > 0 && (
-        <section className="surface-card flex flex-col justify-between gap-5 p-5 lg:flex-row lg:items-center">
-          <div>
-            <StepLabel number={4} label="Sesuaikan Harga" active={true} done={false} className="mb-1" />
-            <p className="text-[13px] text-zinc-500 ml-8">
-              Terapkan ke <strong>{preview.length} brand</strong> terpilih. Saat ini ada <strong className="text-red-700">{totalChanges} perubahan</strong>.
-            </p>
-          </div>
-          <div className="flex shrink-0 flex-col gap-3 rounded-xl border border-red-100 bg-red-50/40 p-3">
-            <AdjustBar onApply={(m, t, v) => bulkAdj([], m, t, v)} buttonText="Terapkan" />
+        <section className="surface-card p-5 lg:p-6 space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-red-100 pb-4">
+            <div>
+              <StepLabel number={4} label="Sesuaikan Harga" active={true} done={false} className="mb-1" />
+              <p className="text-[13px] text-zinc-500 ml-8">
+                Terapkan ke <strong>{preview.length} brand</strong> terpilih. Saat ini ada <strong className="text-red-700">{totalChanges} perubahan</strong>.
+              </p>
+            </div>
 
-            <div className="pt-2 border-t border-zinc-200 flex items-center gap-2">
+            {/* Mode Switcher Tabs */}
+            <div className="flex items-center gap-2 self-start lg:self-auto">
+              <span className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Mode Edit:</span>
+              <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                <button type="button" onClick={() => setItemEditMode("single")}
+                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all ${
+                    itemEditMode === "single" ? "bg-red-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                >Single Select Item</button>
+                <button type="button" onClick={() => setItemEditMode("multi")}
+                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all ${
+                    itemEditMode === "multi" ? "bg-red-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                >Multi Select Item ({selectedItemIds.length})</button>
+                <button type="button" onClick={() => setItemEditMode("all")}
+                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all ${
+                    itemEditMode === "all" ? "bg-red-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                >Apply to All Item</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Sub-bar for Multi Select Item */}
+          {itemEditMode === "multi" && (
+            <div className="flex items-center justify-between bg-amber-50/80 border border-amber-200 rounded-xl p-3 text-[13px]">
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => selectAllVisibleItems(preview)} className="font-bold text-red-700 hover:underline">
+                  ✓ Pilih Semua Item ({preview.reduce((acc, b) => acc + (branchMenus[b.id] || []).length, 0)})
+                </button>
+                <span className="text-amber-300">|</span>
+                <button type="button" onClick={deselectAllItems} className="font-medium text-slate-600 hover:underline">
+                  Batal Pilih
+                </button>
+              </div>
+              <span className="font-bold text-amber-800">{selectedItemIds.length} item terpilih</span>
+            </div>
+          )}
+
+          {/* Adjust Bar & Actions */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-1">
+            <div className="flex-1 min-w-0">
+              <AdjustBar
+                onApply={(m, t, v) => {
+                  if (itemEditMode === "multi") {
+                    if (selectedItemIds.length === 0) {
+                      alert("Pilih setidaknya 1 item terlebih dahulu.");
+                      return;
+                    }
+                    bulkAdj([], m, t, v, selectedItemIds);
+                  } else {
+                    bulkAdj([], m, t, v);
+                  }
+                }}
+                buttonText={
+                  itemEditMode === "multi"
+                    ? `Terapkan ke ${selectedItemIds.length} Item Terpilih`
+                    : itemEditMode === "all"
+                    ? "Terapkan ke Semua Item"
+                    : "Terapkan Perubahan"
+                }
+              />
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 pt-2 lg:pt-0">
               <button type="button" onClick={resetAll}
-                className="px-3.5 py-2 text-[15px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-md transition-colors shrink-0"
+                className="px-3.5 py-2 text-[14px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors shrink-0"
               >
                 Reset Harga
               </button>
               <button type="button" onClick={() => openPushConfirmationModal(checkedIds)} disabled={pushing || totalChanges === 0}
-                className="primary-action flex-1 gap-2"
+                className="primary-action gap-2 px-5 py-2 text-[14px]"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
@@ -1251,6 +1262,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                   <span className={`text-[13px] font-bold uppercase px-2.5 py-1 rounded-full ${
                     job.status === "SUCCESS" ? "bg-emerald-100 text-emerald-700" :
                     job.status === "FAILED" ? "bg-red-100 text-red-700" :
+                    job.status === "PARTIAL_SUCCESS" ? "bg-amber-100 text-amber-700" :
                     "bg-amber-100 text-amber-700"
                   }`}>{job.status}</span>
                 </div>
@@ -1260,6 +1272,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                   <div className={`h-full transition-all duration-500 ${
                     job.status === "SUCCESS" ? "bg-emerald-500" :
                     job.status === "FAILED" ? "bg-red-500" :
+                    job.status === "PARTIAL_SUCCESS" ? "bg-amber-500" :
                     "bg-red-600"
                   }`} style={{ width: `${job.progress_pct}%` }} />
                 </div>
@@ -1303,6 +1316,9 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                   items={branchMenus[branch.id] || []}
                   edits={edits[branch.id] || {}}
                   verification={verificationMap[branch.id] || {}}
+                  itemEditMode={itemEditMode}
+                  selectedItemIds={selectedItemIds}
+                  onToggleSelectItem={toggleSelectItem}
                   onChange={changePrice} onBulkAdj={bulkAdj}
                   onReset={resetOne} onSave={(bids) => openPushConfirmationModal(bids)}
                   onApplyToAll={applyBranchToAll}

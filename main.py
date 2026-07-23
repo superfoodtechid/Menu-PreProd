@@ -1043,7 +1043,15 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
 
                 browser.close()
 
-        job.status = "SUCCESS"
+        if fail_count > 0 and success_count == 0:
+            job.status = "FAILED"
+            job.error_message = f"Pembaruan harga gagal! 0 dari {total_updates} item berhasil diperbarui."
+        elif fail_count > 0 and success_count > 0:
+            job.status = "PARTIAL_SUCCESS"
+            job.error_message = f"Sebagian item gagal diperbarui ({success_count} sukses, {fail_count} gagal)."
+        else:
+            job.status = "SUCCESS"
+
         job.progress_pct = 100
         job.current_step = f"Pembaruan harga selesai! {success_count} sukses, {fail_count} gagal."
         job.result_metadata = {

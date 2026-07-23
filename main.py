@@ -1176,9 +1176,37 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
 
                     patch_group_id = group_id if group_id else cat_common_id
                     passkey = api_headers.get('x-passkey')
-                    res = go_api.update_v2_menu_item(page, token, patch_group_id, item_id, v2_payload, passkey=passkey)
+                    
+                    headers_direct = {
+                        'Accept': 'application/json, text/plain, */*',
+                        'Accept-Language': 'id',
+                        'Authentication-Type': 'go-id',
+                        'Authorization': token,
+                        'Content-Type': 'application/json',
+                        'Gojek-Country-Code': 'ID',
+                        'x-passkey': passkey,
+                        'Origin': 'https://portal.gofoodmerchant.co.id',
+                        'Referer': 'https://portal.gofoodmerchant.co.id/'
+                    }
+
+                    # V2 PATCH via context.request (bypass CORS)
+                    v2_url = f'https://api.gojekapi.com/gofood/merchant/v2/menu_groups/{patch_group_id}/menu_items/{item_id}'
+                    try:
+                        cr = context.request.fetch(
+                            v2_url,
+                            method='PATCH',
+                            headers=headers_direct,
+                            data=json.dumps(v2_payload)
+                        )
+                        res = {'ok': cr.ok, 'status': cr.status, 'body': cr.text()}
+                    except Exception as e:
+                        res = {'ok': False, 'error': str(e)}
 
                     if not res or not res.get('ok'):
+                        status_code = res.get('status', '?') if res else '?'
+                        body_err = (res.get('body') or '')[:500] if res else ''
+                        logger.warning(f"GoFood V2 PATCH gagal (HTTP {status_code}), Body: {body_err}. Fallback ke V1 PUT...")
+
                         v1_payload = {
                             "name": orig_item.get('name'),
                             "price": str(int(new_price)),
@@ -1187,7 +1215,22 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                             "image": orig_item.get('image_url', orig_item.get('image', ''))
                         }
                         v1_item_id = orig_item.get('id')
-                        res = go_api.update_item(page, token, rest_uuid, v1_item_id, v1_payload, passkey=passkey)
+                        
+                        # V1 PUT via context.request (bypass CORS)
+                        if v1_item_id:
+                            v1_url = f'https://api.gojekapi.com/gofood/merchant/v1/restaurants/{rest_uuid}/menu_items/{v1_item_id}'
+                            try:
+                                cr_v1 = context.request.fetch(
+                                    v1_url,
+                                    method='PUT',
+                                    headers=headers_direct,
+                                    data=json.dumps(v1_payload)
+                                )
+                                res = {'ok': cr_v1.ok, 'status': cr_v1.status, 'body': cr_v1.text()}
+                            except Exception as e:
+                                res = {'ok': False, 'error': str(e)}
+                        else:
+                            res = {'ok': False, 'error': 'No V1 item ID available for fallback'}
 
                     if res and res.get('ok'):
                         success_count += 1

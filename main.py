@@ -166,9 +166,16 @@ def sync_sheets(db: Session = Depends(get_db)):
     updated_outlets = 0
 
     # Forward-fill merged/header columns in Google Sheet dataframe (e.g. Status, Nama Outlet, Merchant Name)
-    for col in ["Status", "Nama Outlet", "Merchant Name", "Cabang", "Nama Resto Final", "Brand"]:
-        if col in df.columns:
-            df[col] = df[col].ffill()
+    # Use block_id (derived from non-null No column) to prevent global ffill leak across empty rows/different outlets
+    if "No" in df.columns:
+        df["block_id"] = df["No"].notna().cumsum()
+        for col in ["Status", "Nama Outlet", "Merchant Name", "Cabang", "Nama Resto Final", "Brand"]:
+            if col in df.columns:
+                df[col] = df.groupby("block_id")[col].ffill()
+    else:
+        for col in ["Status", "Nama Outlet", "Merchant Name", "Cabang", "Nama Resto Final", "Brand"]:
+            if col in df.columns:
+                df[col] = df[col].ffill()
 
     # Filter only Live status
     df_live = df[df["Status"].str.contains("Live", na=False, case=False)]
@@ -627,7 +634,8 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
         logger.error(f"❌ Job {job_id} failed: {e}")
         job.status = "FAILED"
         job.error_message = str(e)
-        job.current_step = f"Terjadi kesalahan: {str(e)}"
+        err_msg = f"Terjadi kesalahan: {str(e)}"
+        job.current_step = err_msg if len(err_msg) <= 255 else err_msg[:252] + "..."
         job.completed_at = datetime.utcnow()
         db.commit()
     finally:
@@ -1003,7 +1011,9 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 session_path = os.path.join(GO_SESSION_DIR, f"session_{email}.json")
                 storage_state = session_path if os.path.exists(session_path) else None
 
-                browser = p.chromium.launch(headless=True)
+                headless_env = os.getenv("HEADLESS") or os.getenv("HEADLESS_GOFOOD")
+                is_headless = headless_env.lower() in ("true", "1", "yes") if headless_env else False
+                browser = p.chromium.launch(headless=is_headless)
                 context = browser.new_context(
                     storage_state=storage_state,
                     user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -1214,7 +1224,8 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
         logger.error(f"❌ Job {job_id} failed: {e}")
         job.status = "FAILED"
         job.error_message = str(e)
-        job.current_step = f"Terjadi kesalahan: {str(e)}"
+        err_msg = f"Terjadi kesalahan: {str(e)}"
+        job.current_step = err_msg if len(err_msg) <= 255 else err_msg[:252] + "..."
         job.completed_at = datetime.utcnow()
         db.commit()
 
@@ -1494,8 +1505,26 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
     if not excel_path or not os.path.exists(excel_path):
         return []
 
-    # We determine promo status purely from active Excel catalog pulled in real-time
+    # Detect items locked by promo constraints from push failures since the last successful PULL job
+    latest_pull = db.query(Job).filter(
+        Job.outlet_id == outlet_id,
+        Job.job_type == "PULL",
+        Job.status.in_(["SUCCESS", "PARTIAL_SUCCESS"])
+    ).order_by(Job.completed_at.desc()).first()
+    latest_pull_time = latest_pull.completed_at if latest_pull and latest_pull.completed_at else datetime.min
+
     promo_item_ids = set()
+    try:
+        promo_trails = db.query(AuditTrail).filter(
+            AuditTrail.outlet_id == outlet_id,
+            AuditTrail.created_at >= latest_pull_time,
+            (AuditTrail.error_message.ilike("%promo%") | AuditTrail.error_message.ilike("%campaign%"))
+        ).all()
+        for pt in promo_trails:
+            if pt.item_id:
+                promo_item_ids.add(str(pt.item_id))
+    except Exception as ex:
+        logger.warning(f"Error querying promo audit trails: {ex}")
 
     try:
         import openpyxl

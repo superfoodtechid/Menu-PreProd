@@ -117,7 +117,7 @@ function AdjustBar({ onApply, buttonText = "OK" }) {
 }
 
 // ─── Branch Card ──────────────────────────────────────────────────────────────
-function BranchCard({ branch, items = [], edits, onChange, onBulkAdj, onReset, onSave, onApplyToAll, totalBranches, saving, saved }) {
+function BranchCard({ branch, items = [], edits, verification = {}, onChange, onBulkAdj, onReset, onSave, onApplyToAll, totalBranches, saving, saved }) {
   const label = branch.brand || branch.nama_resto_final || branch.merchant_name;
   const groups = group(items);
   const changed = items.filter((i) => (edits[i.id] ?? i.price) !== i.price).length;
@@ -180,10 +180,11 @@ function BranchCard({ branch, items = [], edits, onChange, onBulkAdj, onReset, o
                   const pct = item.price > 0 ? ((cur - item.price) / item.price) * 100 : 0;
                   const pctFmt = (pct > 0 ? "+" : "") + (Number.isInteger(pct) ? pct.toFixed(0) : pct.toFixed(1)) + "%";
                   const { isViolation, message: violationMsg } = checkViolation(branch.platform, item.price, cur);
+                  const ver = verification[item.id];
 
                   return (
                     <div key={item.id}
-                      className={`flex items-center justify-between py-1.5 px-2 rounded-lg transition-colors ${
+                      className={`flex flex-col gap-1 py-1.5 px-2 rounded-lg transition-colors ${
                         isViolation
                           ? "border border-red-200 bg-red-50"
                           : diff
@@ -191,38 +192,55 @@ function BranchCard({ branch, items = [], edits, onChange, onBulkAdj, onReset, o
                           : "hover:bg-slate-50"
                       }`}
                     >
-                      <div className="min-w-0 flex-1 mr-3">
-                        <div className="flex items-center gap-1">
-                          <p className="text-[15px] truncate font-medium text-zinc-700">{item.name}</p>
-                          {isViolation && (
-                            <span title={violationMsg} className="inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full bg-red-600 text-[13px] font-bold text-white shadow-sm">!</span>
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1 mr-3">
+                          <div className="flex items-center gap-1">
+                            <p className="text-[15px] truncate font-medium text-zinc-700">{item.name}</p>
+                            {isViolation && (
+                              <span title={violationMsg} className="inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full bg-red-600 text-[13px] font-bold text-white shadow-sm">!</span>
+                            )}
+                          </div>
+                          {diff && (
+                            <p className="text-[13px] font-medium text-zinc-650 flex items-center gap-1 mt-0.5 flex-wrap">
+                              <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.price)}</span>
+                              <span className="text-zinc-400">→</span>
+                              <span className="font-semibold text-zinc-750">Rp {fmt(cur)}</span>
+                              <span className={`rounded px-1 text-[13px] font-bold ${pct > 0 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                ({pctFmt})
+                              </span>
+                            </p>
                           )}
                         </div>
-                        {diff && (
-                          <p className="text-[13px] font-medium text-zinc-650 flex items-center gap-1 mt-0.5 flex-wrap">
-                            <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.price)}</span>
-                            <span className="text-zinc-400">→</span>
-                            <span className="font-semibold text-zinc-750">Rp {fmt(cur)}</span>
-                            <span className={`rounded px-1 text-[13px] font-bold ${pct > 0 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
-                              ({pctFmt})
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-[13px] text-zinc-400">Rp</span>
+                          <input type="text" inputMode="numeric"
+                            value={fmt(cur)}
+                            onChange={(e) => onChange(branch.id, item.id, e.target.value)}
+                            className={`w-24 text-right text-[15px] font-semibold rounded-md px-2 py-1 border transition-colors focus:outline-none focus:ring-1 ${
+                              isViolation
+                                ? "border-red-400 bg-white text-red-700 focus:border-red-500 focus:ring-red-200"
+                                : diff
+                                ? "border-amber-300 bg-white text-slate-700 focus:ring-amber-200"
+                                : "border-slate-200 bg-slate-50 text-slate-700 focus:ring-red-200 focus:bg-white"
+                            }`}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Verification Post-Pull Compare Badge */}
+                      {ver && (
+                        <div className="mt-0.5 flex items-center gap-1.5 text-[12px]">
+                          {ver.status === "VERIFIED" ? (
+                            <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 font-bold text-emerald-800">
+                              ✓ Terverifikasi Sesuai di Portal (Rp {fmt(ver.actualPrice)})
                             </span>
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="text-[13px] text-zinc-400">Rp</span>
-                        <input type="text" inputMode="numeric"
-                          value={fmt(cur)}
-                          onChange={(e) => onChange(branch.id, item.id, e.target.value)}
-                          className={`w-24 text-right text-[15px] font-semibold rounded-md px-2 py-1 border transition-colors focus:outline-none focus:ring-1 ${
-                            isViolation
-                              ? "border-red-400 bg-white text-red-700 focus:border-red-500 focus:ring-red-200"
-                              : diff
-                              ? "border-amber-300 bg-white text-slate-700 focus:ring-amber-200"
-                              : "border-slate-200 bg-slate-50 text-slate-700 focus:ring-red-200 focus:bg-white"
-                          }`}
-                        />
-                      </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 font-bold text-amber-800">
+                              ⏳ Menunggu Sinkron Portal (Target: Rp {fmt(ver.targetPrice)} / Aktual: Rp {fmt(ver.actualPrice)})
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -289,10 +307,11 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
   const [branchMenus, setBranchMenus] = useState({});
   const [edits, setEdits] = useState({});
   const [saveState, setSaveState] = useState({});
+  const [verificationMap, setVerificationMap] = useState({}); // { [bid]: { [itemId]: { targetPrice, actualPrice, status } } }
 
   // Auto-pull sync state
   const [syncPhase, setSyncPhase] = useState("idle"); // "idle" | "syncing" | "done"
-  const [syncJobs, setSyncJobs] = useState([]); // [{ id, branchId, name, platform, status, progress_pct, current_step, error_message }]
+  const [syncJobs, setSyncJobs] = useState([]);
   const syncPollingRef = useRef({});
 
   const [openPlatformDropdown, setOpenPlatformDropdown] = useState(false);
@@ -301,10 +320,11 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
   const [pushing, setPushing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showPushConfirm, setShowPushConfirm] = useState(false);
-  const [pushViolations, setPushViolations] = useState([]);
+  const [showPushConfirmModal, setShowPushConfirmModal] = useState(false);
+  const [pushSummaryList, setPushSummaryList] = useState([]); // [{ branchId, branchName, updates: [{ id, name, category, oldPrice, newPrice, pct, isViolation, violationMsg }] }]
+  const [intendedPushPrices, setIntendedPushPrices] = useState({}); // { [bid]: { [itemId]: targetPrice } }
+
   const [activeJobs, setActiveJobs] = useState([]);
-  
   const pushPollingIntervalsRef = useRef({});
 
   // Clear auto-pull polling intervals
@@ -319,14 +339,14 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     if (!platform) {
       setAllOutlets([]); setUniqueParents([]); setSelectedParent("");
       setBranches([]); setSelectedBrandId(""); setCheckedIds([]); setSearch(""); setEdits({}); setBranchMenus({});
-      setSyncPhase("idle"); setSyncJobs([]);
+      setSyncPhase("idle"); setSyncJobs([]); setVerificationMap({});
       setOpenOutletDropdown(false); setOpenBranchDropdown(false);
       return;
     }
     setLoading(true);
     setAllOutlets([]); setUniqueParents([]); setSelectedParent("");
     setBranches([]); setSelectedBrandId(""); setCheckedIds([]); setSearch(""); setEdits({}); setBranchMenus({});
-    setSyncPhase("idle"); setSyncJobs([]);
+    setSyncPhase("idle"); setSyncJobs([]); setVerificationMap({});
 
     const url = `${API_BASE_URL}/api/outlets?platform=${platform}`;
     fetch(url).then(r => r.json())
@@ -338,10 +358,13 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
       .finally(() => setLoading(false));
   }, [platform, API_BASE_URL, clearSyncPolling]);
 
-  const fetchMenus = useCallback(async (targetBranches) => {
+  // Fetch menu items and run verification check against intended push prices
+  const fetchMenusAndVerify = useCallback(async (targetBranches, targetIntendedPrices = intendedPushPrices) => {
     setLoading(true);
     const menusMap = {};
     const editsMap = {};
+    const newVerifications = { ...verificationMap };
+
     await Promise.all(targetBranches.map(async (b) => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/outlets/${b.id}/menu-items`);
@@ -349,7 +372,26 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           const items = await res.json();
           menusMap[b.id] = items;
           editsMap[b.id] = {};
-          items.forEach(i => { editsMap[b.id][i.id] = i.price; });
+          
+          const branchIntended = targetIntendedPrices[b.id] || {};
+          const branchVer = {};
+
+          items.forEach(i => {
+            editsMap[b.id][i.id] = i.price;
+            if (branchIntended[i.id] !== undefined) {
+              const targetP = branchIntended[i.id];
+              const isMatch = i.price === targetP;
+              branchVer[i.id] = {
+                targetPrice: targetP,
+                actualPrice: i.price,
+                status: isMatch ? "VERIFIED" : "PENDING_SYNC"
+              };
+            }
+          });
+
+          if (Object.keys(branchVer).length > 0) {
+            newVerifications[b.id] = branchVer;
+          }
         } else {
           menusMap[b.id] = [];
         }
@@ -357,10 +399,12 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
         menusMap[b.id] = [];
       }
     }));
+
     setBranchMenus(menusMap);
     setEdits(editsMap);
+    setVerificationMap(newVerifications);
     setLoading(false);
-  }, [API_BASE_URL]);
+  }, [API_BASE_URL, intendedPushPrices, verificationMap]);
 
   // Clean up polling intervals on unmount
   useEffect(() => {
@@ -373,12 +417,10 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
   }, []);
 
   // Trigger real-time Auto-Pull for chosen brand
-  const triggerAutoPull = useCallback(async (targetBranches) => {
+  const triggerAutoPull = useCallback(async (targetBranches, customIntendedPrices = intendedPushPrices) => {
     if (!targetBranches || targetBranches.length === 0) return;
     clearSyncPolling();
     setSyncPhase("syncing");
-    setBranchMenus({});
-    setEdits({});
 
     const initialJobs = targetBranches.map(b => ({
       id: null,
@@ -445,7 +487,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
     const activeJobIds = createdJobs.filter(j => j.id && !j.id.startsWith("err-")).map(j => j.id);
     if (activeJobIds.length === 0) {
-      fetchMenus(targetBranches);
+      fetchMenusAndVerify(targetBranches, customIntendedPrices);
       setSyncPhase("done");
       return;
     }
@@ -469,7 +511,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
               delete syncPollingRef.current[jobId];
 
               if (Object.keys(syncPollingRef.current).length === 0) {
-                fetchMenus(targetBranches);
+                fetchMenusAndVerify(targetBranches, customIntendedPrices);
                 setSyncPhase("done");
               }
             }
@@ -478,7 +520,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
       }, 2000);
     });
 
-  }, [API_BASE_URL, clearSyncPolling, fetchMenus]);
+  }, [API_BASE_URL, clearSyncPolling, fetchMenusAndVerify, intendedPushPrices]);
 
   // When selected parent (Outlet) changes
   const handleSelectOutlet = (name) => {
@@ -511,7 +553,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
   const handleSkipSync = () => {
     clearSyncPolling();
     const targetBranches = branches.filter(b => b.id === selectedBrandId);
-    fetchMenus(targetBranches);
+    fetchMenusAndVerify(targetBranches);
     setSyncPhase("done");
   };
 
@@ -544,7 +586,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setSaveState(p => { const n = { ...p }; targets.forEach(id => { n[id] = null; }); return n; });
   };
 
-  const startPollingPushJob = (jobId) => {
+  const startPollingPushJob = (jobId, branchId) => {
     if (pushPollingIntervalsRef.current[jobId]) {
       clearInterval(pushPollingIntervalsRef.current[jobId]);
     }
@@ -573,7 +615,14 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           if (job.status === "SUCCESS" || job.status === "FAILED") {
             clearInterval(pushPollingIntervalsRef.current[jobId]);
             delete pushPollingIntervalsRef.current[jobId];
-            fetchMenus(branches);
+
+            if (job.status === "SUCCESS") {
+              // Trigger Auto-Pull & Compare verification automatically upon push completion
+              const targetBranch = branches.filter(b => b.id === branchId);
+              if (targetBranch.length > 0) {
+                triggerAutoPull(targetBranch);
+              }
+            }
           }
         })
         .catch((err) => {
@@ -588,6 +637,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setPushing(true);
     const targets = Array.isArray(bidsToUpdate) ? bidsToUpdate : [bidsToUpdate];
     const newJobsList = [];
+    const newIntended = { ...intendedPushPrices };
 
     for (const bid of targets) {
       const branch = branches.find(x => x.id === bid);
@@ -597,6 +647,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
       const branchEdits = edits[bid] || {};
       const branchItems = branchMenus[bid] || [];
       const updates = [];
+      const branchIntendedMap = {};
 
       branchItems.forEach(i => {
         const curPrice = branchEdits[i.id];
@@ -606,10 +657,13 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
             category_id: i.category_id || "",
             new_price: curPrice
           });
+          branchIntendedMap[i.id] = curPrice;
         }
       });
 
       if (updates.length === 0) continue;
+
+      newIntended[bid] = { ...(newIntended[bid] || {}), ...branchIntendedMap };
 
       try {
         setSaveState(p => ({ ...p, [bid]: "saving" }));
@@ -633,7 +687,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
             current_step: job.current_step,
             error_message: null
           });
-          startPollingPushJob(job.id);
+          startPollingPushJob(job.id, bid);
           setSaveState(p => ({ ...p, [bid]: "saved" }));
         } else {
           setSaveState(p => ({ ...p, [bid]: null }));
@@ -645,6 +699,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
       }
     }
 
+    setIntendedPushPrices(newIntended);
     if (newJobsList.length > 0) {
       setActiveJobs(p => [...newJobsList, ...p]);
     }
@@ -652,28 +707,62 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     return newJobsList.length;
   };
 
-  const checkAndPushToOFD = () => {
-    const violations = [];
-    preview.forEach(b => {
-      const items = branchMenus[b.id] || [];
-      items.forEach(item => {
-        const cur = edits[b.id]?.[item.id] ?? item.price;
-        const { isViolation } = checkViolation(b.platform, item.price, cur);
-        if (isViolation) violations.push(item.name);
+  // Open rich push summary modal before sending update
+  const openPushConfirmationModal = (bidsToUpdate = checkedIds) => {
+    const targets = Array.isArray(bidsToUpdate) ? bidsToUpdate : [bidsToUpdate];
+    const summary = [];
+
+    targets.forEach(bid => {
+      const branch = branches.find(x => x.id === bid);
+      if (!branch) return;
+      const bLabel = branch.brand || branch.nama_resto_final || branch.merchant_name;
+      const branchItems = branchMenus[bid] || [];
+      const itemUpdates = [];
+
+      branchItems.forEach(item => {
+        const curPrice = edits[bid]?.[item.id] ?? item.price;
+        if (curPrice !== item.price) {
+          const diff = curPrice - item.price;
+          const pct = item.price > 0 ? (diff / item.price) * 100 : 0;
+          const { isViolation, message: violationMsg } = checkViolation(branch.platform, item.price, curPrice);
+          itemUpdates.push({
+            id: item.id,
+            name: item.name,
+            category: item.category,
+            oldPrice: item.price,
+            newPrice: curPrice,
+            diff: diff,
+            pct: pct,
+            isViolation: isViolation,
+            violationMsg: violationMsg
+          });
+        }
       });
+
+      if (itemUpdates.length > 0) {
+        summary.push({
+          branchId: bid,
+          branchName: bLabel,
+          platform: branch.platform,
+          storeId: branch.store_id,
+          updates: itemUpdates
+        });
+      }
     });
 
-    if (violations.length > 0) {
-      setPushViolations(violations);
-      setShowPushConfirm(true);
-    } else {
-      executePush();
+    if (summary.length === 0) {
+      alert("Tidak ada perubahan harga yang terdeteksi.");
+      return;
     }
+
+    setPushSummaryList(summary);
+    setShowPushConfirmModal(true);
   };
 
-  const executePush = async () => {
-    setShowPushConfirm(false);
-    const queuedJobs = await triggerPriceUpdate(checkedIds);
+  const executePushFromModal = async () => {
+    setShowPushConfirmModal(false);
+    const targetBids = pushSummaryList.map(s => s.branchId);
+    const queuedJobs = await triggerPriceUpdate(targetBids);
     if (queuedJobs > 0) {
       setShowSuccessModal(true);
     }
@@ -711,6 +800,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
   };
 
   const completedSyncCount = syncJobs.filter(j => j.status === "SUCCESS" || j.status === "FAILED").length;
+  const totalSummaryItems = pushSummaryList.reduce((acc, s) => acc + s.updates.length, 0);
 
   return (
     <main className="flex flex-col gap-6">
@@ -995,7 +1085,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
               >
                 Reset Harga
               </button>
-              <button type="button" onClick={checkAndPushToOFD} disabled={pushing || totalChanges === 0}
+              <button type="button" onClick={() => openPushConfirmationModal(checkedIds)} disabled={pushing || totalChanges === 0}
                 className="primary-action flex-1 gap-2"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1079,8 +1169,9 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 <BranchCard key={branch.id} branch={branch}
                   items={branchMenus[branch.id] || []}
                   edits={edits[branch.id] || {}}
+                  verification={verificationMap[branch.id] || {}}
                   onChange={changePrice} onBulkAdj={bulkAdj}
-                  onReset={resetOne} onSave={triggerPriceUpdate}
+                  onReset={resetOne} onSave={(bids) => openPushConfirmationModal(bids)}
                   onApplyToAll={applyBranchToAll}
                   totalBranches={preview.length}
                   saving={saveState[branch.id] === "saving"}
@@ -1092,38 +1183,75 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
         </section>
       )}
 
-      {/* ── Pop-up Push Confirmation Modal ── */}
-      {showPushConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
-          onClick={() => setShowPushConfirm(false)}
+      {/* ── Pop-up Push Rich Confirmation Summary Modal ── */}
+      {showPushConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
+          onClick={() => setShowPushConfirmModal(false)}
         >
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-red-100 text-center space-y-4 animate-scale-up"
+          <div className="bg-white rounded-2xl p-6 max-w-xl w-full shadow-2xl border border-red-100 space-y-4 animate-scale-up max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-700 ring-8 ring-red-50/60">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-zinc-100 pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Ringkasan Update Harga Sebelum Push</h3>
+                <p className="text-[13px] text-zinc-500 mt-0.5">
+                  Tinjau daftar rincian <strong>{totalSummaryItems} item</strong> yang akan dikirim ke Merchant Portal.
+                </p>
+              </div>
+              <button type="button" onClick={() => setShowPushConfirmModal(false)}
+                className="text-zinc-400 hover:text-zinc-600 text-lg font-bold"
+              >×</button>
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">Periksa batas perubahan harga</h3>
-              <p className="text-[15px] text-zinc-500 mt-1">
-                Terdapat <strong>{pushViolations.length} item</strong> yang melebihi batas maksimal kenaikan harga OFD (GoFood 15%, GrabFood 15% & 15x/bulan, ShopeeFood 25% & 1x/hari).
-              </p>
-              <p className="text-[13px] text-zinc-455 mt-2 italic">
-                Lanjutkan hanya jika perubahan ini memang sudah diverifikasi.
-              </p>
+
+            {/* Content List */}
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              {pushSummaryList.map(summary => (
+                <div key={summary.branchId} className="rounded-xl border border-red-100 bg-red-50/20 p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-red-100 pb-2">
+                    <span className="font-bold text-slate-800 text-[15px]">{summary.branchName}</span>
+                    <PlatformBadge platform={summary.platform} storeId={summary.storeId} />
+                  </div>
+
+                  <div className="space-y-2">
+                    {summary.updates.map(u => (
+                      <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg bg-white p-2.5 border border-zinc-100 gap-1 text-[13px]">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-slate-800 truncate">{u.name}</p>
+                          <span className="text-[12px] text-slate-400 uppercase tracking-wider">{u.category}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="line-through text-slate-400">Rp {fmt(u.oldPrice)}</span>
+                          <span className="text-slate-400">→</span>
+                          <span className="font-bold text-slate-900">Rp {fmt(u.newPrice)}</span>
+                          <span className={`rounded px-1.5 py-0.5 text-[12px] font-bold ${u.diff > 0 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                            ({u.diff > 0 ? "+" : ""}{u.pct.toFixed(1)}%)
+                          </span>
+                          {u.isViolation && (
+                            <span title={u.violationMsg} className="rounded bg-red-600 text-white text-[12px] font-bold px-1.5 py-0.5">! Batas</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center gap-2 pt-2">
-              <button type="button" onClick={() => setShowPushConfirm(false)}
-                className="flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 font-semibold text-[15px] py-2.5 rounded-xl transition-colors shadow-sm"
+
+            {/* Footer Actions */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100">
+              <button type="button" onClick={() => setShowPushConfirmModal(false)}
+                className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-semibold text-[14px] rounded-xl transition-colors"
               >
                 Batal
               </button>
-              <button type="button" onClick={executePush}
-                className="flex-1 bg-red-700 hover:bg-red-800 text-white font-semibold text-[15px] py-2.5 rounded-xl transition-colors shadow-sm"
+              <button type="button" onClick={executePushFromModal}
+                className="px-5 py-2 bg-red-700 hover:bg-red-800 text-white font-bold text-[14px] rounded-xl transition-colors shadow-md flex items-center gap-1.5"
               >
-                Ya, lanjutkan
+                <span>Konfirmasi & Push Update</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
               </button>
             </div>
           </div>
@@ -1146,7 +1274,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
             <div>
               <h3 className="text-lg font-bold text-slate-900">Update mulai diproses</h3>
               <p className="text-[15px] text-zinc-500 mt-1">
-                Job untuk <strong>{preview.length} brand</strong> sudah dikirim. Pantau hasil akhirnya pada bagian status pembaruan.
+                Job untuk <strong>{preview.length} brand</strong> sudah dikirim. Pantau status job di bagian bawah. Setelah job selesai, sistem akan otomatis melakukan tarik ulang menu untuk membandingkan kesesuaian harga.
               </p>
             </div>
             <button type="button" onClick={() => setShowSuccessModal(false)}

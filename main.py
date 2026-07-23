@@ -1030,7 +1030,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 api_headers = {}
                 def capture_headers(request):
                     url_lower = request.url.lower()
-                    if "api.gojekapi.com" in url_lower or "api.gobiz.co.id" in url_lower:
+                    if "api.gojekapi.com" in url_lower or "api.gobiz.co.id" in url_lower or "portal.gofoodmerchant.co.id" in url_lower:
                         h = request.headers
                         if 'authorization' in h:
                             api_headers['authorization'] = h['authorization']
@@ -1073,7 +1073,11 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                     page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu", wait_until="domcontentloaded")
                     time.sleep(3)
 
-                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu", wait_until="domcontentloaded")
+                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}", wait_until="domcontentloaded")
+                time.sleep(2)
+                page.reload(wait_until="domcontentloaded")
+                time.sleep(2)
+                page.reload(wait_until="domcontentloaded")
 
                 # Wait dynamically (up to 15s) for restaurant_uuid, authorization, and x-passkey
                 start_wait = time.time()

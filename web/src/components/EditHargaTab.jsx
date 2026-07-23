@@ -123,6 +123,33 @@ function BranchCard({ branch, items = [], edits, verification = {}, onChange, on
   const changed = items.filter((i) => (edits[i.id] ?? i.price) !== i.price).length;
   const [showAdj, setShowAdj] = useState(false);
 
+  // Item Selection Edit Controls
+  const [itemEditMode, setItemEditMode] = useState("single"); // "single" | "multi" | "all"
+  const [selectedItemIds, setSelectedItemIds] = useState([]);
+
+  const toggleItemSelect = (id) => {
+    setSelectedItemIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllItems = () => {
+    setSelectedItemIds(items.map(i => i.id));
+  };
+
+  const handleDeselectAllItems = () => {
+    setSelectedItemIds([]);
+  };
+
+  const handleApplySelectedAdj = (m, t, v) => {
+    if (selectedItemIds.length === 0) return;
+    onBulkAdj([branch.id], m, t, v, selectedItemIds);
+  };
+
+  const handleApplyAllAdj = (m, t, v) => {
+    onBulkAdj([branch.id], m, t, v);
+  };
+
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-red-100 bg-white shadow-[0_14px_35px_-28px_rgba(127,29,29,0.5)] transition-all hover:border-red-200">
       {/* header */}
@@ -158,9 +185,58 @@ function BranchCard({ branch, items = [], edits, verification = {}, onChange, on
         </div>
       </div>
 
-      {/* per-card adjust (toggle) */}
-      {showAdj && (
-        <div className="px-4 pb-3 border-t border-zinc-100 pt-3">
+      {/* Mode Switcher Header */}
+      <div className="px-4 py-2 border-y border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap text-[12px]">
+        <span className="font-semibold text-slate-500 uppercase tracking-wider text-[11px]">Pemilihan Item:</span>
+        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
+          <button type="button" onClick={() => setItemEditMode("single")}
+            className={`px-2.5 py-1 rounded-md font-semibold transition-colors ${
+              itemEditMode === "single" ? "bg-red-700 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >Single Select</button>
+          <button type="button" onClick={() => setItemEditMode("multi")}
+            className={`px-2.5 py-1 rounded-md font-semibold transition-colors ${
+              itemEditMode === "multi" ? "bg-red-700 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >Multi Select ({selectedItemIds.length})</button>
+          <button type="button" onClick={() => setItemEditMode("all")}
+            className={`px-2.5 py-1 rounded-md font-semibold transition-colors ${
+              itemEditMode === "all" ? "bg-red-700 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >Apply to All</button>
+        </div>
+      </div>
+
+      {/* Sub-bar for Multi Select */}
+      {itemEditMode === "multi" && (
+        <div className="px-4 py-3 bg-amber-50/60 border-b border-amber-200/60 space-y-2">
+          <div className="flex items-center justify-between text-[12px]">
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={handleSelectAllItems} className="font-bold text-red-700 hover:underline">
+                Pilih Semua ({items.length})
+              </button>
+              <span className="text-slate-300">|</span>
+              <button type="button" onClick={handleDeselectAllItems} className="font-medium text-slate-500 hover:underline">
+                Batal Pilih
+              </button>
+            </div>
+            <span className="font-bold text-amber-800">{selectedItemIds.length} item terpilih</span>
+          </div>
+          <AdjustBar onApply={handleApplySelectedAdj} buttonText={`Terapkan ke ${selectedItemIds.length} Item`} />
+        </div>
+      )}
+
+      {/* Sub-bar for Apply to All */}
+      {itemEditMode === "all" && (
+        <div className="px-4 py-3 bg-red-50/60 border-b border-red-200/60 space-y-2">
+          <p className="text-[12px] font-bold text-red-800">Ubah Semua Item Dalam Brand ({items.length} Item)</p>
+          <AdjustBar onApply={handleApplyAllAdj} buttonText="Terapkan ke Semua Item" />
+        </div>
+      )}
+
+      {/* legacy per-card adjust (toggle) */}
+      {showAdj && itemEditMode === "single" && (
+        <div className="px-4 pb-3 border-b border-zinc-100 pt-3 bg-slate-50/50">
           <AdjustBar onApply={(m, t, v) => onBulkAdj([branch.id], m, t, v)} buttonText="Terapkan" />
         </div>
       )}
@@ -181,35 +257,47 @@ function BranchCard({ branch, items = [], edits, verification = {}, onChange, on
                   const pctFmt = (pct > 0 ? "+" : "") + (Number.isInteger(pct) ? pct.toFixed(0) : pct.toFixed(1)) + "%";
                   const { isViolation, message: violationMsg } = checkViolation(branch.platform, item.price, cur);
                   const ver = verification[item.id];
+                  const isChecked = selectedItemIds.includes(item.id);
 
                   return (
                     <div key={item.id}
                       className={`flex flex-col gap-1 py-1.5 px-2 rounded-lg transition-colors ${
                         isViolation
                           ? "border border-red-200 bg-red-50"
+                          : isChecked
+                          ? "bg-amber-100/70 border border-amber-200"
                           : diff
                           ? "bg-amber-50/70"
                           : "hover:bg-slate-50"
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="min-w-0 flex-1 mr-3">
-                          <div className="flex items-center gap-1">
-                            <p className="text-[15px] truncate font-medium text-zinc-700">{item.name}</p>
-                            {isViolation && (
-                              <span title={violationMsg} className="inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full bg-red-600 text-[13px] font-bold text-white shadow-sm">!</span>
+                        <div className="min-w-0 flex-1 mr-3 flex items-center gap-2">
+                          {itemEditMode === "multi" && (
+                            <input type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleItemSelect(item.id)}
+                              className="h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer shrink-0"
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1">
+                              <p className="text-[15px] truncate font-medium text-zinc-700">{item.name}</p>
+                              {isViolation && (
+                                <span title={violationMsg} className="inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full bg-red-600 text-[13px] font-bold text-white shadow-sm">!</span>
+                              )}
+                            </div>
+                            {diff && (
+                              <p className="text-[13px] font-medium text-zinc-650 flex items-center gap-1 mt-0.5 flex-wrap">
+                                <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.price)}</span>
+                                <span className="text-zinc-400">→</span>
+                                <span className="font-semibold text-zinc-750">Rp {fmt(cur)}</span>
+                                <span className={`rounded px-1 text-[13px] font-bold ${pct > 0 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                  ({pctFmt})
+                                </span>
+                              </p>
                             )}
                           </div>
-                          {diff && (
-                            <p className="text-[13px] font-medium text-zinc-650 flex items-center gap-1 mt-0.5 flex-wrap">
-                              <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.price)}</span>
-                              <span className="text-zinc-400">→</span>
-                              <span className="font-semibold text-zinc-750">Rp {fmt(cur)}</span>
-                              <span className={`rounded px-1 text-[13px] font-bold ${pct > 0 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
-                                ({pctFmt})
-                              </span>
-                            </p>
-                          )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <span className="text-[13px] text-zinc-400">Rp</span>
@@ -309,6 +397,10 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
   const [saveState, setSaveState] = useState({});
   const [verificationMap, setVerificationMap] = useState({}); // { [bid]: { [itemId]: { targetPrice, actualPrice, status } } }
 
+  // GSheet auto-sync state
+  const [gsheetSyncing, setGsheetSyncing] = useState(false);
+  const [gsheetSyncedAt, setGsheetSyncedAt] = useState(null);
+
   // Auto-pull sync state
   const [syncPhase, setSyncPhase] = useState("idle"); // "idle" | "syncing" | "done"
   const [syncJobs, setSyncJobs] = useState([]);
@@ -326,6 +418,21 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
   const [activeJobs, setActiveJobs] = useState([]);
   const pushPollingIntervalsRef = useRef({});
+
+  // Trigger GSheet sync from backend POST /api/sync-sheets
+  const triggerGSheetSync = useCallback(async () => {
+    setGsheetSyncing(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/sync-sheets`, { method: "POST" });
+      if (res.ok) {
+        setGsheetSyncedAt(new Date().toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      }
+    } catch (err) {
+      console.error("GSheet sync error:", err);
+    } finally {
+      setGsheetSyncing(false);
+    }
+  }, [API_BASE_URL]);
 
   // Clear auto-pull polling intervals
   const clearSyncPolling = useCallback(() => {
@@ -348,15 +455,17 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setBranches([]); setSelectedBrandId(""); setCheckedIds([]); setSearch(""); setEdits({}); setBranchMenus({});
     setSyncPhase("idle"); setSyncJobs([]); setVerificationMap({});
 
-    const url = `${API_BASE_URL}/api/outlets?platform=${platform}`;
-    fetch(url).then(r => r.json())
-      .then(data => {
-        setAllOutlets(data);
-        setUniqueParents(Array.from(new Set(data.map(o => o.nama_outlet).filter(Boolean))).sort());
-      })
-      .catch((err) => console.error("Error fetching outlets:", err))
+    // Sync GSheet first when platform is selected
+    triggerGSheetSync().then(() => {
+      const url = `${API_BASE_URL}/api/outlets?platform=${platform}`;
+      return fetch(url).then(r => r.json())
+        .then(data => {
+          setAllOutlets(data);
+          setUniqueParents(Array.from(new Set(data.map(o => o.nama_outlet).filter(Boolean))).sort());
+        });
+    }).catch((err) => console.error("Error fetching outlets:", err))
       .finally(() => setLoading(false));
-  }, [platform, API_BASE_URL, clearSyncPolling]);
+  }, [platform, API_BASE_URL, clearSyncPolling, triggerGSheetSync]);
 
   // Fetch menu items and run verification check against intended push prices
   const fetchMenusAndVerify = useCallback(async (targetBranches, targetIntendedPrices = intendedPushPrices) => {
@@ -531,6 +640,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setSelectedBrandId("");
     setCheckedIds([]);
     setSyncPhase("idle");
+    triggerGSheetSync();
   };
 
   // When selected brand changes (Single Select)
@@ -539,6 +649,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setCheckedIds([branchId]);
     setOpenBranchDropdown(false);
     setSyncPhase("idle");
+    triggerGSheetSync();
   };
 
   // Start Pull & Edit
@@ -571,14 +682,18 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setSaveState(p => ({ ...p, [bid]: null }));
   };
 
-  const bulkAdj = (bids, mode, type, val) => {
+  const bulkAdj = (bids, mode, type, val, targetItemIds = null) => {
     const targets = bids.length ? bids : checkedIds;
     setEdits(p => {
       const n = { ...p };
       targets.forEach(bid => {
         const items = branchMenus[bid] || [];
         const be = { ...(p[bid] || {}) };
-        items.forEach(i => { be[i.id] = applyAdj(be[i.id] ?? i.price, mode, type, val); });
+        items.forEach(i => {
+          if (!targetItemIds || targetItemIds.includes(i.id)) {
+            be[i.id] = applyAdj(be[i.id] ?? i.price, mode, type, val);
+          }
+        });
         n[bid] = be;
       });
       return n;
@@ -806,10 +921,28 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     <main className="flex flex-col gap-6">
       {/* ── Top: Controls ── */}
       <section className="surface-card p-5 sm:p-6 space-y-6">
-        <div className="border-b border-red-100 pb-4">
-          <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600">Pengaturan harga</p>
-          <h2 className="mt-1 text-xl font-bold text-slate-900">Tentukan target perubahan</h2>
-          <p className="mt-1 text-[15px] text-slate-500">Pilih aplikator, outlet, dan brand (single-select), lalu lakukan tarik menu real-time sebelum melakukan perubahan harga.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-red-100 pb-4 gap-2">
+          <div>
+            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600">Pengaturan harga</p>
+            <h2 className="mt-1 text-xl font-bold text-slate-900">Tentukan target perubahan</h2>
+            <p className="mt-1 text-[15px] text-slate-500">Pilih aplikator, outlet, dan brand (single-select), lalu lakukan tarik menu real-time sebelum melakukan perubahan harga.</p>
+          </div>
+          <div className="flex items-center gap-2 text-[13px] font-medium shrink-0">
+            {gsheetSyncing ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-amber-700 border border-amber-200 animate-pulse">
+                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Syncing GSheet...
+              </span>
+            ) : gsheetSyncedAt ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 border border-emerald-200">
+                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                GSheet Synced ({gsheetSyncedAt})
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-3">

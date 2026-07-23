@@ -1,0 +1,970 @@
+{
+    "categories": [
+        {
+            "categoryID": "IDCAT2026070703194480036",
+            "categoryName": "Lauk Tambahan",
+            "availableStatus": 1,
+            "sortOrder": 2,
+            "items": [
+                {
+                    "itemID": "IDITE2026070703351371252",
+                    "itemName": "Lauk Ayam Bumbu Bali",
+                    "availableStatus": 1,
+                    "priceDisplay": "Rp36.000,00",
+                    "sortOrder": 4,
+                    "description": "Ayam goreng disiram bumbu Bali pedas gurih menggoda.",
+                    "imageURL": "https://food-cms.grab.com/item/IDITE2026070703351371252/photos/menueditor_item_0ff90eccbbfc42fc90123378c3b5f76b_1783395286585025681.jpeg",
+                    "priceInMin": 3600000,
+                    "weight": null,
+                    "itemCode": "",
+                    "itemClassID": "",
+                    "specialItemType": "",
+                    "itemClassName": "",
+                    "skuID": "",
+                    "brandName": "",
+                    "itemStock": null,
+                    "linkedModifierGroupIDs": [
+                        "IDMOG2026070703412625667"
+                    ],
+                    "soldByWeight": false,
+                    "webPURL": "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703351371252/detail/menueditor_item_0ff90eccbbfc42fc90123378c3b5f76b_1783395286585025681.webp",
+                    "sellingTimeID": "IDSLT202508241042439383",
+                    "priceRange": "Rp36.000,00",
+                    "advancedPricing": null,
+                    "purchasability": null,
+                    "attributes": null,
+                    "imageURLs": [
+                        "https://food-cms.grab.com/item/IDITE2026070703351371252/photos/menueditor_item_0ff90eccbbfc42fc90123378c3b5f76b_1783395286585025681.jpeg"
+                    ],
+                    "webPURLs": [
+                        "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703351371252/detail/menueditor_item_0ff90eccbbfc42fc90123378c3b5f76b_1783395286585025681.webp"
+                    ],
+                    "serviceTypePriceRange": {
+                        "Delivery": "Rp36.000,00",
+                        "DineIn": "Rp36.000,00",
+                        "SelfPickUp": "Rp36.000,00"
+                    },
+                    "availableAt": "0001-01-01T00:00:00Z",
+                    "stockPrediction": null,
+                    "parentItemClassID": "",
+                    "parentItemClassName": "",
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Balinese Spiced Chicken Dish",
+                            "ko": "발리식 양념 치킨 반찬",
+                            "zh": "巴厘香料鸡肉"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "descriptionTranslation": {
+                        "translation": {
+                            "en": "Fried Chicken Drizzled With Spicy Savory Balinese Sauce.",
+                            "ko": "발리 양념으로 뿌린 매콤하고 맛있는 닭고기 튀김.",
+                            "zh": "香辣可口诱人的巴厘岛风味浇汁炸鸡。"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "supportedAttributeClusterIDs": null,
+                    "prediction": null,
+                    "menuScanError": null,
+                    "aiGeneratedFields": null,
+                    "suggestFields": null,
+                    "soldQuantity": 0,
+                    "itemCampaignInfo": null,
+                    "menuScanTaskMeta": null,
+                    "oosNonReplacementReason": "",
+                    "eligibleSellingStatus": "ELIGIBLE",
+                    "m41MetaData": null,
+                    "categoryID": "IDCAT2026070703194480036",
+                    "categoryName": "",
+                    "failedPhotos": null,
+                    "bcrsInfo": null,
+                    "masterItemID": "",
+                    "categoryTreeNodeID": ""
+                },
+                {
+                    "itemID": "IDITE2026070703340642052",
+                    "itemName": "Lauk Ayam Rica",
+                    "availableStatus": 1,
+                    "priceDisplay": "Rp36.000,00",
+                    "sortOrder": 3,
+                    "description": "Ayam goreng pedas rica dengan rempah khas nusantara.",
+                    "imageURL": "https://food-cms.grab.com/item/IDITE2026070703340642052/photos/menueditor_item_810f8c06ba404779b1703d278abbc105_1783395214282639950.jpeg",
+                    "priceInMin": 3600000,
+                    "weight": null,
+                    "itemCode": "",
+                    "itemClassID": "",
+                    "specialItemType": "",
+                    "itemClassName": "",
+                    "skuID": "",
+                    "brandName": "",
+                    "itemStock": null,
+                    "linkedModifierGroupIDs": [
+                        "IDMOG2026070703412625667"
+                    ],
+                    "soldByWeight": false,
+                    "webPURL": "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703340642052/detail/menueditor_item_810f8c06ba404779b1703d278abbc105_1783395214282639950.webp",
+                    "sellingTimeID": "IDSLT202508241042439383",
+                    "priceRange": "Rp36.000,00",
+                    "advancedPricing": null,
+                    "purchasability": null,
+                    "attributes": null,
+                    "imageURLs": [
+                        "https://food-cms.grab.com/item/IDITE2026070703340642052/photos/menueditor_item_810f8c06ba404779b1703d278abbc105_1783395214282639950.jpeg"
+                    ],
+                    "webPURLs": [
+                        "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703340642052/detail/menueditor_item_810f8c06ba404779b1703d278abbc105_1783395214282639950.webp"
+                    ],
+                    "serviceTypePriceRange": {
+                        "Delivery": "Rp36.000,00",
+                        "DineIn": "Rp36.000,00",
+                        "SelfPickUp": "Rp36.000,00"
+                    },
+                    "availableAt": "0001-01-01T00:00:00Z",
+                    "stockPrediction": null,
+                    "parentItemClassID": "",
+                    "parentItemClassName": "",
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Chicken Rica Dish",
+                            "ko": "닭고기 리카 요리",
+                            "zh": "香辣鸡肉"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "descriptionTranslation": {
+                        "translation": {
+                            "en": "Spicy Fried Chicken Rica With Traditional Indonesian Spices.",
+                            "ko": "리카 매운 튀긴 닭고기, 인도네시아 특유의 향신료와 함께.",
+                            "zh": "辣味鸡肉配独特香料的印尼风味。"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "supportedAttributeClusterIDs": null,
+                    "prediction": null,
+                    "menuScanError": null,
+                    "aiGeneratedFields": null,
+                    "suggestFields": null,
+                    "soldQuantity": 0,
+                    "itemCampaignInfo": null,
+                    "menuScanTaskMeta": null,
+                    "oosNonReplacementReason": "",
+                    "eligibleSellingStatus": "ELIGIBLE",
+                    "m41MetaData": null,
+                    "categoryID": "IDCAT2026070703194480036",
+                    "categoryName": "",
+                    "failedPhotos": null,
+                    "bcrsInfo": null,
+                    "masterItemID": "",
+                    "categoryTreeNodeID": ""
+                },
+                {
+                    "itemID": "IDITE2026070703325167370",
+                    "itemName": "Lauk Mujair Bumbu Bali",
+                    "availableStatus": 1,
+                    "priceDisplay": "Rp22.220,00",
+                    "sortOrder": 2,
+                    "description": "Mujair goreng garing berpadu bumbu Bali pedas manis.",
+                    "imageURL": "https://food-cms.grab.com/item/IDITE2026070703325167370/photos/menueditor_item_aece82cd48e743d1b1ed176da7eb9cf9_1783395140257576870.jpeg",
+                    "priceInMin": 2222000,
+                    "weight": null,
+                    "itemCode": "",
+                    "itemClassID": "",
+                    "specialItemType": "",
+                    "itemClassName": "",
+                    "skuID": "",
+                    "brandName": "",
+                    "itemStock": null,
+                    "linkedModifierGroupIDs": [
+                        "IDMOG2026070703412625667"
+                    ],
+                    "soldByWeight": false,
+                    "webPURL": "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703325167370/detail/menueditor_item_aece82cd48e743d1b1ed176da7eb9cf9_1783395140257576870.webp",
+                    "sellingTimeID": "IDSLT202508241042439383",
+                    "priceRange": "Rp22.220,00",
+                    "advancedPricing": null,
+                    "purchasability": null,
+                    "attributes": null,
+                    "imageURLs": [
+                        "https://food-cms.grab.com/item/IDITE2026070703325167370/photos/menueditor_item_aece82cd48e743d1b1ed176da7eb9cf9_1783395140257576870.jpeg"
+                    ],
+                    "webPURLs": [
+                        "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703325167370/detail/menueditor_item_aece82cd48e743d1b1ed176da7eb9cf9_1783395140257576870.webp"
+                    ],
+                    "serviceTypePriceRange": {
+                        "Delivery": "Rp22.220,00",
+                        "DineIn": "Rp22.220,00",
+                        "SelfPickUp": "Rp22.220,00"
+                    },
+                    "availableAt": "0001-01-01T00:00:00Z",
+                    "stockPrediction": null,
+                    "parentItemClassID": "",
+                    "parentItemClassName": "",
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Mujair Fish With Balinese Spices",
+                            "ko": "발리식 양념 틸라피아",
+                            "zh": "巴厘香料罗非鱼"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "descriptionTranslation": {
+                        "translation": {
+                            "en": "Crispy Fried Tilapia Fish With Sweet And Spicy Balinese Spices.",
+                            "ko": "바삭하게 튀긴 물고기와 발리 스타일의 달콤하고 매운 양념이 어우러진 요리.",
+                            "zh": "酥炸罗非鱼搭配巴厘岛香料的甜辣风味。"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "supportedAttributeClusterIDs": null,
+                    "prediction": null,
+                    "menuScanError": null,
+                    "aiGeneratedFields": null,
+                    "suggestFields": null,
+                    "soldQuantity": 0,
+                    "itemCampaignInfo": null,
+                    "menuScanTaskMeta": null,
+                    "oosNonReplacementReason": "",
+                    "eligibleSellingStatus": "ELIGIBLE",
+                    "m41MetaData": null,
+                    "categoryID": "IDCAT2026070703194480036",
+                    "categoryName": "",
+                    "failedPhotos": null,
+                    "bcrsInfo": null,
+                    "masterItemID": "",
+                    "categoryTreeNodeID": ""
+                },
+                {
+                    "itemID": "IDITE2026070703213043498",
+                    "itemName": "Lauk Mujair Rica",
+                    "availableStatus": 1,
+                    "priceDisplay": "Rp22.220,00",
+                    "sortOrder": 1,
+                    "description": "Mujair goreng dengan bumbu rica pedas segar menggugah.",
+                    "imageURL": "https://food-cms.grab.com/item/IDITE2026070703213043498/photos/menueditor_item_e40ba043326c46f7902ae782a315b1e4_1783394460174446665.jpeg",
+                    "priceInMin": 2222000,
+                    "weight": null,
+                    "itemCode": "",
+                    "itemClassID": "",
+                    "specialItemType": "",
+                    "itemClassName": "",
+                    "skuID": "",
+                    "brandName": "",
+                    "itemStock": null,
+                    "linkedModifierGroupIDs": [
+                        "IDMOG2026070703412625667"
+                    ],
+                    "soldByWeight": false,
+                    "webPURL": "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703213043498/detail/menueditor_item_e40ba043326c46f7902ae782a315b1e4_1783394460174446665.webp",
+                    "sellingTimeID": "IDSLT202508241042439383",
+                    "priceRange": "Rp22.220,00",
+                    "advancedPricing": null,
+                    "purchasability": null,
+                    "attributes": null,
+                    "imageURLs": [
+                        "https://food-cms.grab.com/item/IDITE2026070703213043498/photos/menueditor_item_e40ba043326c46f7902ae782a315b1e4_1783394460174446665.jpeg"
+                    ],
+                    "webPURLs": [
+                        "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703213043498/detail/menueditor_item_e40ba043326c46f7902ae782a315b1e4_1783394460174446665.webp"
+                    ],
+                    "serviceTypePriceRange": {
+                        "Delivery": "Rp22.220,00",
+                        "DineIn": "Rp22.220,00",
+                        "SelfPickUp": "Rp22.220,00"
+                    },
+                    "availableAt": "0001-01-01T00:00:00Z",
+                    "stockPrediction": null,
+                    "parentItemClassID": "",
+                    "parentItemClassName": "",
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Mujair Rica Dish",
+                            "ko": "무지어르 리카",
+                            "zh": "辣味罗非鱼配菜"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "descriptionTranslation": {
+                        "translation": {
+                            "en": "Fried Tilapia Fish With Fresh Spicy Rica Seasoning That Tempts The Appetite.",
+                            "ko": "신선하고 매콤한 리카 양념으로 맛을 돋구는 튀긴 무자이르 생선.",
+                            "zh": "炸罗非鱼配新鲜辣味调料，令人垂涎欲滴。"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "supportedAttributeClusterIDs": null,
+                    "prediction": null,
+                    "menuScanError": null,
+                    "aiGeneratedFields": null,
+                    "suggestFields": null,
+                    "soldQuantity": 0,
+                    "itemCampaignInfo": null,
+                    "menuScanTaskMeta": null,
+                    "oosNonReplacementReason": "",
+                    "eligibleSellingStatus": "ELIGIBLE",
+                    "m41MetaData": null,
+                    "categoryID": "IDCAT2026070703194480036",
+                    "categoryName": "",
+                    "failedPhotos": null,
+                    "bcrsInfo": null,
+                    "masterItemID": "",
+                    "categoryTreeNodeID": ""
+                }
+            ],
+            "sellingTimeID": "IDSLT202508241042439383",
+            "nameTranslation": {
+                "translation": {
+                    "en": "Additional Side Dishes",
+                    "ko": "추가 반찬",
+                    "zh": "额外配菜"
+                },
+                "originalTranslationFromDS": null
+            },
+            "menuScanError": null,
+            "menuScanTaskMeta": null
+        },
+        {
+            "categoryID": "IDCAT2026070703215027965",
+            "categoryName": "Menu Pedas Andalan",
+            "availableStatus": 1,
+            "sortOrder": 1,
+            "items": [
+                {
+                    "itemID": "IDITE2026070703303426106",
+                    "itemName": "Nasi Kepala Ayam (Isi 2)",
+                    "availableStatus": 1,
+                    "priceDisplay": "Rp24.240,00",
+                    "sortOrder": 5,
+                    "description": "Nasi dengan dua kepala ayam berbumbu gurih pedas khas rumahan.",
+                    "imageURL": "https://food-cms.grab.com/item/IDITE2026070703303426106/photos/menueditor_item_27071a1e5fff487786b8a17fd19b5a20_1783395001890143843.jpeg",
+                    "priceInMin": 2424000,
+                    "weight": null,
+                    "itemCode": "",
+                    "itemClassID": "",
+                    "specialItemType": "",
+                    "itemClassName": "",
+                    "skuID": "",
+                    "brandName": "",
+                    "itemStock": null,
+                    "linkedModifierGroupIDs": null,
+                    "soldByWeight": false,
+                    "webPURL": "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703303426106/detail/menueditor_item_27071a1e5fff487786b8a17fd19b5a20_1783395001890143843.webp",
+                    "sellingTimeID": "IDSLT202508241042439383",
+                    "priceRange": "Rp24.240,00",
+                    "advancedPricing": null,
+                    "purchasability": null,
+                    "attributes": null,
+                    "imageURLs": [
+                        "https://food-cms.grab.com/item/IDITE2026070703303426106/photos/menueditor_item_27071a1e5fff487786b8a17fd19b5a20_1783395001890143843.jpeg"
+                    ],
+                    "webPURLs": [
+                        "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703303426106/detail/menueditor_item_27071a1e5fff487786b8a17fd19b5a20_1783395001890143843.webp"
+                    ],
+                    "serviceTypePriceRange": {
+                        "Delivery": "Rp24.240,00",
+                        "DineIn": "Rp24.240,00",
+                        "SelfPickUp": "Rp24.240,00"
+                    },
+                    "availableAt": "0001-01-01T00:00:00Z",
+                    "stockPrediction": null,
+                    "parentItemClassID": "",
+                    "parentItemClassName": "",
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Rice With Chicken Head (2 Pieces)",
+                            "ko": "닭 머리 밥 (2개)",
+                            "zh": "鸡头饭（含2个）"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "descriptionTranslation": {
+                        "translation": {
+                            "en": "Rice With Two Seasoned Chicken Heads, Flavored With A Spicy Savory Homemade Touch.",
+                            "ko": "가정식 스타일의 매콤하고 맛있는 양념 두 마리 닭고기와 밥.",
+                            "zh": "家常风味的香辣调味双鸡头配米饭。"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "supportedAttributeClusterIDs": null,
+                    "prediction": null,
+                    "menuScanError": null,
+                    "aiGeneratedFields": null,
+                    "suggestFields": null,
+                    "soldQuantity": 0,
+                    "itemCampaignInfo": null,
+                    "menuScanTaskMeta": null,
+                    "oosNonReplacementReason": "",
+                    "eligibleSellingStatus": "ELIGIBLE",
+                    "m41MetaData": null,
+                    "categoryID": "IDCAT2026070703215027965",
+                    "categoryName": "",
+                    "failedPhotos": null,
+                    "bcrsInfo": null,
+                    "masterItemID": "",
+                    "categoryTreeNodeID": ""
+                },
+                {
+                    "itemID": "IDITE2026070703292977185",
+                    "itemName": "Nasi Pindang (Isi 2)",
+                    "availableStatus": 1,
+                    "priceDisplay": "Rp24.240,00",
+                    "sortOrder": 4,
+                    "description": "Dua potong ikan pindang dengan bumbu gurih tradisional disajikan bersama nasi hangat.",
+                    "imageURL": "https://food-cms.grab.com/item/IDITE2026070703292977185/photos/menueditor_item_dfffcbba98524edcb08a1817823ef339_1783394941829730694.jpeg",
+                    "priceInMin": 2424000,
+                    "weight": null,
+                    "itemCode": "",
+                    "itemClassID": "",
+                    "specialItemType": "",
+                    "itemClassName": "",
+                    "skuID": "",
+                    "brandName": "",
+                    "itemStock": null,
+                    "linkedModifierGroupIDs": null,
+                    "soldByWeight": false,
+                    "webPURL": "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703292977185/detail/menueditor_item_dfffcbba98524edcb08a1817823ef339_1783394941829730694.webp",
+                    "sellingTimeID": "IDSLT202508241042439383",
+                    "priceRange": "Rp24.240,00",
+                    "advancedPricing": null,
+                    "purchasability": null,
+                    "attributes": null,
+                    "imageURLs": [
+                        "https://food-cms.grab.com/item/IDITE2026070703292977185/photos/menueditor_item_dfffcbba98524edcb08a1817823ef339_1783394941829730694.jpeg"
+                    ],
+                    "webPURLs": [
+                        "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703292977185/detail/menueditor_item_dfffcbba98524edcb08a1817823ef339_1783394941829730694.webp"
+                    ],
+                    "serviceTypePriceRange": {
+                        "Delivery": "Rp24.240,00",
+                        "DineIn": "Rp24.240,00",
+                        "SelfPickUp": "Rp24.240,00"
+                    },
+                    "availableAt": "0001-01-01T00:00:00Z",
+                    "stockPrediction": null,
+                    "parentItemClassID": "",
+                    "parentItemClassName": "",
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Pindang Rice (Contains 2)",
+                            "ko": "나시 핀당 (2개 포함)",
+                            "zh": "拼蛋饭（两份）"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "descriptionTranslation": {
+                        "translation": {
+                            "en": "Two Pieces Of Pindang Fish With Traditional Savory Seasoning Served With Warm Rice.",
+                            "ko": "전통적인 향신료로 맛을 낸 두 조각의 생선 찜이 따뜻한 밥과 함께 제공됩니다.",
+                            "zh": "两块传统美味调味的咸鱼与热米饭一起呈现。"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "supportedAttributeClusterIDs": null,
+                    "prediction": null,
+                    "menuScanError": null,
+                    "aiGeneratedFields": null,
+                    "suggestFields": null,
+                    "soldQuantity": 0,
+                    "itemCampaignInfo": null,
+                    "menuScanTaskMeta": null,
+                    "oosNonReplacementReason": "",
+                    "eligibleSellingStatus": "ELIGIBLE",
+                    "m41MetaData": null,
+                    "categoryID": "IDCAT2026070703215027965",
+                    "categoryName": "",
+                    "failedPhotos": null,
+                    "bcrsInfo": null,
+                    "masterItemID": "",
+                    "categoryTreeNodeID": ""
+                },
+                {
+                    "itemID": "IDITE2026070703282614946",
+                    "itemName": "Nasi Pindang Bumbu Bali (Isi 2)",
+                    "availableStatus": 1,
+                    "priceDisplay": "Rp24.240,00",
+                    "sortOrder": 3,
+                    "description": "Nasi dengan dua potong ikan pindang berbumbu Bali pedas gurih menggugah selera.",
+                    "imageURL": "https://food-cms.grab.com/item/IDITE2026070703282614946/photos/menueditor_item_0c73590267b7453db40e7360390fb060_1783394881357688867.jpeg",
+                    "priceInMin": 2424000,
+                    "weight": null,
+                    "itemCode": "",
+                    "itemClassID": "",
+                    "specialItemType": "",
+                    "itemClassName": "",
+                    "skuID": "",
+                    "brandName": "",
+                    "itemStock": null,
+                    "linkedModifierGroupIDs": null,
+                    "soldByWeight": false,
+                    "webPURL": "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703282614946/detail/menueditor_item_0c73590267b7453db40e7360390fb060_1783394881357688867.webp",
+                    "sellingTimeID": "IDSLT202508241042439383",
+                    "priceRange": "Rp24.240,00",
+                    "advancedPricing": null,
+                    "purchasability": null,
+                    "attributes": null,
+                    "imageURLs": [
+                        "https://food-cms.grab.com/item/IDITE2026070703282614946/photos/menueditor_item_0c73590267b7453db40e7360390fb060_1783394881357688867.jpeg"
+                    ],
+                    "webPURLs": [
+                        "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703282614946/detail/menueditor_item_0c73590267b7453db40e7360390fb060_1783394881357688867.webp"
+                    ],
+                    "serviceTypePriceRange": {
+                        "Delivery": "Rp24.240,00",
+                        "DineIn": "Rp24.240,00",
+                        "SelfPickUp": "Rp24.240,00"
+                    },
+                    "availableAt": "0001-01-01T00:00:00Z",
+                    "stockPrediction": null,
+                    "parentItemClassID": "",
+                    "parentItemClassName": "",
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Balinese Spiced Pindang Rice (Contains 2)",
+                            "ko": "발리 양념 핀당 밥 (2개 포함)",
+                            "zh": "巴厘岛调味酱炖肉饭（2份）"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "descriptionTranslation": {
+                        "translation": {
+                            "en": "Rice With Two Pieces Of Seasoned Mackerel Fish Bali-Style, Spicy, Savory, And Appetizing.",
+                            "ko": "발리 스타일의 매운맛과 감칠맛이 있는 두 조각의 생선과 함께 제공되는 밥.",
+                            "zh": "带有两块巴厘岛香辣调味咸鱼的米饭，令人食欲大开。"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "supportedAttributeClusterIDs": null,
+                    "prediction": null,
+                    "menuScanError": null,
+                    "aiGeneratedFields": null,
+                    "suggestFields": null,
+                    "soldQuantity": 0,
+                    "itemCampaignInfo": null,
+                    "menuScanTaskMeta": null,
+                    "oosNonReplacementReason": "",
+                    "eligibleSellingStatus": "ELIGIBLE",
+                    "m41MetaData": null,
+                    "categoryID": "IDCAT2026070703215027965",
+                    "categoryName": "",
+                    "failedPhotos": null,
+                    "bcrsInfo": null,
+                    "masterItemID": "",
+                    "categoryTreeNodeID": ""
+                },
+                {
+                    "itemID": "IDITE2026070703271118644",
+                    "itemName": "Nasi Ayam Geprek",
+                    "availableStatus": 1,
+                    "priceDisplay": "Rp46.000,00",
+                    "sortOrder": 2,
+                    "description": "Ayam goreng renyah digeprek dengan sambal pedas segar dan nasi hangat.",
+                    "imageURL": "https://food-cms.grab.com/item/IDITE2026070703271118644/photos/menueditor_item_ff123a403a724ef185be37fd51e1c9f4_1783394805366092567.jpeg",
+                    "priceInMin": 4600000,
+                    "weight": null,
+                    "itemCode": "",
+                    "itemClassID": "",
+                    "specialItemType": "",
+                    "itemClassName": "",
+                    "skuID": "",
+                    "brandName": "",
+                    "itemStock": null,
+                    "linkedModifierGroupIDs": null,
+                    "soldByWeight": false,
+                    "webPURL": "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703271118644/detail/menueditor_item_ff123a403a724ef185be37fd51e1c9f4_1783394805366092567.webp",
+                    "sellingTimeID": "IDSLT202508241042439383",
+                    "priceRange": "Rp46.000,00",
+                    "advancedPricing": null,
+                    "purchasability": null,
+                    "attributes": null,
+                    "imageURLs": [
+                        "https://food-cms.grab.com/item/IDITE2026070703271118644/photos/menueditor_item_ff123a403a724ef185be37fd51e1c9f4_1783394805366092567.jpeg"
+                    ],
+                    "webPURLs": [
+                        "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703271118644/detail/menueditor_item_ff123a403a724ef185be37fd51e1c9f4_1783394805366092567.webp"
+                    ],
+                    "serviceTypePriceRange": {
+                        "Delivery": "Rp46.000,00",
+                        "DineIn": "Rp46.000,00",
+                        "SelfPickUp": "Rp46.000,00"
+                    },
+                    "availableAt": "0001-01-01T00:00:00Z",
+                    "stockPrediction": null,
+                    "parentItemClassID": "",
+                    "parentItemClassName": "",
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Smashed Fried Chicken With Rice",
+                            "ko": "스매시드 치킨 라이스",
+                            "zh": "香酥鸡饭"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "descriptionTranslation": {
+                        "translation": {
+                            "en": "Crispy Fried Chicken Smashed With Fresh Spicy Sambal And Warm Rice.",
+                            "ko": "바삭한 튀김 닭고기를 매운 신선한 고추 소스와 따뜻한 밥과 함께 제공됩니다.",
+                            "zh": "脆皮炸鸡配上新鲜辣椒酱和热腾腾的米饭。"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "supportedAttributeClusterIDs": null,
+                    "prediction": null,
+                    "menuScanError": null,
+                    "aiGeneratedFields": null,
+                    "suggestFields": null,
+                    "soldQuantity": 0,
+                    "itemCampaignInfo": null,
+                    "menuScanTaskMeta": null,
+                    "oosNonReplacementReason": "",
+                    "eligibleSellingStatus": "ELIGIBLE",
+                    "m41MetaData": null,
+                    "categoryID": "IDCAT2026070703215027965",
+                    "categoryName": "",
+                    "failedPhotos": null,
+                    "bcrsInfo": null,
+                    "masterItemID": "",
+                    "categoryTreeNodeID": ""
+                },
+                {
+                    "itemID": "IDITE2026070703254884551",
+                    "itemName": "Nasi Panggangan (Isi 2)",
+                    "availableStatus": 1,
+                    "priceDisplay": "Rp30.300,00",
+                    "sortOrder": 1,
+                    "description": "Dua potong lauk panggang dengan bumbu manis gurih khas dapur tradisional.",
+                    "imageURL": "https://food-cms.grab.com/item/IDITE2026070703254884551/photos/menueditor_item_4f60aad307d941b9816c5c8bf73777c5_1783394702291950833.jpeg",
+                    "priceInMin": 3030000,
+                    "weight": null,
+                    "itemCode": "",
+                    "itemClassID": "",
+                    "specialItemType": "",
+                    "itemClassName": "",
+                    "skuID": "",
+                    "brandName": "",
+                    "itemStock": null,
+                    "linkedModifierGroupIDs": null,
+                    "soldByWeight": false,
+                    "webPURL": "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703254884551/detail/menueditor_item_4f60aad307d941b9816c5c8bf73777c5_1783394702291950833.webp",
+                    "sellingTimeID": "IDSLT202508241042439383",
+                    "priceRange": "Rp30.300,00",
+                    "advancedPricing": null,
+                    "purchasability": null,
+                    "attributes": null,
+                    "imageURLs": [
+                        "https://food-cms.grab.com/item/IDITE2026070703254884551/photos/menueditor_item_4f60aad307d941b9816c5c8bf73777c5_1783394702291950833.jpeg",
+                        "https://food-cms.grab.com/item/IDITE2026070703254884551/photos/menueditor_item_aa741a64548f4833af52e93760f3248a_1783394702287676780.jpeg"
+                    ],
+                    "webPURLs": [
+                        "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703254884551/detail/menueditor_item_4f60aad307d941b9816c5c8bf73777c5_1783394702291950833.webp",
+                        "https://food-cms.grab.com/compressed_webp/items/IDITE2026070703254884551/detail/menueditor_item_aa741a64548f4833af52e93760f3248a_1783394702287676780.webp"
+                    ],
+                    "serviceTypePriceRange": {
+                        "Delivery": "Rp30.300,00",
+                        "DineIn": "Rp30.300,00",
+                        "SelfPickUp": "Rp30.300,00"
+                    },
+                    "availableAt": "0001-01-01T00:00:00Z",
+                    "stockPrediction": null,
+                    "parentItemClassID": "",
+                    "parentItemClassName": "",
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Grilled Rice (Contains 2)",
+                            "ko": "구운 밥 (2인분)",
+                            "zh": "烤饭（2份）"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "descriptionTranslation": {
+                        "translation": {
+                            "en": "Two Pieces Of Grilled Dishes With Sweet Savory Seasoning From Traditional Kitchen.",
+                            "ko": "전통적인 주방의 달콤하고 감칠맛 나는 양념으로 구운 두 조각 요리.",
+                            "zh": "两块烤肉，搭配传统厨房特有的甜咸调料。"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "supportedAttributeClusterIDs": null,
+                    "prediction": null,
+                    "menuScanError": null,
+                    "aiGeneratedFields": null,
+                    "suggestFields": null,
+                    "soldQuantity": 0,
+                    "itemCampaignInfo": null,
+                    "menuScanTaskMeta": null,
+                    "oosNonReplacementReason": "",
+                    "eligibleSellingStatus": "ELIGIBLE",
+                    "m41MetaData": null,
+                    "categoryID": "IDCAT2026070703215027965",
+                    "categoryName": "",
+                    "failedPhotos": null,
+                    "bcrsInfo": null,
+                    "masterItemID": "",
+                    "categoryTreeNodeID": ""
+                }
+            ],
+            "sellingTimeID": "IDSLT202508241042439383",
+            "nameTranslation": {
+                "translation": {
+                    "en": "Signature Spicy Menu",
+                    "ko": "시그니처 매운 메뉴",
+                    "zh": "招牌辣菜"
+                },
+                "originalTranslationFromDS": null
+            },
+            "menuScanError": null,
+            "menuScanTaskMeta": null
+        }
+    ],
+    "modifierGroups": [
+        {
+            "modifierGroupID": "IDMOG2026070703412625667",
+            "modifierGroupName": "Varian Lauk",
+            "selectionRangeMin": 1,
+            "selectionRangeMax": 1,
+            "modifiers": [
+                {
+                    "modifierID": "IDMOD20260707034126114620",
+                    "modifierName": "Goreng",
+                    "priceDisplay": "",
+                    "isNeedExtraCost": false,
+                    "availableStatus": 1,
+                    "sortOrder": 3,
+                    "quantity": 0,
+                    "priceInMin": 0,
+                    "priceRange": "Rp0,00",
+                    "advancedPricing": null,
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Fried",
+                            "ko": "독일의 공학력",
+                            "zh": "油炸"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "maxModifierSelectionQuantity": 1,
+                    "bcrsInfo": null
+                },
+                {
+                    "modifierID": "IDMOD20260707034126138673",
+                    "modifierName": "Bali",
+                    "priceDisplay": "",
+                    "isNeedExtraCost": false,
+                    "availableStatus": 1,
+                    "sortOrder": 2,
+                    "quantity": 0,
+                    "priceInMin": 0,
+                    "priceRange": "Rp0,00",
+                    "advancedPricing": null,
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Island Of The Gods",
+                            "ko": "신들의 섬",
+                            "zh": "神岛"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "maxModifierSelectionQuantity": 1,
+                    "bcrsInfo": null
+                },
+                {
+                    "modifierID": "IDMOD20260707034127029757",
+                    "modifierName": "Rica",
+                    "priceDisplay": "",
+                    "isNeedExtraCost": false,
+                    "availableStatus": 1,
+                    "sortOrder": 1,
+                    "quantity": 0,
+                    "priceInMin": 0,
+                    "priceRange": "Rp0,00",
+                    "advancedPricing": null,
+                    "nameTranslation": {
+                        "translation": {
+                            "en": "Rich",
+                            "ko": "풍부한",
+                            "zh": "富有"
+                        },
+                        "originalTranslationFromDS": null
+                    },
+                    "maxModifierSelectionQuantity": 1,
+                    "bcrsInfo": null
+                }
+            ],
+            "relatedItemIDs": [
+                "IDITE2026070703351371252",
+                "IDITE2026070703340642052",
+                "IDITE2026070703325167370",
+                "IDITE2026070703213043498"
+            ],
+            "availableStatus": 1,
+            "nameTranslation": {
+                "translation": {
+                    "en": "Side Dish Variant",
+                    "ko": "반찬 종류",
+                    "zh": "配菜变体"
+                },
+                "originalTranslationFromDS": null
+            },
+            "isM41ItemLinked": false,
+            "isFlexibleQuantityEnabled": false,
+            "maxModifierSelectionQuantity": 1
+        }
+    ],
+    "sellingTimes": [
+        {
+            "sellingTimeID": "IDSLT202508241042439383",
+            "merchantID": "6-C7MAGJMDTKBBJX",
+            "name": "Always Available",
+            "status": "ACTIVE",
+            "serviceHours": {
+                "sun": {
+                    "openPeriodType": "OpenAllDay"
+                },
+                "mon": {
+                    "openPeriodType": "OpenAllDay"
+                },
+                "tue": {
+                    "openPeriodType": "OpenAllDay"
+                },
+                "wed": {
+                    "openPeriodType": "OpenAllDay"
+                },
+                "thu": {
+                    "openPeriodType": "OpenAllDay"
+                },
+                "fri": {
+                    "openPeriodType": "OpenAllDay"
+                },
+                "sat": {
+                    "openPeriodType": "OpenAllDay"
+                }
+            },
+            "updatedAt": "2025-08-24T10:42:43Z",
+            "createdAt": "2025-08-24T10:42:43.920834Z",
+            "startTime": "1000-01-01T00:00:00Z",
+            "endTime": "9999-12-31T23:59:59Z"
+        },
+        {
+            "sellingTimeID": "IDSLT202509290349026174",
+            "merchantID": "6-C7MAGJMDTKBBJX",
+            "name": "Selling Times 1",
+            "status": "ACTIVE",
+            "serviceHours": {
+                "sun": {
+                    "periods": [
+                        {
+                            "startTime": "09:00",
+                            "endTime": "21:00"
+                        }
+                    ],
+                    "openPeriodType": "Period"
+                },
+                "mon": {
+                    "periods": [
+                        {
+                            "startTime": "09:00",
+                            "endTime": "21:00"
+                        }
+                    ],
+                    "openPeriodType": "Period"
+                },
+                "tue": {
+                    "periods": [
+                        {
+                            "startTime": "09:00",
+                            "endTime": "21:00"
+                        }
+                    ],
+                    "openPeriodType": "Period"
+                },
+                "wed": {
+                    "periods": [
+                        {
+                            "startTime": "09:00",
+                            "endTime": "21:00"
+                        }
+                    ],
+                    "openPeriodType": "Period"
+                },
+                "thu": {
+                    "periods": [
+                        {
+                            "startTime": "09:00",
+                            "endTime": "21:00"
+                        }
+                    ],
+                    "openPeriodType": "Period"
+                },
+                "fri": {
+                    "periods": [
+                        {
+                            "startTime": "09:00",
+                            "endTime": "21:00"
+                        }
+                    ],
+                    "openPeriodType": "Period"
+                },
+                "sat": {
+                    "periods": [
+                        {
+                            "startTime": "09:00",
+                            "endTime": "21:00"
+                        }
+                    ],
+                    "openPeriodType": "Period"
+                }
+            },
+            "updatedAt": "2025-10-02T23:45:58Z",
+            "createdAt": "2025-09-29T03:49:02.778959Z",
+            "startTime": "2023-09-28T08:08:44Z",
+            "endTime": "9999-12-31T23:59:59Z"
+        }
+    ],
+    "isMenuEditorEnabled": true,
+    "attributesData": {
+        "attributeClusters": {
+            "ACL-C4CYCLAZT6JAJT7856": {
+                "id": "ACL-C4CYCLAZT6JAJT7856",
+                "name": "Brand",
+                "nameLocalization": "Brand",
+                "businessType": "FOOD",
+                "status": "Enabled",
+                "attributeClusterType": "PreDefined",
+                "attributeClusterOption": {
+                    "countryID": 6,
+                    "isShownToPax": true,
+                    "isMexSelfServe": true,
+                    "isSearchKeywordEnabled": true,
+                    "isFilterOptionEnabled": true,
+                    "attributeClusterOptionID": "ACO-C4CYCLAZUFLJVE6074"
+                },
+                "metadata": {
+                    "preDefinedMetadata": {
+                        "attributesLimitPerItem": 1
+                    }
+                }
+            },
+            "ACL-C4JCRNDKVB5CVX7516": {
+                "id": "ACL-C4JCRNDKVB5CVX7516",
+                "name": "Dietary preferences",
+                "nameLocalization": "Preferensi makanan khusus",
+                "businessType": "FOOD",
+                "status": "Enabled",
+                "attributeClusterType": "PreDefined",
+                "attributeClusterOption": {
+                    "countryID": 6,
+                    "isShownToPax": true,
+                    "isMexSelfServe": true,
+                    "isSearchKeywordEnabled": true,
+                    "isFilterOptionEnabled": true,
+                    "attributeClusterOptionID": "ACO-C4JCRNDKVJKUNA9026"
+                },
+                "metadata": {
+                    "preDefinedMetadata": {
+                        "attributesLimitPerItem": 4
+                    }
+                }
+            }
+        }
+    },
+    "stockPhotoUsageStatus": "BELOW_THRESHOLD"
+}

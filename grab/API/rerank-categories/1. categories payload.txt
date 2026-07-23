@@ -1,0 +1,7 @@
+{sectionSorts: [{sectionID: "", sorts: [{resourceID: "IDCAT2026070703194480036", sortOrder: 2},…]}]}
+sectionSorts
+: 
+[{sectionID: "", sorts: [{resourceID: "IDCAT2026070703194480036", sortOrder: 2},…]}]
+0
+: 
+{sectionID: "", sorts: [{resourceID: "IDCAT2026070703194480036", sortOrder: 2},…]}

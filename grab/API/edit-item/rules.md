@@ -1,0 +1,1 @@
+Di grab untuk edit harga ada aturan kenaikan harga maksimal 15 persen dan maksimal 10 kali sehari. kemudian di hari kedua diberi kesempatan 5x sehari . kemudian sebulan hanya 15x.

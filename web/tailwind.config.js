@@ -1,24 +1,35 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: "class",
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
+      spacing: {
+        "4.5": "1.125rem",
+      },
       colors: {
+        zinc: {
+          150: "#ececea",
+          250: "#d4d4d1",
+          350: "#b0b0aa",
+          450: "#898984",
+          455: "#83837e",
+          650: "#454541",
+          750: "#333330",
+          850: "#20201e",
+        },
         brand: {
-          red: "#D90000",
-          "red-hover": "#A60000",
+          red: "#B91C1C",
+          "red-hover": "#991B1B",
           white: "#FFFFFF",
-          "white-hover": "#F5F5F5",
+          "white-hover": "#F5F4F1",
           card: "#FFFFFF",
-          border: "#D90000",
-          muted: "#71717A",
-          dark: "#18181B",
-          light: "#FAFAFA",
+          border: "#B91C1C",
+          muted: "#78716C",
+          dark: "#1C1917",
+          light: "#F8F7F4",
         }
       }
     },

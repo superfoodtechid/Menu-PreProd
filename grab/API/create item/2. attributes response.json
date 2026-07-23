@@ -1,0 +1,505 @@
+{
+    "hasMore": true,
+    "attributes": [
+        {
+            "id": "ATT-C4KUV6JFRP2GRN6509",
+            "name": "7 Up",
+            "nameLocalization": "7 Up",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524082457UTC13610",
+            "name": "A\u0026W",
+            "nameLocalization": "A\u0026W",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524085300UTC96704",
+            "name": "Ades",
+            "nameLocalization": "Ades",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524091259UTC46936",
+            "name": "Alpro",
+            "nameLocalization": "Alpro",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524092105UTC53804",
+            "name": "Aqua",
+            "nameLocalization": "Aqua",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524092118UTC42507",
+            "name": "Aquafina",
+            "nameLocalization": "Aquafina",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524092150UTC88724",
+            "name": "Aquarius",
+            "nameLocalization": "Aquarius",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JFTA2ZGE0619",
+            "name": "Asian Delight",
+            "nameLocalization": "Asian Delight",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524093659UTC81021",
+            "name": "Authentic Tea House",
+            "nameLocalization": "Authentic Tea House",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524093755UTC20901",
+            "name": "Axe",
+            "nameLocalization": "Axe",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524094456UTC10499",
+            "name": "Bango",
+            "nameLocalization": "Bango",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524095146UTC68978",
+            "name": "Bebelac",
+            "nameLocalization": "Bebelac",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524095321UTC18050",
+            "name": "Ben \u0026 Jerry's",
+            "nameLocalization": "Ben \u0026 Jerry's",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524095506UTC32694",
+            "name": "Best Foods",
+            "nameLocalization": "Best Foods",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JFT4MXJX2831",
+            "name": "Bleu",
+            "nameLocalization": "Bleu",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524102301UTC11677",
+            "name": "Breeze",
+            "nameLocalization": "Breeze",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524102741UTC11542",
+            "name": "Buavita",
+            "nameLocalization": "Buavita",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JFVNXTN62737",
+            "name": "Calippo",
+            "nameLocalization": "Calippo",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524104148UTC14857",
+            "name": "Calpis",
+            "nameLocalization": "Calpis",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524104210UTC10944",
+            "name": "Camay",
+            "nameLocalization": "Camay",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524105457UTC38973",
+            "name": "Carte D'Or",
+            "nameLocalization": "Carte D'Or",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524110327UTC62067",
+            "name": "Cheetos",
+            "nameLocalization": "Cheetos",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524110801UTC85196",
+            "name": "Cif",
+            "nameLocalization": "Cif",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524110839UTC24635",
+            "name": "Citra",
+            "nameLocalization": "Citra",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524110933UTC89102",
+            "name": "Clear",
+            "nameLocalization": "Clear",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JFWEBBGA6553",
+            "name": "Close-Up",
+            "nameLocalization": "Close-Up",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524111109UTC50054",
+            "name": "Coca-Cola",
+            "nameLocalization": "Coca-Cola",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524111322UTC63536",
+            "name": "Comfort",
+            "nameLocalization": "Comfort",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220524111536UTC80905",
+            "name": "Cornetto",
+            "nameLocalization": "Cornetto",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JGAXX1ME6114",
+            "name": "Dairy Champ",
+            "nameLocalization": "Dairy Champ",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525064536UTC98630",
+            "name": "Dasani",
+            "nameLocalization": "Dasani",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525065406UTC29322",
+            "name": "Doritos",
+            "nameLocalization": "Doritos",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JGCEWZLJ8995",
+            "name": "Dove Shampoo",
+            "nameLocalization": "Dove Shampoo",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JGC7BZVX6570",
+            "name": "Dugro",
+            "nameLocalization": "Dugro",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JGEUBENN8894",
+            "name": "Ellips",
+            "nameLocalization": "Ellips",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525070949UTC43927",
+            "name": "Eskinol",
+            "nameLocalization": "Eskinol",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JGGE3YJ68207",
+            "name": "Evervess",
+            "nameLocalization": "Evervess",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525071101UTC80561",
+            "name": "Evian",
+            "nameLocalization": "Evian",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525072249UTC96064",
+            "name": "Fair \u0026 Lovely",
+            "nameLocalization": "Fair \u0026 Lovely",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525072323UTC31486",
+            "name": "Fanta",
+            "nameLocalization": "Fanta",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525072415UTC63691",
+            "name": "Feast",
+            "nameLocalization": "Feast",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JGHBBHA26217",
+            "name": "Ferrarelle",
+            "nameLocalization": "Ferrarelle",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525074816UTC35121",
+            "name": "Fluocaril",
+            "nameLocalization": "Fluocaril",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525075104UTC83438",
+            "name": "Fresca",
+            "nameLocalization": "Fresca",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525075156UTC83657",
+            "name": "Frestea",
+            "nameLocalization": "Frestea",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525075353UTC72387",
+            "name": "Frito-Lay",
+            "nameLocalization": "Frito-Lay",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JGJTUKAN7151",
+            "name": "Fuze Tea",
+            "nameLocalization": "Fuze Tea",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525080041UTC8693",
+            "name": "Gatorade",
+            "nameLocalization": "Gatorade",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "001ATTR20220525080327UTC85346",
+            "name": "Glacéau",
+            "nameLocalization": "Glacéau",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        },
+        {
+            "id": "ATT-C4KUV6JGLCCGMA8179",
+            "name": "Good Mood",
+            "nameLocalization": "Good Mood",
+            "countryID": 0,
+            "businessType": "",
+            "status": "Enabled",
+            "cluster": "Brand",
+            "attributeClusterID": "ACL-C4CYCLAZT6JAJT7856"
+        }
+    ]
+}

@@ -1,0 +1,8 @@
+Request payload:
+{itemID: "IDITE2026072202434251254", menuGroupID: ""}
+itemID
+: 
+"IDITE2026072202434251254"
+menuGroupID
+: 
+""

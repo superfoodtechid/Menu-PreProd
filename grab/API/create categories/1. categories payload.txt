@@ -1,0 +1,17 @@
+Request payload:
+{name: "jualan", categoryID: "", sectionID: "", sellingTimeID: "IDSLT202508241042439383",…}
+categoryID
+: 
+""
+menuGroupID
+: 
+""
+name
+: 
+"jualan"
+sectionID
+: 
+""
+sellingTimeID
+: 
+"IDSLT202508241042439383"

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, status
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Query, status
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -327,6 +327,27 @@ def list_accounts(db: Session = Depends(get_db)):
 
 # ─── OUTLETS ENDPOINTS ────────────────────────────────────────────────────────
 
+SUPPORTED_PLATFORMS = {"shopee", "grab", "gofood"}
+
+
+def normalize_platform_filters(platforms: Optional[List[str]]) -> List[str]:
+    normalized = list(dict.fromkeys(
+        value.strip().lower()
+        for value in (platforms or [])
+        if value and value.strip()
+    ))
+    unsupported = sorted(set(normalized) - SUPPORTED_PLATFORMS)
+    if unsupported:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Unsupported platform filter",
+                "unsupported": unsupported,
+                "supported": sorted(SUPPORTED_PLATFORMS),
+            },
+        )
+    return normalized
+
 @app.post("/api/outlets", response_model=OutletResponse, status_code=status.HTTP_201_CREATED)
 def create_outlet(outlet: OutletCreate, db: Session = Depends(get_db)):
     # Verify account exists
@@ -355,10 +376,18 @@ def create_outlet(outlet: OutletCreate, db: Session = Depends(get_db)):
     return new_outlet
 
 @app.get("/api/outlets", response_model=List[OutletResponse])
-def list_outlets(platform: Optional[str] = None, db: Session = Depends(get_db)):
-    if platform:
-        return db.query(Outlet).join(Outlet.account).filter(Account.platform == platform.lower()).all()
-    return db.query(Outlet).all()
+def list_outlets(
+    platform: Optional[List[str]] = Query(
+        default=None,
+        description="Filter platform berulang, contoh: ?platform=grab&platform=gofood",
+    ),
+    db: Session = Depends(get_db),
+):
+    platforms = normalize_platform_filters(platform)
+    query = db.query(Outlet)
+    if platforms:
+        query = query.join(Outlet.account).filter(Account.platform.in_(platforms))
+    return query.all()
 
 
 # ─── BACKGROUND JOBS WORKER ───────────────────────────────────────────────────

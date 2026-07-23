@@ -1,0 +1,8 @@
+Request payload:
+{menuGroupID: "", categoryID: "IDCAT2026072203232391713"}
+categoryID
+: 
+"IDCAT2026072203232391713"
+menuGroupID
+: 
+""

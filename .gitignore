@@ -61,6 +61,13 @@ outlet\ -info/data/
 # Node/Frontend
 web/node_modules/
 web/.next/
+web/dist/
 web/out/
 web/build/
 **/node_modules/
+
+# Sensitive & Backup files
+creds_testing.json
+**/creds_testing.json
+*.bak
+

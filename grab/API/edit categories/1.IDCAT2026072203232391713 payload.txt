@@ -1,0 +1,17 @@
+Request payload:
+{name: "jualan coklat", categoryID: "IDCAT2026072203232391713", sectionID: "",…}
+categoryID
+: 
+"IDCAT2026072203232391713"
+name
+: 
+"jualan coklat"
+nameTranslation
+: 
+null
+sectionID
+: 
+""
+sellingTimeID
+: 
+"IDSLT202508241042439383"

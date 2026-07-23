@@ -1016,7 +1016,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 storage_state = session_path if os.path.exists(session_path) else None
 
                 headless_env = os.getenv("HEADLESS") or os.getenv("HEADLESS_GOFOOD")
-                is_headless = headless_env.lower() in ("true", "1", "yes") if headless_env else False
+                is_headless = headless_env.lower() in ("true", "1", "yes") if headless_env else True
                 browser = p.chromium.launch(headless=is_headless)
                 context = browser.new_context(
                     storage_state=storage_state,

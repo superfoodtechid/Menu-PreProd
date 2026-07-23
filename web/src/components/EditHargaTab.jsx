@@ -210,7 +210,7 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                               <p className="text-[15px] truncate font-medium text-zinc-700">{item.name}</p>
                               {item.is_in_promo && (
                                 <span title="Item sedang dalam promo aktif di portal. Harga dasar dikunci." className="inline-flex items-center gap-1 rounded bg-purple-100 border border-purple-200 px-1.5 py-0.5 text-[11px] font-bold text-purple-800 shrink-0">
-                                  ⚡ PROMO AKTIF
+                                  PROMO AKTIF
                                 </span>
                               )}
                               {isViolation && (
@@ -254,11 +254,11 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                         <div className="mt-0.5 flex items-center gap-1.5 text-[12px]">
                           {ver.status === "VERIFIED" ? (
                             <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 font-bold text-emerald-800">
-                              ✓ Terverifikasi Sesuai di Portal (Rp {fmt(ver.actualPrice)})
+                              Terverifikasi Sesuai di Portal (Rp {fmt(ver.actualPrice)})
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 font-bold text-amber-800">
-                              ⏳ Menunggu Sinkron Portal (Target: Rp {fmt(ver.targetPrice)} / Aktual: Rp {fmt(ver.actualPrice)})
+                              Menunggu Sinkron Portal (Target: Rp {fmt(ver.targetPrice)} / Aktual: Rp {fmt(ver.actualPrice)})
                             </span>
                           )}
                         </div>
@@ -1097,7 +1097,6 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                     ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
                     : "bg-amber-50 text-amber-800 border-amber-200"
                 }`}>
-                  <span>{cacheInfo.is_valid_24h ? "✅" : "⚠️"}</span>
                   <span>
                     Terakhir ditarik: <strong>{cacheInfo.human_age}</strong>
                     {!cacheInfo.is_valid_24h && " (>24 jam)"}
@@ -1118,7 +1117,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                   className="px-4 py-2.5 rounded-xl font-bold text-[14px] bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm flex items-center gap-2 transition-all cursor-pointer"
                   title="Tampilkan data menu cached tanpa membuka browser"
                 >
-                  <span>⚡ Buka Menu Cached ({cacheInfo.human_age})</span>
+                  <span>Buka Menu Cached ({cacheInfo.human_age})</span>
                 </button>
               )}
 
@@ -1138,7 +1137,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 {syncPhase === "syncing"
                   ? "Sedang Menarik Menu Real-Time..."
                   : cacheInfo?.has_cache
-                  ? "🔄 Tarik Ulang Menu Fresh (Live)"
+                  ? "Tarik Ulang Menu Fresh (Live)"
                   : "Tarik Real-Time Menu & Edit Harga"}
               </button>
             </div>
@@ -1382,14 +1381,12 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                   
                   {/* Live Step Description */}
                   <div className="text-[13px] text-zinc-700 font-medium flex items-center gap-2 bg-white/70 p-2.5 rounded-lg border border-zinc-100">
-                    <span className="text-zinc-400">ℹ️</span>
                     <span>{job.current_step || "Mengantrekan tugas..."}</span>
                   </div>
 
                   {/* Explicit Error Banner when Failed or Partial */}
                   {(job.error_message || isFailed) && (
                     <div className="rounded-xl border border-red-200 bg-red-50/90 p-3 flex items-start gap-2 text-[13px] text-red-800 font-medium shadow-sm">
-                      <span className="text-base">⚠️</span>
                       <div className="flex-1">
                         <div className="font-bold text-red-900 mb-0.5">Detail Kesalahan Pembaruan:</div>
                         <div>{job.error_message || "Pembaruan harga tidak dapat diselesaikan atau 0 item terverifikasi."}</div>
@@ -1401,7 +1398,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                   {job.result_metadata?.items_breakdown && job.result_metadata.items_breakdown.length > 0 && (
                     <div className="mt-1 space-y-2">
                       <div className="text-[12px] font-bold text-zinc-700 uppercase tracking-wider flex items-center justify-between">
-                        <span>📋 Rincian Hasil Verifikasi Per Item ({job.result_metadata.items_breakdown.length} Menu)</span>
+                        <span>Rincian Hasil Verifikasi Per Item ({job.result_metadata.items_breakdown.length} Menu)</span>
                       </div>
                       <div className="overflow-x-auto border border-zinc-200/80 rounded-xl bg-white shadow-xs">
                         <table className="w-full text-left text-[12px]">

@@ -25,159 +25,98 @@ _HEADERS_TMPL = """(token) => ({
 })"""
 
 
-def _fetch(page, token, url):
-    """GET request via page.evaluate, kembalikan parsed JSON atau None."""
-    result = page.evaluate("""async ({token, url}) => {
-        try {
-            const res = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json, text/plain, */*',
-                    'Accept-Language': 'id',
-                    'Authentication-Type': 'go-id',
-                    'Authorization': token,
-                    'Gojek-Country-Code': 'ID',
-                    'Origin': 'https://portal.gofoodmerchant.co.id',
-                    'Referer': 'https://portal.gofoodmerchant.co.id/'
-                }
-            });
-            if (!res.ok) return { error: `HTTP ${res.status}`, status: res.status };
-            const text = await res.text();
-            try { return JSON.parse(text); } catch(e) { return { error: 'JSON parse failed', text }; }
-        } catch(e) { return { error: e.message }; }
-    }""", {"token": token, "url": url})
+def _get_headers(token, passkey=None):
+    h = {
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'id',
+        'Authentication-Type': 'go-id',
+        'Authorization': token,
+        'Content-Type': 'application/json',
+        'Gojek-Country-Code': 'ID',
+        'x-passkey': passkey or "1729b182-c60e-4568-849d-5eb7d794fd09"
+    }
+    return h
 
-    if not result or 'error' in result:
-        print(f"   ⚠️ Fetch gagal [{url}]: {result}")
+
+def _fetch(page, token, url, passkey=None):
+    """GET request via page.context.request, kembalikan parsed JSON atau None."""
+    try:
+        res = page.context.request.get(url, headers=_get_headers(token, passkey))
+        if not res.ok:
+            print(f"   ⚠️ Fetch gagal [{url}]: HTTP {res.status}")
+            return None
+        return res.json()
+    except Exception as e:
+        print(f"   ⚠️ Fetch error [{url}]: {e}")
         return None
-    return result
 
 
-def _put(page, token, url, payload):
-    """PUT request via page.evaluate, kembalikan {ok, status, body}."""
+def _put(page, token, url, payload, passkey=None):
+    """PUT request via page.context.request, kembalikan {ok, status, body}."""
     import json
-    return page.evaluate("""async ({token, url, payload}) => {
-        try {
-            const res = await fetch(url, {
-                method: 'PUT',
-                headers: {
-                    'Accept': 'application/json, text/plain, */*',
-                    'Accept-Language': 'id',
-                    'Authentication-Type': 'go-id',
-                    'Authorization': token,
-                    'Content-Type': 'application/json',
-                    'Gojek-Country-Code': 'ID',
-                    'Origin': 'https://portal.gofoodmerchant.co.id',
-                    'Referer': 'https://portal.gofoodmerchant.co.id/'
-                },
-                body: payload
-            });
-            const text = await res.text();
-            return { ok: res.ok, status: res.status, body: text };
-        } catch(e) { return { ok: false, error: e.message }; }
-    }""", {"token": token, "url": url, "payload": json.dumps(payload)})
+    try:
+        res = page.context.request.put(url, headers=_get_headers(token, passkey), data=json.dumps(payload))
+        return { "ok": res.ok, "status": res.status, "body": res.text() }
+    except Exception as e:
+        return { "ok": False, "error": str(e) }
 
 
-def _post(page, token, url, payload):
-    """POST request via page.evaluate, kembalikan {ok, status, body}."""
+def _post(page, token, url, payload, passkey=None):
+    """POST request via page.context.request, kembalikan {ok, status, body}."""
     import json
-    return page.evaluate("""async ({token, url, payload}) => {
-        try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json, text/plain, */*',
-                    'Accept-Language': 'id',
-                    'Authentication-Type': 'go-id',
-                    'Authorization': token,
-                    'Content-Type': 'application/json',
-                    'Gojek-Country-Code': 'ID',
-                    'Origin': 'https://portal.gofoodmerchant.co.id',
-                    'Referer': 'https://portal.gofoodmerchant.co.id/'
-                },
-                body: payload
-            });
-            const text = await res.text();
-            return { ok: res.ok, status: res.status, body: text };
-        } catch(e) { return { ok: false, error: e.message }; }
-    }""", {"token": token, "url": url, "payload": json.dumps(payload)})
+    try:
+        res = page.context.request.post(url, headers=_get_headers(token, passkey), data=json.dumps(payload))
+        return { "ok": res.ok, "status": res.status, "body": res.text() }
+    except Exception as e:
+        return { "ok": False, "error": str(e) }
 
 
-def _patch(page, token, url, payload):
-    """PATCH request via page.evaluate, kembalikan {ok, status, body}."""
+def _patch(page, token, url, payload, passkey=None):
+    """PATCH request via page.context.request, kembalikan {ok, status, body}."""
     import json
-    return page.evaluate("""async ({token, url, payload}) => {
-        try {
-            const res = await fetch(url, {
-                method: 'PATCH',
-                headers: {
-                    'Accept': 'application/json, text/plain, */*',
-                    'Accept-Language': 'id',
-                    'Authentication-Type': 'go-id',
-                    'Authorization': token,
-                    'Content-Type': 'application/json',
-                    'Gojek-Country-Code': 'ID',
-                    'Origin': 'https://portal.gofoodmerchant.co.id',
-                    'Referer': 'https://portal.gofoodmerchant.co.id/'
-                },
-                body: payload
-            });
-            const text = await res.text();
-            return { ok: res.ok, status: res.status, body: text };
-        } catch(e) { return { ok: false, error: e.message }; }
-    }""", {"token": token, "url": url, "payload": json.dumps(payload)})
+    try:
+        res = page.context.request.patch(url, headers=_get_headers(token, passkey), data=json.dumps(payload))
+        return { "ok": res.ok, "status": res.status, "body": res.text() }
+    except Exception as e:
+        return { "ok": False, "error": str(e) }
 
 
-def _delete(page, token, url):
-    """DELETE request via page.evaluate, kembalikan {ok, status, body}."""
-    return page.evaluate("""async ({token, url}) => {
-        try {
-            const res = await fetch(url, {
-                method: 'DELETE',
-                headers: {
-                    'Accept': 'application/json, text/plain, */*',
-                    'Accept-Language': 'id',
-                    'Authentication-Type': 'go-id',
-                    'Authorization': token,
-                    'Content-Type': 'application/json',
-                    'Gojek-Country-Code': 'ID',
-                    'Origin': 'https://portal.gofoodmerchant.co.id',
-                    'Referer': 'https://portal.gofoodmerchant.co.id/'
-                }
-            });
-            const text = await res.text();
-            return { ok: res.ok, status: res.status, body: text };
-        } catch(e) { return { ok: false, error: e.message }; }
-    }""", {"token": token, "url": url})
+def _delete(page, token, url, passkey=None):
+    """DELETE request via page.context.request, kembalikan {ok, status, body}."""
+    try:
+        res = page.context.request.delete(url, headers=_get_headers(token, passkey))
+        return { "ok": res.ok, "status": res.status, "body": res.text() }
+    except Exception as e:
+        return { "ok": False, "error": str(e) }
 
 
 # ── Public helpers ────────────────────────────────────────────
 
-def fetch_menus(page, token, rest_uuid):
+def fetch_menus(page, token, rest_uuid, passkey=None):
     """Ambil semua menu (kategori + item) dari restoran via v1."""
-    return _fetch(page, token, f"{BASE_V1}/restaurants/{rest_uuid}/menus")
+    return _fetch(page, token, f"{BASE_V1}/restaurants/{rest_uuid}/menus", passkey=passkey)
 
 
-def fetch_menu_groups(page, token, rest_uuid):
+def fetch_menu_groups(page, token, rest_uuid, passkey=None):
     """
     Ambil daftar menu groups (dengan UUID) dari restoran.
     Mencoba beberapa endpoint untuk mendapat UUID yang valid bagi bulk upload.
     Endpoint: GET /v2/restaurants/{rest_uuid}/menu_groups
     """
-    result = _fetch(page, token, f"{BASE_V2}/restaurants/{rest_uuid}/menu_groups")
+    result = _fetch(page, token, f"{BASE_V2}/restaurants/{rest_uuid}/menu_groups", passkey=passkey)
     if result:
         return result
     # Fallback ke v1
-    return _fetch(page, token, f"{BASE_V1}/restaurants/{rest_uuid}/menu_groups")
+    return _fetch(page, token, f"{BASE_V1}/restaurants/{rest_uuid}/menu_groups", passkey=passkey)
 
 
-def fetch_menus_v2(page, token, group_id):
+def fetch_menus_v2(page, token, group_id, passkey=None):
     """
     Ambil daftar kategori dari menu_group via v2.
     Endpoint: GET /v2/menu_groups/{group_id}/menus
     Mengembalikan list kategori dengan ID v2 yang kompatibel untuk PATCH/DELETE.
     """
-    return _fetch(page, token, f"{BASE_V2}/menu_groups/{group_id}/menus")
+    return _fetch(page, token, f"{BASE_V2}/menu_groups/{group_id}/menus", passkey=passkey)
 
 
 def parse_menus(data):
@@ -203,71 +142,71 @@ def parse_menus(data):
     return categories
 
 
-def update_category(page, token, group_id, payload):
+def update_category(page, token, group_id, payload, passkey=None):
     """
     Rename/update kategori (menu_group).
     Endpoint: PATCH /v2/menu_groups/{group_id}
     Payload minimal: {"name": "...", "active": true/false}
     """
-    return _patch(page, token, f"{BASE_V2}/menu_groups/{group_id}", payload)
+    return _patch(page, token, f"{BASE_V2}/menu_groups/{group_id}", payload, passkey=passkey)
 
 
-def update_menu_item(page, token, group_id, menu_id, payload):
+def update_menu_item(page, token, group_id, menu_id, payload, passkey=None):
     """
     Update/rename item atau kategori di dalam satu menu_group.
     Endpoint: PATCH /v2/menu_groups/{group_id}/menus/{menu_id}
     Payload: {"name": "...", "active": true/false}
     """
-    return _patch(page, token, f"{BASE_V2}/menu_groups/{group_id}/menus/{menu_id}", payload)
+    return _patch(page, token, f"{BASE_V2}/menu_groups/{group_id}/menus/{menu_id}", payload, passkey=passkey)
 
 
-def delete_menu_item(page, token, group_id, menu_id):
+def delete_menu_item(page, token, group_id, menu_id, passkey=None):
     """
     Hapus kategori/item dari menu_group.
     Endpoint: DELETE /v2/menu_groups/{group_id}/menus/{menu_id}
     """
-    return _delete(page, token, f"{BASE_V2}/menu_groups/{group_id}/menus/{menu_id}")
+    return _delete(page, token, f"{BASE_V2}/menu_groups/{group_id}/menus/{menu_id}", passkey=passkey)
 
 
-def update_item(page, token, rest_uuid, item_id, payload):
+def update_item(page, token, rest_uuid, item_id, payload, passkey=None):
     """Legacy PUT v1 — dipertahankan untuk kompatibilitas mundur."""
-    return _put(page, token, f"{BASE_V1}/restaurants/{rest_uuid}/menu_items/{item_id}", payload)
+    return _put(page, token, f"{BASE_V1}/restaurants/{rest_uuid}/menu_items/{item_id}", payload, passkey=passkey)
 
 
-def update_v2_menu_item(page, token, group_id, item_id, payload):
+def update_v2_menu_item(page, token, group_id, item_id, payload, passkey=None):
     """
     Update menu item per V2 API.
     Endpoint: PATCH /v2/menu_groups/{group_id}/menu_items/{item_id}
     """
-    return _patch(page, token, f"{BASE_V2}/menu_groups/{group_id}/menu_items/{item_id}", payload)
+    return _patch(page, token, f"{BASE_V2}/menu_groups/{group_id}/menu_items/{item_id}", payload, passkey=passkey)
 
 
-def fetch_variant_categories(page, token, group_id):
+def fetch_variant_categories(page, token, group_id, passkey=None):
     """Ambil variasi (variant_categories) untuk satu menu group."""
-    return _fetch(page, token, f"{BASE_V2}/menu_groups/{group_id}/variant_categories")
+    return _fetch(page, token, f"{BASE_V2}/menu_groups/{group_id}/variant_categories", passkey=passkey)
 
 
-def update_variant_category(page, token, group_id, variant_id, payload):
-    return _patch(page, token, f"{BASE_V2}/menu_groups/{group_id}/variant_categories/{variant_id}", payload)
+def update_variant_category(page, token, group_id, variant_id, payload, passkey=None):
+    return _patch(page, token, f"{BASE_V2}/menu_groups/{group_id}/variant_categories/{variant_id}", payload, passkey=passkey)
 
-def delete_variant_category(page, token, group_id, variant_id):
+def delete_variant_category(page, token, group_id, variant_id, passkey=None):
     """
     Hapus seluruh variasi (variant_category).
     Endpoint: DELETE /v2/menu_groups/{group_id}/variant_categories/{variant_id}
     """
-    return _delete(page, token, f"{BASE_V2}/menu_groups/{group_id}/variant_categories/{variant_id}")
+    return _delete(page, token, f"{BASE_V2}/menu_groups/{group_id}/variant_categories/{variant_id}", passkey=passkey)
 
-def create_variant_category(page, token, group_id, payload):
+def create_variant_category(page, token, group_id, payload, passkey=None):
     """Membuat grup variasi (variant_category) baru."""
-    return _post(page, token, f"{BASE_V2}/menu_groups/{group_id}/variant_categories", payload)
+    return _post(page, token, f"{BASE_V2}/menu_groups/{group_id}/variant_categories", payload, passkey=passkey)
 
-def create_variant(page, token, group_id, payload):
+def create_variant(page, token, group_id, payload, passkey=None):
     """Membuat opsi (variant) baru di dalam suatu variant_category."""
-    return _post(page, token, f"{BASE_V2}/menu_groups/{group_id}/variants", payload)
+    return _post(page, token, f"{BASE_V2}/menu_groups/{group_id}/variants", payload, passkey=passkey)
 
-def delete_variant(page, token, group_id, variant_id):
+def delete_variant(page, token, group_id, variant_id, passkey=None):
     """Menghapus opsi (variant) dari variant_category."""
-    return _delete(page, token, f"{BASE_V2}/menu_groups/{group_id}/variants/{variant_id}")
+    return _delete(page, token, f"{BASE_V2}/menu_groups/{group_id}/variants/{variant_id}", passkey=passkey)
 
 
 def download_bulk_csv(page, api_headers, group_id):

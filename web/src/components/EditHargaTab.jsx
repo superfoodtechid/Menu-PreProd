@@ -1309,11 +1309,9 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
       {activeJobs.length > 0 && (
         <section className="surface-card space-y-4 p-5 shadow-sm border border-zinc-200/80 rounded-2xl">
           <div className="flex items-center justify-between">
-            <h3 className="text-[14px] font-bold text-zinc-800 uppercase tracking-wider flex items-center gap-2">
-              <span className="flex h-2.5 w-2.5 rounded-full bg-red-600 animate-pulse" />
+            <h3 className="text-[14px] font-bold text-zinc-800 uppercase tracking-wider">
               Proses Pembaruan Harga & Verifikasi Real-Time
             </h3>
-            <span className="text-[12px] text-zinc-400 font-medium">Satu Proses Terpadu</span>
           </div>
           <div className="space-y-3.5 max-h-[400px] overflow-y-auto pr-1">
             {activeJobs.map(job => {

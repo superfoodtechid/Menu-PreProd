@@ -164,6 +164,11 @@ def sync_sheets(db: Session = Depends(get_db)):
     added_outlets = 0
     updated_outlets = 0
 
+    # Forward-fill merged/header columns in Google Sheet dataframe (e.g. Status, Nama Outlet, Merchant Name)
+    for col in ["Status", "Nama Outlet", "Merchant Name", "Cabang", "Nama Resto Final", "Brand"]:
+        if col in df.columns:
+            df[col] = df[col].ffill()
+
     # Filter only Live status
     df_live = df[df["Status"].str.contains("Live", na=False, case=False)]
 

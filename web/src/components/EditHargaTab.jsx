@@ -166,8 +166,8 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
         </div>
       )}
 
-      {/* menu items */}
-      <div className="flex-1 overflow-y-auto max-h-64 px-4 pb-2">
+      {/* menu items container (expanded vertically) */}
+      <div className="flex-1 overflow-y-auto max-h-[750px] px-4 pb-3">
         {items.length === 0 ? (
           <p className="text-center text-[15px] text-zinc-400 py-6">Tidak ada item menu ditemukan.</p>
         ) : (

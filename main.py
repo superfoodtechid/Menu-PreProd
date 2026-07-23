@@ -1494,18 +1494,8 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
     if not excel_path or not os.path.exists(excel_path):
         return []
 
-    # Query AuditTrail to detect items locked by promo constraints from recent jobs
+    # We determine promo status purely from active Excel catalog pulled in real-time
     promo_item_ids = set()
-    try:
-        promo_trails = db.query(AuditTrail).filter(
-            AuditTrail.outlet_id == outlet_id,
-            (AuditTrail.error_message.ilike("%promo%") | AuditTrail.error_message.ilike("%campaign%"))
-        ).all()
-        for pt in promo_trails:
-            if pt.item_id:
-                promo_item_ids.add(str(pt.item_id))
-    except Exception as ex:
-        logger.warning(f"Error querying promo audit trails: {ex}")
 
     try:
         import openpyxl

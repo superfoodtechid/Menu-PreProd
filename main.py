@@ -1070,15 +1070,15 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                     
                     page.wait_for_url(lambda url: "/auth/login" not in url, timeout=45000)
                     context.storage_state(path=session_path)
-                    page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/", wait_until="domcontentloaded")
+                    page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu", wait_until="domcontentloaded")
                     time.sleep(3)
 
-                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/", wait_until="domcontentloaded")
+                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu", wait_until="domcontentloaded")
 
-                # Wait dynamically (up to 15s) for restaurant_uuid and authorization token to be captured
+                # Wait dynamically (up to 15s) for restaurant_uuid, authorization, and x-passkey
                 start_wait = time.time()
                 while (time.time() - start_wait) < 15:
-                    if api_headers.get('restaurant_uuid') and api_headers.get('authorization'):
+                    if api_headers.get('restaurant_uuid') and api_headers.get('authorization') and api_headers.get('x-passkey'):
                         break
                     page.wait_for_timeout(500)
 

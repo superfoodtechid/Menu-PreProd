@@ -40,6 +40,7 @@ export default function MenuPullTab({ API_BASE_URL }) {
 
   // Active jobs tracked list
   const [activeJobs, setActiveJobs] = useState([]);
+  const [retryingJobIds, setRetryingJobIds] = useState({});
   
   const pollingIntervalsRef = useRef({});
 
@@ -205,6 +206,7 @@ export default function MenuPullTab({ API_BASE_URL }) {
                     current_step: job.current_step,
                     error_message: job.error_message,
                     result_metadata: job.result_metadata,
+                    outlet_id: job.outlet_id || j.outlet_id,
                   }
                 : j
             )
@@ -256,6 +258,7 @@ export default function MenuPullTab({ API_BASE_URL }) {
 
         newJobsList.push({
           id: job.id,
+          outlet_id: target.id,
           name: branchLabel,
           platform: target.platform,
           status: job.status,
@@ -269,6 +272,7 @@ export default function MenuPullTab({ API_BASE_URL }) {
         console.error(err);
         newJobsList.push({
           id: `err-${Math.random()}`,
+          outlet_id: target.id,
           name: branchLabel,
           platform: target.platform,
           status: "FAILED",
@@ -282,6 +286,52 @@ export default function MenuPullTab({ API_BASE_URL }) {
     setActiveJobs((prev) => [...newJobsList, ...prev]);
     if (Object.keys(pollingIntervalsRef.current).length === 0) {
       setTriggering(false);
+    }
+  };
+
+  // Re-run single failed pull job
+  const handleReRunPullJob = async (failedJob) => {
+    const outletId = failedJob.outlet_id;
+    if (!outletId) {
+      alert("ID Outlet tidak ditemukan untuk menjalankan ulang tugas ini.");
+      return;
+    }
+
+    setRetryingJobIds((prev) => ({ ...prev, [failedJob.id]: true }));
+    setTriggering(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/jobs/pull?outlet_id=${outletId}`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Gagal memulai kembali tugas penarikan");
+      const newJob = await res.json();
+
+      const updatedJobObj = {
+        id: newJob.id,
+        outlet_id: outletId,
+        name: failedJob.name,
+        platform: failedJob.platform,
+        status: newJob.status,
+        progress_pct: newJob.progress_pct,
+        current_step: newJob.current_step,
+        error_message: null,
+      };
+
+      setActiveJobs((prev) =>
+        prev.map((j) => (j.id === failedJob.id ? updatedJobObj : j))
+      );
+
+      startPollingJob(newJob.id);
+    } catch (err) {
+      console.error(err);
+      alert(`Gagal menjalankan ulang: ${err.message}`);
+    } finally {
+      setRetryingJobIds((prev) => {
+        const next = { ...prev };
+        delete next[failedJob.id];
+        return next;
+      });
     }
   };
 
@@ -513,6 +563,22 @@ export default function MenuPullTab({ API_BASE_URL }) {
                   {job.error_message && (
                     <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-[13px] text-red-700">
                       {job.error_message}
+                    </div>
+                  )}
+
+                  {job.status === "FAILED" && (
+                    <div className="pt-2 border-t border-red-100 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleReRunPullJob(job)}
+                        disabled={retryingJobIds[job.id]}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-red-800 disabled:opacity-50"
+                      >
+                        <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        {retryingJobIds[job.id] ? "Memulai Ulang..." : "Coba Lagi (Re-run)"}
+                      </button>
                     </div>
                   )}
 

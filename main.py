@@ -1,4 +1,5 @@
 import os
+import json
 import sys
 import uuid
 import logging
@@ -1092,7 +1093,6 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 rest_uuid = api_headers.get('restaurant_uuid')
                 if not rest_uuid:
                     # Coba baca dari cached menu response hasil Pull sebelumnya
-                    import json
                     cache_path = os.path.join(BASE_DIR, "Gofood", "API", f"menu-response-{merchant_id}.json")
                     if os.path.exists(cache_path):
                         try:
@@ -1184,7 +1184,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         'Authorization': token,
                         'Content-Type': 'application/json',
                         'Gojek-Country-Code': 'ID',
-                        'x-passkey': passkey,
+                        'x-passkey': passkey or '',
                         'Origin': 'https://portal.gofoodmerchant.co.id',
                         'Referer': 'https://portal.gofoodmerchant.co.id/'
                     }
@@ -1205,7 +1205,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                     if not res or not res.get('ok'):
                         status_code = res.get('status', '?') if res else '?'
                         body_err = (res.get('body') or '')[:500] if res else ''
-                        logger.warning(f"GoFood V2 PATCH gagal (HTTP {status_code}), Body: {body_err}. Fallback ke V1 PUT...")
+                        logger.warning(f"GoFood V2 PATCH gagal (HTTP {status_code}), Body: {body_err}, Error: {res.get('error')}. Fallback ke V1 PUT...")
 
                         v1_payload = {
                             "name": orig_item.get('name'),

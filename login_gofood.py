@@ -796,13 +796,21 @@ def login_outlet(outlet_info, proxy_config=None):
             captured_menu = None
             captured_restaurant_id = None
             captured_modifiers = []
+            captured_v2_group_id = None
+            captured_x_passkey = None
             if store_id:
                 store_id_clean = str(store_id).strip()
                 print(f"   🤖 Target Store ID: {store_id_clean}")
                 try:
+                    # Capture x-passkey dari request headers
+                    def handle_request_passkey(req):
+                        nonlocal captured_x_passkey
+                        if 'gojekapi.com' in req.url and req.headers.get('x-passkey'):
+                            captured_x_passkey = req.headers['x-passkey']
+
                     # Register response listener to capture API response asynchronously
                     def handle_response(response):
-                        nonlocal captured_menu, captured_restaurant_id
+                        nonlocal captured_menu, captured_restaurant_id, captured_v2_group_id
                         url_lower = response.url.lower()
 
                         if "/restaurants/" in url_lower:
@@ -813,6 +821,21 @@ def login_outlet(outlet_info, proxy_config=None):
                                     if len(cand) == 36 and "-" in cand:
                                         captured_restaurant_id = cand
                                         break
+
+                        # Capture v2_menus_group_id dari endpoint /v2/menu_groups/{gid}/menus
+                        if "/v2/menu_groups/" in response.url and "/menus" in response.url and "variant" not in response.url:
+                            try:
+                                if response.status == 200:
+                                    parts = response.url.split("/")
+                                    for idx, part in enumerate(parts):
+                                        if part == "menu_groups" and idx + 1 < len(parts):
+                                            gid = parts[idx + 1].split("?")[0]
+                                            if len(gid) == 36 and gid.count("-") == 4:
+                                                captured_v2_group_id = gid
+                                                print(f"   ✅ [Listener] Berhasil menangkap V2 Menu Group ID: {gid}")
+                                                break
+                            except Exception:
+                                pass
 
                         if "gofood/merchant" in url_lower and ("/menus" in url_lower or "menu_groups" in url_lower):
                             try:
@@ -835,6 +858,7 @@ def login_outlet(outlet_info, proxy_config=None):
                             except Exception as e:
                                 print(f"   ⚠️ [Listener] Gagal memproses JSON modifier response: {e}")
                     
+                    page.on("request", handle_request_passkey)
                     page.on("response", handle_response)
                     
                     # 1. Coba klik Menu tab di sidebar dengan selector href yang presisi
@@ -1040,6 +1064,9 @@ def login_outlet(outlet_info, proxy_config=None):
                 'sessionStorage': session_storage,
                 'captured_menu': captured_menu,
                 'captured_modifiers': deduped_modifiers,
+                'v2_menus_group_id': captured_v2_group_id,
+                'restaurant_uuid': captured_restaurant_id,
+                'x_passkey': captured_x_passkey,
             }
 
             # Save session for future runs

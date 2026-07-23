@@ -1563,6 +1563,7 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
                     "name": item_name,
                     "description": desc,
                     "price": price_val,
+                    "original_price": fake_price_val,
                     "availability": avail_val,
                     "is_in_promo": is_in_promo
                 })

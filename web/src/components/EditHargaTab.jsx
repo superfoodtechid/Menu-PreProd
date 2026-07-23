@@ -208,6 +208,13 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                                 <span title={violationMsg} className="inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full bg-red-600 text-[13px] font-bold text-white shadow-sm">!</span>
                               )}
                             </div>
+                            {item.is_in_promo && item.original_price > 0 && item.original_price > item.price && (
+                              <p className="text-[13px] font-medium flex items-center gap-1 mt-0.5 flex-wrap">
+                                <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.original_price)}</span>
+                                <span className="text-zinc-400">→</span>
+                                <span className="font-semibold text-purple-700">Rp {fmt(item.price)}</span>
+                              </p>
+                            )}
                             {diff && (
                               <p className="text-[13px] font-medium text-zinc-650 flex items-center gap-1 mt-0.5 flex-wrap">
                                 <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.price)}</span>

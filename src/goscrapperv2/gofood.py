@@ -52,33 +52,6 @@ START_TIME_TOTAL = time.time()
 SHEET_PUBLISHED_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3tLKBNXDqRgBw0mNhKZFxgvKx-JoiTDzm_s5Ix1cm7O6HCv4IvExOLR2HSRVaXSsx82V348mcr9X4/pub?gid=0&single=true&output=csv"
 
 
-def safe_goto_with_retry(page, url, wait_until="domcontentloaded", timeout=30000, max_attempts=3):
-    """
-    Mekanisme navigasi aman dengan reload 2x (total 3 attempt) jika terjadi Timeout Error
-    saat mengakses halaman portal GoFood.
-    """
-    last_err = None
-    for attempt in range(1, max_attempts + 1):
-        try:
-            return page.goto(url, wait_until=wait_until, timeout=timeout)
-        except Exception as e:
-            last_err = e
-            console.print(f"   ⚠️ [Timeout/Error] Navigasi ke {url} gagal pada percobaan {attempt}/{max_attempts}: {e}")
-            if attempt < max_attempts:
-                console.print(f"   🔄 [Reload Mekanisme 2x] Melakukan reload / re-try navigasi ke {url} (Coba {attempt}/{max_attempts - 1})...")
-                time.sleep(2.0)
-                try:
-                    if page.url and page.url != "about:blank":
-                        page.reload(wait_until=wait_until, timeout=timeout)
-                        console.print(f"   ✅ Reload berhasil untuk {url}")
-                        return True
-                except Exception as reload_err:
-                    console.print(f"   ⚠️ Reload gagal ({reload_err}), mencoba page.goto ulang...")
-    if last_err:
-        raise last_err
-    return False
-
-
 def to_csv_url(url):
     if 'pubhtml' in url:
         url = url.replace('/pubhtml?', '/pub?')
@@ -705,10 +678,10 @@ def login_outlet_gofood_flow(outlet_info):
                 page = context.new_page()
                 if current_email:
                     console.print(f"\n   ➡️ [Email: {current_email}] Membuka halaman login email langsung... (Percobaan {attempt + 1}/{max_login_attempts})")
-                    safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/auth/login/email", wait_until="domcontentloaded")
+                    page.goto("https://portal.gofoodmerchant.co.id/auth/login/email", wait_until="load")
                 else:
                     console.print(f"\n   ➡️ Membuka halaman login... (Percobaan {attempt + 1}/{max_login_attempts})")
-                    safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/auth/login", wait_until="domcontentloaded")
+                    page.goto("https://portal.gofoodmerchant.co.id/auth/login", wait_until="load")
 
                 # Langsung input ke email field, abaikan cookie & pop-up
                 time.sleep(1.0)

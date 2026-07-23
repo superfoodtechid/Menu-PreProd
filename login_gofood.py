@@ -32,31 +32,7 @@ def normalisasi_nomor_hp(nomor_hp):
         return nomor_hp[2:]
     if nomor_hp.startswith("0"):
         return nomor_hp[1:]
-def safe_goto_with_retry(page, url, wait_until="domcontentloaded", timeout=30000, max_attempts=3):
-    """
-    Mekanisme navigasi aman dengan reload 2x (total 3 attempt) jika terjadi Timeout Error
-    saat mengakses halaman portal GoFood.
-    """
-    last_err = None
-    for attempt in range(1, max_attempts + 1):
-        try:
-            return page.goto(url, wait_until=wait_until, timeout=timeout)
-        except Exception as e:
-            last_err = e
-            print(f"   ⚠️ [Timeout/Error] Navigasi ke {url} gagal pada percobaan {attempt}/{max_attempts}: {e}")
-            if attempt < max_attempts:
-                print(f"   🔄 [Reload Mekanisme 2x] Melakukan reload / re-try navigasi ke {url} (Coba {attempt}/{max_attempts - 1})...")
-                time.sleep(2.0)
-                try:
-                    if page.url and page.url != "about:blank":
-                        page.reload(wait_until=wait_until, timeout=timeout)
-                        print(f"   ✅ Reload berhasil untuk {url}")
-                        return True
-                except Exception as reload_err:
-                    print(f"   ⚠️ Reload gagal ({reload_err}), mencoba page.goto ulang...")
-    if last_err:
-        raise last_err
-    return False
+    return nomor_hp
 
 
 def fetch_gofood_outlets():
@@ -425,7 +401,7 @@ def login_outlet(outlet_info, proxy_config=None):
                 context.add_cookies(cached_data['cookies'])
                 
                 page = context.new_page()
-                safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/dashboard", wait_until="domcontentloaded")
+                page.goto("https://portal.gofoodmerchant.co.id/dashboard", wait_until="load")
                 time.sleep(2.0)
                 
                 # Check if we are logged in (i.e. URL does not contain /auth/login)
@@ -467,10 +443,10 @@ def login_outlet(outlet_info, proxy_config=None):
                 page = context.new_page()
                 if current_email:
                     print(f"\n   ➡️ [Email: {current_email}] Membuka halaman login email langsung... (Percobaan {attempt + 1}/{max_login_attempts})")
-                    safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/auth/login/email", wait_until="domcontentloaded")
+                    page.goto("https://portal.gofoodmerchant.co.id/auth/login/email", wait_until="load")
                 else:
                     print(f"\n   ➡️ Membuka halaman login... (Percobaan {attempt + 1}/{max_login_attempts})")
-                    safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/auth/login", wait_until="domcontentloaded")
+                    page.goto("https://portal.gofoodmerchant.co.id/auth/login", wait_until="load")
 
                 time.sleep(1.0)
                 
@@ -872,7 +848,7 @@ def login_outlet(outlet_info, proxy_config=None):
                         tutup_semua_popup(page)
                     else:
                         print("   ⚠️ Tab Menu di sidebar tidak ditemukan, mencoba langsung ke URL /gofood...")
-                        safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/gofood", wait_until="domcontentloaded")
+                        page.goto("https://portal.gofoodmerchant.co.id/gofood", wait_until="domcontentloaded")
                     
                     # Cek apakah sudah otomatis ter-redirect ke halaman menu items (untuk single-branch)
                     current_url = page.url
@@ -880,7 +856,7 @@ def login_outlet(outlet_info, proxy_config=None):
                         print("   🤖 Halaman otomatis beralih ke Menu Items (Single Branch). Menunggu capture...")
                     else:
                         print(f"   🤖 Langsung navigasi ke halaman menu outlet {store_id_clean}...")
-                        safe_goto_with_retry(page, f"https://portal.gofoodmerchant.co.id/gofood/{store_id_clean}/", wait_until="domcontentloaded")
+                        page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{store_id_clean}/", wait_until="domcontentloaded")
                             
                     # Tunggu 15 detik pertama hingga captured_menu terisi
                     print("   🤖 Menunggu response API Menu ditangkap (15 detik)...")

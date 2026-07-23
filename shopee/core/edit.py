@@ -39,10 +39,14 @@ def _boot_client(store_metadata: dict, headless: bool = True) -> tuple[ShopeeMod
     if not session_data or "shopee_tob_token" not in session_data:
         return None, "Gagal menginisialisasi browser session"
         
+    extra_cookies = session_data.get("extra_cookies", {}).copy()
+    if store_id:
+        extra_cookies["shopee_tob_entity_id"] = str(store_id)
+
     client = ShopeeModifyClient(
         tob_token=session_data["shopee_tob_token"],
-        entity_id=store_id,
-        extra_cookies=session_data.get("extra_cookies", {})
+        entity_id=str(store_id),
+        extra_cookies=extra_cookies
     )
     return client, ""
 

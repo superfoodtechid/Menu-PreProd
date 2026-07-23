@@ -1070,14 +1070,39 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                     
                     page.wait_for_url(lambda url: "/auth/login" not in url, timeout=45000)
                     context.storage_state(path=session_path)
-                    page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu", wait_until="domcontentloaded")
+                    page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
                     time.sleep(3)
 
-                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}", wait_until="domcontentloaded")
+                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
                 time.sleep(2)
                 page.reload(wait_until="domcontentloaded")
                 time.sleep(2)
                 page.reload(wait_until="domcontentloaded")
+
+                def tutup_semua_popup(p):
+                    cookie_sels = ['button:has-text("Terima Semua Cookie")', 'button:has-text("Accept All Cookies")', 'button:has-text("Terima")', 'button:has-text("Accept")']
+                    for sel in cookie_sels:
+                        try:
+                            loc = p.locator(sel)
+                            if loc.count() > 0 and loc.first.is_visible():
+                                loc.first.click(timeout=1500)
+                                time.sleep(0.5)
+                        except Exception: pass
+
+                    dismiss_sels = ['button:has-text("Lewati")', 'button:has-text("Lewati Tutorial")', 'button:has-text("Selesai")', 'button:has-text("Tutup")', 'button:has-text("Nanti Saja")', '[aria-label="close"]', '[aria-label="Close"]', 'button.close', '.dismiss-button', 'button[class*="close"]', 'button:has-text("×")', 'button:has-text("✕")']
+                    for sel in dismiss_sels:
+                        try:
+                            loc = p.locator(sel)
+                            for i in range(loc.count()):
+                                cand = loc.nth(i)
+                                if cand.is_visible():
+                                    cand.click(timeout=1500)
+                                    time.sleep(0.5)
+                        except Exception: pass
+
+                for _ in range(3):
+                    tutup_semua_popup(page)
+                    time.sleep(1)
 
                 # Wait dynamically (up to 15s) for restaurant_uuid, authorization, and x-passkey
                 start_wait = time.time()

@@ -65,9 +65,6 @@ def validate_credentials(username, password):
     if u.lower() in placeholders or p.lower() in placeholders:
         return False, f"Credential contains a placeholder value (user: '{u}', pwd: '{p}')"
         
-    if u.lower() == p.lower():
-        return False, f"Username and Password are identical (likely copy-paste error): '{u}'"
-        
     if len(p) < 6:
         return False, f"Password is too short (less than 6 characters): '{p}'"
         
@@ -1074,6 +1071,8 @@ def parse_menu(menu_data, store_id, outlet_name, shopee_short_name):
             
             sold_qty = item.get("soldQuantity") or item.get("soldQty") or item.get("sold_qty") or 0
             
+            is_in_promo = (item.get("itemCampaignInfo") is not None) or (item.get("advancedPricing") is not None) or (original_price > discounted_price and original_price > 0)
+
             items_list.append({
                 "Link outlet": f"https://food.grab.com/id/en/restaurant/{store_id}",
                 "Nama panjang": outlet_name,
@@ -1090,12 +1089,13 @@ def parse_menu(menu_data, store_id, outlet_name, shopee_short_name):
                 "Harga item setelah promo (harga coret)": discounted_price,
                 "Nominal atau persentase promo (harga coret)": promo_val,
                 "Ketersediaan item": availability,
+                "Sedang promo": "Ya" if is_in_promo else "Tidak",
                 "Link foto": photo_url
             })
             
     return items_list, modifiers_list
 
-async def run_api_download_for_portal(user, pwd, start_date: str = None, end_date: str = None, browser=None):
+async def run_api_download_for_portal(user, pwd, start_date: str = None, end_date: str = None, browser=None, target_store_id: str = None):
     is_valid, err_msg = validate_credentials(user, pwd)
     if not is_valid:
         logger.error(f"  ✗ [Validation] Invalid credentials for {user}: {err_msg}")
@@ -1165,13 +1165,11 @@ async def run_api_download_for_portal(user, pwd, start_date: str = None, end_dat
 
             # Step 2: Navigasi ke /food/menu + intercept request halaman untuk
             # mendapatkan merchantId yang BENAR (sama dengan curl yang digunakan manual).
-            # Ini lebih andal daripada merchant-selector karena halaman tahu ID-nya sendiri.
             logger.info(f"  [Nav] Opening /food/menu and intercepting merchant IDs...")
             intercepted = await api.get_merchant_ids_from_page_requests()
 
             if intercepted:
                 logger.info(f"  [Intercept] {len(intercepted)} store(s) found via page request interception.")
-                # Ambil nama dari merchant-selector sebagai metadata tambahan
                 selector_stores = await api.get_all_merchants_and_stores()
                 name_map = {s["store_id"]: s["store_name"] for s in selector_stores if s["store_id"]}
                 stores = []
@@ -1194,16 +1192,21 @@ async def run_api_download_for_portal(user, pwd, start_date: str = None, end_dat
                         "store_id":   mgid,
                         "store_name": "Default Store",
                     }]
-                # Navigasi ke food/menu karena interception belum dilakukan
-                try:
-                    await page.goto(
-                        "https://merchant.grab.com/food/menu",
-                        wait_until="domcontentloaded",
-                        timeout=30000
-                    )
-                    await page.wait_for_timeout(2000)
-                except Exception as nav_err:
-                    logger.warning(f"  [Nav] food/menu navigation failed: {nav_err}.")
+            
+            # Filter stores to target_store_id if provided
+            if target_store_id:
+                filtered_stores = [s for s in stores if s.get("store_id") == target_store_id]
+                if filtered_stores:
+                    stores = filtered_stores
+                    logger.info(f"  🎯 Filtered to target store: {target_store_id}")
+                else:
+                    logger.info(f"  🎯 Direct target store ID specified: {target_store_id}")
+                    stores = [{
+                        "group_id":   mgid,
+                        "group_name": "",
+                        "store_id":   target_store_id,
+                        "store_name": target_store_id,
+                    }]
 
             all_items = []
             all_modifiers = []
@@ -1214,17 +1217,15 @@ async def run_api_download_for_portal(user, pwd, start_date: str = None, end_dat
                 store_name = s["store_name"]
                 is_mg      = s.get("is_menu_group", False)
 
-                # Jika multi-store, navigasi ke food/menu tiap store (skip jika is_menu_group)
-                if len(stores) > 1 and not is_mg:
+                # Navigasi ke food/menu/{store_id} untuk mengaktifkan konteks sesi store di frontend Grab
+                if store_id and not is_mg:
                     try:
-                        await page.goto(
-                            "https://merchant.grab.com/food/menu",
-                            wait_until="domcontentloaded",
-                            timeout=30000
-                        )
-                        await page.wait_for_timeout(2000)
+                        menu_tab_url = f"https://merchant.grab.com/food/menu/{store_id}"
+                        logger.info(f"  [Nav] Navigating to store menu page: {menu_tab_url}")
+                        await page.goto(menu_tab_url, wait_until="domcontentloaded", timeout=30000)
+                        await page.wait_for_timeout(3000)
                     except Exception as nav_err:
-                        logger.warning(f"  [Nav] food/menu re-navigation failed: {nav_err}.")
+                        logger.warning(f"  [Nav] food/menu/{store_id} navigation warning: {nav_err}")
 
                 # Step 3: Fetch menu dari konteks halaman /food/menu
                 logger.info(f"  [Fetch] Fetching menu API for {store_name} ({store_id})...")

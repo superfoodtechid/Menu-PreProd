@@ -486,7 +486,7 @@ def login_outlet(outlet_info, proxy_config=None):
                 if current_email:
                     try:
                         email_input = page.wait_for_selector(
-                            'input[type="email"], input[name="email"], input[placeholder*="email" i], input[placeholder*="Email" i], input[type="text"]',
+                            'input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible',
                             timeout=15000
                         )
                         if email_input:

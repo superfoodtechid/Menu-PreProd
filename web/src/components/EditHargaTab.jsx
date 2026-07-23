@@ -34,7 +34,7 @@ function checkViolation(platform, oldPrice, newPrice) {
 const CHIPS_NOM = [500, 1000, 2000, 5000];
 const CHIPS_PCT = [5, 10, 15, 20];
 
-function AdjustBar({ onApply, buttonText = "OK" }) {
+function AdjustBar({ onApply, buttonText = "OK", extraActions = null }) {
   const [mode, setMode] = useState("add");
   const [type, setType] = useState("nominal");
   const [val, setVal] = useState("");
@@ -103,14 +103,22 @@ function AdjustBar({ onApply, buttonText = "OK" }) {
         >{buttonText}</button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-0.5 text-[13px] text-slate-400">Nilai cepat:</span>
-        {chips.map((v) => (
-          <button key={v} type="button"
-            onClick={() => setVal(String(v))}
-            className={`rounded-full border bg-white px-2.5 py-0.5 text-[13px] font-semibold transition-colors ${mode === "add" ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50" : "border-red-200 text-red-700 hover:bg-red-50"}`}
-          >{mode === "add" ? "+" : "−"}{type === "nominal" ? fmt(v) : `${v}%`}</button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-0.5 text-[13px] text-slate-400 font-medium">Nilai cepat:</span>
+          {chips.map((v) => (
+            <button key={v} type="button"
+              onClick={() => setVal(String(v))}
+              className={`rounded-full border bg-white px-2.5 py-0.5 text-[13px] font-semibold transition-colors ${mode === "add" ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50" : "border-red-200 text-red-700 hover:bg-red-50"}`}
+            >{mode === "add" ? "+" : "−"}{type === "nominal" ? fmt(v) : `${v}%`}</button>
+          ))}
+        </div>
+
+        {extraActions && (
+          <div className="flex items-center gap-2 shrink-0">
+            {extraActions}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -145,29 +153,12 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
               {changed} berubah
             </span>
           )}
-          <button type="button" onClick={() => setShowAdj(!showAdj)}
-            title="Sesuaikan semua harga brand ini"
-            className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
-              showAdj ? "bg-red-700 text-white" : "bg-red-50 text-red-600 hover:bg-red-100"
-            }`}
-          >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
-          </button>
         </div>
       </div>
 
-      {/* Quick per-card adjust (toggle) */}
-      {showAdj && (
-        <div className="px-4 pb-3 border-b border-zinc-100 pt-3 bg-slate-50/50">
-          <AdjustBar onApply={(m, t, v) => onBulkAdj([branch.id], m, t, v)} buttonText="Terapkan" />
-        </div>
-      )}
 
-      {/* menu items */}
-      <div className="flex-1 overflow-y-auto max-h-64 px-4 pb-2">
+      {/* menu items container (expanded vertically) */}
+      <div className="flex-1 overflow-y-auto max-h-[750px] px-4 pb-3">
         {items.length === 0 ? (
           <p className="text-center text-[15px] text-zinc-400 py-6">Tidak ada item menu ditemukan.</p>
         ) : (
@@ -206,12 +197,24 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                             />
                           )}
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               <p className="text-[15px] truncate font-medium text-zinc-700">{item.name}</p>
+                              {item.is_in_promo && (
+                                <span title="Item sedang dalam promo aktif di portal. Harga dasar dikunci." className="inline-flex items-center gap-1 rounded bg-purple-100 border border-purple-200 px-1.5 py-0.5 text-[11px] font-bold text-purple-800 shrink-0">
+                                  PROMO AKTIF
+                                </span>
+                              )}
                               {isViolation && (
                                 <span title={violationMsg} className="inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full bg-red-600 text-[13px] font-bold text-white shadow-sm">!</span>
                               )}
                             </div>
+                            {item.is_in_promo && item.original_price > 0 && item.original_price > item.price && (
+                              <p className="text-[13px] font-medium flex items-center gap-1 mt-0.5 flex-wrap">
+                                <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.original_price)}</span>
+                                <span className="text-zinc-400">→</span>
+                                <span className="font-semibold text-purple-700">Rp {fmt(item.price)}</span>
+                              </p>
+                            )}
                             {diff && (
                               <p className="text-[13px] font-medium text-zinc-650 flex items-center gap-1 mt-0.5 flex-wrap">
                                 <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.price)}</span>
@@ -227,10 +230,14 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                         <div className="flex items-center gap-1 shrink-0">
                           <span className="text-[13px] text-zinc-400">Rp</span>
                           <input type="text" inputMode="numeric"
+                            disabled={item.is_in_promo}
+                            title={item.is_in_promo ? "Harga dikunci oleh portal karena menu sedang dalam promo aktif" : ""}
                             value={fmt(cur)}
                             onChange={(e) => onChange(branch.id, item.id, e.target.value)}
                             className={`w-24 text-right text-[15px] font-semibold rounded-md px-2 py-1 border transition-colors focus:outline-none focus:ring-1 ${
-                              isViolation
+                              item.is_in_promo
+                                ? "border-purple-200 bg-purple-50/50 text-purple-900 cursor-not-allowed opacity-80"
+                                : isViolation
                                 ? "border-red-400 bg-white text-red-700 focus:border-red-500 focus:ring-red-200"
                                 : diff
                                 ? "border-amber-300 bg-white text-slate-700 focus:ring-amber-200"
@@ -245,11 +252,11 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                         <div className="mt-0.5 flex items-center gap-1.5 text-[12px]">
                           {ver.status === "VERIFIED" ? (
                             <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 font-bold text-emerald-800">
-                              ✓ Terverifikasi Sesuai di Portal (Rp {fmt(ver.actualPrice)})
+                              Terverifikasi Sesuai di Portal (Rp {fmt(ver.actualPrice)})
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 font-bold text-amber-800">
-                              ⏳ Menunggu Sinkron Portal (Target: Rp {fmt(ver.targetPrice)} / Aktual: Rp {fmt(ver.actualPrice)})
+                              Menunggu Sinkron Portal (Target: Rp {fmt(ver.targetPrice)} / Aktual: Rp {fmt(ver.actualPrice)})
                             </span>
                           )}
                         </div>
@@ -263,29 +270,7 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
         )}
       </div>
 
-      {/* footer */}
-      <div className="flex items-center justify-between gap-2 border-t border-red-100 bg-red-50/30 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => onReset(branch.id, items)}
-            className="text-[13px] font-semibold text-zinc-500 hover:text-zinc-700 bg-zinc-100 hover:bg-zinc-200 px-2 py-1 rounded transition-all shadow-sm"
-          >Reset</button>
-          {totalBranches > 1 && (
-            <button type="button" onClick={() => onApplyToAll(branch.id)}
-              title="Salin harga brand ini ke semua brand terpilih"
-              className="text-[13px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 px-2 py-1 rounded transition-colors"
-            >
-              Terapkan ke Semua Brand
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {saving && <span className="text-[13px] text-zinc-400 animate-pulse">Menyimpan...</span>}
-          {saved && <span className="text-[13px] font-semibold text-emerald-700">Tersimpan ✓</span>}
-          <button type="button" onClick={() => onSave([branch.id])} disabled={saving || changed === 0}
-            className="rounded-lg bg-red-700 px-3 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-          >Simpan</button>
-        </div>
-      </div>
+
     </div>
   );
 }
@@ -342,6 +327,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
   const [intendedPushPrices, setIntendedPushPrices] = useState({}); // { [bid]: { [itemId]: targetPrice } }
 
   const [activeJobs, setActiveJobs] = useState([]);
+  const [showPostPushMenu, setShowPostPushMenu] = useState(false);
   const pushPollingIntervalsRef = useRef({});
 
   // Item Selection Edit Controls state in Step 4
@@ -570,6 +556,9 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
               if (Object.keys(syncPollingRef.current).length === 0) {
                 fetchMenusAndVerify(targetBranches, customIntendedPrices);
                 setSyncPhase("done");
+                if (targetBranches[0]?.id) {
+                  fetchCacheStatus(targetBranches[0].id);
+                }
               }
             }
           })
@@ -578,6 +567,18 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     });
 
   }, [API_BASE_URL, clearSyncPolling, fetchMenusAndVerify, intendedPushPrices]);
+
+  const [cacheInfo, setCacheInfo] = useState(null);
+
+  const fetchCacheStatus = (branchId) => {
+    if (!branchId) return;
+    fetch(`${API_BASE_URL}/api/outlets/${branchId}/menu-cache-status`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) setCacheInfo(data);
+      })
+      .catch(err => console.error("Error fetching cache status:", err));
+  };
 
   // When selected parent (Outlet) changes
   const handleSelectOutlet = (name) => {
@@ -588,6 +589,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setSelectedBrandId("");
     setCheckedIds([]);
     setSyncPhase("idle");
+    setCacheInfo(null);
     triggerGSheetSync();
   };
 
@@ -597,11 +599,15 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
     setCheckedIds([branchId]);
     setOpenBranchDropdown(false);
     setSyncPhase("idle");
+    setCacheInfo(null);
+    fetchCacheStatus(branchId);
     triggerGSheetSync();
   };
 
   // Start Pull & Edit
   const handleStartPullAndEdit = () => {
+    setActiveJobs([]);
+    setShowPostPushMenu(false);
     const targetBranches = branches.filter(b => b.id === selectedBrandId);
     if (targetBranches.length > 0) {
       triggerAutoPull(targetBranches);
@@ -610,11 +616,16 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
   // Skip pull and jump straight to editing
   const handleSkipSync = () => {
+    setActiveJobs([]);
+    setShowPostPushMenu(false);
     clearSyncPolling();
     const targetBranches = branches.filter(b => b.id === selectedBrandId);
     fetchMenusAndVerify(targetBranches);
     setSyncPhase("done");
   };
+
+  const isPushInProgress = activeJobs.length > 0 && activeJobs.some(j => j.status === "PENDING" || j.status === "RUNNING");
+  const isPushCompleted = activeJobs.length > 0 && activeJobs.every(j => j.status === "SUCCESS" || j.status === "FAILED" || j.status === "PARTIAL_SUCCESS");
 
   const filtered = uniqueParents.filter(n => n.toLowerCase().includes(search.toLowerCase()));
   const selectedBrandObj = branches.find(b => b.id === selectedBrandId);
@@ -670,21 +681,20 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                     progress_pct: job.progress_pct,
                     current_step: job.current_step,
                     error_message: job.error_message,
+                    result_metadata: job.result_metadata
                   }
                 : j
             )
           );
 
-          if (job.status === "SUCCESS" || job.status === "FAILED") {
+          if (job.status === "SUCCESS" || job.status === "FAILED" || job.status === "PARTIAL_SUCCESS") {
             clearInterval(pushPollingIntervalsRef.current[jobId]);
             delete pushPollingIntervalsRef.current[jobId];
 
-            if (job.status === "SUCCESS") {
-              // Trigger Auto-Pull & Compare verification automatically upon push completion
-              const targetBranch = branches.filter(b => b.id === branchId);
-              if (targetBranch.length > 0) {
-                triggerAutoPull(targetBranch);
-              }
+            // Refresh local menu data for target branch quietly without secondary loading card
+            const targetBranch = branches.filter(b => b.id === branchId);
+            if (targetBranch.length > 0) {
+              fetchMenusAndVerify(targetBranch, intendedPushPrices);
             }
           }
         })
@@ -698,6 +708,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
   const triggerPriceUpdate = async (bidsToUpdate) => {
     setPushing(true);
+    setShowPostPushMenu(false);
     const targets = Array.isArray(bidsToUpdate) ? bidsToUpdate : [bidsToUpdate];
     const newJobsList = [];
     const newIntended = { ...intendedPushPrices };
@@ -718,6 +729,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           updates.push({
             item_id: i.id,
             category_id: i.category_id || "",
+            item_name: i.name || "",
             new_price: curPrice
           });
           branchIntendedMap[i.id] = curPrice;
@@ -877,7 +889,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           </div>
           <div className="flex items-center gap-2 text-[13px] font-medium shrink-0">
             {gsheetSyncing ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-amber-700 border border-amber-200 animate-pulse">
+              <span className="inline-flex items-center gap-1.5 text-amber-700 font-semibold">
                 <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -885,9 +897,8 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 Syncing GSheet...
               </span>
             ) : gsheetSyncedAt ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 border border-emerald-200">
-                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                GSheet Synced ({gsheetSyncedAt})
+              <span className="text-emerald-700 font-bold uppercase tracking-wider">
+                Gsheet Synced
               </span>
             ) : null}
           </div>
@@ -1063,22 +1074,64 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
         </div>
 
-        {/* Start Pull Button */}
+        {/* Pull Actions & 24h Cache Section */}
         {selectedBrandId && (
-          <div className="pt-2 border-t border-red-100 flex justify-end">
-            <button
-              type="button"
-              disabled={syncPhase === "syncing"}
-              onClick={handleStartPullAndEdit}
-              className="primary-action gap-2 px-6 py-2.5 text-[15px]"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              {syncPhase === "syncing"
-                ? "Sedang Menarik Menu Real-Time..."
-                : `Tarik Real-Time Menu & Edit Harga`}
-            </button>
+          <div className="pt-3 border-t border-red-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-[13px] text-zinc-600 font-medium flex items-center gap-2">
+              {cacheInfo?.has_cache ? (
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${
+                  cacheInfo.is_valid_24h 
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
+                    : "bg-amber-50 text-amber-800 border-amber-200"
+                }`}>
+                  <span>
+                    Terakhir ditarik: <strong>{cacheInfo.human_age}</strong>
+                    {!cacheInfo.is_valid_24h && " (>24 jam)"}
+                  </span>
+                </span>
+              ) : (
+                <span className="text-zinc-400 font-normal">Belum ada cache menu lokal.</span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* Existing Pull / Fast Load Cached Button */}
+              {cacheInfo?.has_cache && (
+                <button
+                  type="button"
+                  disabled={syncPhase === "syncing"}
+                  onClick={handleSkipSync}
+                  className={`px-4 py-2.5 rounded-xl font-bold text-[14px] bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm flex items-center gap-2 transition-all ${
+                    syncPhase === "syncing" ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"
+                  }`}
+                  title="Tampilkan data menu cached tanpa membuka browser"
+                >
+                  <span>Buka Menu Cached ({cacheInfo.human_age})</span>
+                </button>
+              )}
+
+              {/* Fresh Pull Button (Always Live Syncs) */}
+              <button
+                type="button"
+                disabled={syncPhase === "syncing"}
+                onClick={handleStartPullAndEdit}
+                className={`primary-action gap-2 px-5 py-2.5 text-[14px] ${
+                  syncPhase === "syncing" ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
+                } ${
+                  cacheInfo?.has_cache ? "bg-red-800 hover:bg-red-900" : ""
+                }`}
+                title="Meluncurkan browser untuk tarik menu ter-fresh dari portal merchant"
+              >
+                <svg className={`w-4 h-4 ${syncPhase === "syncing" ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {syncPhase === "syncing"
+                  ? "Sedang Menarik Menu Real-Time..."
+                  : cacheInfo?.has_cache
+                  ? "Tarik Ulang Menu Fresh (Live)"
+                  : "Tarik Real-Time Menu & Edit Harga"}
+              </button>
+            </div>
           </div>
         )}
       </section>
@@ -1101,12 +1154,6 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 </p>
               </div>
             </div>
-
-            <button type="button" onClick={handleSkipSync}
-              className="self-start sm:self-auto rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-[13px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-            >
-              Lewati & Edit Langsung
-            </button>
           </div>
 
           <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
@@ -1158,135 +1205,172 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 Terapkan ke <strong>{preview.length} brand</strong> terpilih. Saat ini ada <strong className="text-red-700">{totalChanges} perubahan</strong>.
               </p>
             </div>
-
-            {/* Mode Switcher Tabs */}
-            <div className="flex items-center gap-2 self-start lg:self-auto">
-              <span className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Mode Edit:</span>
-              <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                <button type="button" onClick={() => setItemEditMode("single")}
-                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all ${
-                    itemEditMode === "single" ? "bg-red-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                >Single Select Item</button>
-                <button type="button" onClick={() => setItemEditMode("multi")}
-                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all ${
-                    itemEditMode === "multi" ? "bg-red-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                >Multi Select Item ({selectedItemIds.length})</button>
-                <button type="button" onClick={() => setItemEditMode("all")}
-                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all ${
-                    itemEditMode === "all" ? "bg-red-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                >Apply to All Item</button>
-              </div>
-            </div>
           </div>
 
-          {/* Sub-bar for Multi Select Item */}
-          {itemEditMode === "multi" && (
-            <div className="flex items-center justify-between bg-amber-50/80 border border-amber-200 rounded-xl p-3 text-[13px]">
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={() => selectAllVisibleItems(preview)} className="font-bold text-red-700 hover:underline">
-                  ✓ Pilih Semua Item ({preview.reduce((acc, b) => acc + (branchMenus[b.id] || []).length, 0)})
-                </button>
-                <span className="text-amber-300">|</span>
-                <button type="button" onClick={deselectAllItems} className="font-medium text-slate-600 hover:underline">
-                  Batal Pilih
-                </button>
-              </div>
-              <span className="font-bold text-amber-800">{selectedItemIds.length} item terpilih</span>
-            </div>
-          )}
-
           {/* Adjust Bar & Actions */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-1">
-            <div className="flex-1 min-w-0">
-              <AdjustBar
-                onApply={(m, t, v) => {
-                  if (itemEditMode === "multi") {
-                    if (selectedItemIds.length === 0) {
-                      alert("Pilih setidaknya 1 item terlebih dahulu.");
-                      return;
-                    }
-                    bulkAdj([], m, t, v, selectedItemIds);
-                  } else {
-                    bulkAdj([], m, t, v);
-                  }
-                }}
-                buttonText={
-                  itemEditMode === "multi"
-                    ? `Terapkan ke ${selectedItemIds.length} Item Terpilih`
-                    : itemEditMode === "all"
-                    ? "Terapkan ke Semua Item"
-                    : "Terapkan Perubahan"
-                }
-              />
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0 pt-2 lg:pt-0">
-              <button type="button" onClick={resetAll}
-                className="px-3.5 py-2 text-[14px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors shrink-0"
-              >
-                Reset Harga
-              </button>
-              <button type="button" onClick={() => openPushConfirmationModal(checkedIds)} disabled={pushing || totalChanges === 0}
-                className="primary-action gap-2 px-5 py-2 text-[14px]"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                {pushing ? "Mengirim job..." : `Push ${totalChanges} Perubahan`}
-              </button>
-            </div>
+          <div className="pt-1">
+            <AdjustBar
+              onApply={(m, t, v) => bulkAdj([], m, t, v)}
+              buttonText="Terapkan Perubahan"
+              extraActions={
+                <>
+                  <button type="button" onClick={resetAll}
+                    className="px-3.5 py-1.5 text-[13px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors shrink-0 cursor-pointer"
+                  >
+                    Reset Harga
+                  </button>
+                  <button type="button" onClick={() => openPushConfirmationModal(checkedIds)} disabled={pushing || totalChanges === 0}
+                    className="primary-action gap-2 px-4 py-1.5 text-[13px] font-bold shrink-0"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    {pushing ? "Mengirim job..." : `Push ${totalChanges} Perubahan`}
+                  </button>
+                </>
+              }
+            />
           </div>
         </section>
       )}
 
-      {/* ── Active Push Price Jobs Section ── */}
+      {/* ── Active Push Price Jobs & Real-Time Verification Section (Single Unified Loading Process) ── */}
       {activeJobs.length > 0 && (
-        <section className="surface-card space-y-4 p-5">
-          <h3 className="text-[15px] font-semibold text-zinc-700 uppercase tracking-wider">
-            Status Pembaruan Harga ke Merchant Portal
-          </h3>
-          <div className="space-y-3 max-h-60 overflow-y-auto">
-            {activeJobs.map(job => (
-              <div key={job.id} className="border border-red-100 p-4 rounded-lg flex flex-col gap-2.5 bg-red-50/30">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="text-[15px] font-semibold text-zinc-700">{job.name}</div>
-                    <div className="text-[13px] text-zinc-400">
-                      JOB ID: {job.id} · PLATFORM: {job.platform?.toUpperCase()}
+        <section className="surface-card space-y-4 p-5 shadow-sm border border-zinc-200/80 rounded-2xl">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[14px] font-bold text-zinc-800 uppercase tracking-wider">
+              Proses Pembaruan Harga & Verifikasi Real-Time
+            </h3>
+          </div>
+          <div className="space-y-3.5 max-h-[400px] overflow-y-auto pr-1">
+            {activeJobs.map(job => {
+              const isRunning = job.status === "PENDING" || job.status === "RUNNING";
+              const isSuccess = job.status === "SUCCESS";
+              const isFailed = job.status === "FAILED";
+              const isPartial = job.status === "PARTIAL_SUCCESS";
+
+              return (
+                <div 
+                  key={job.id} 
+                  className={`p-4 rounded-xl border transition-all flex flex-col gap-3 ${
+                    isSuccess ? "bg-emerald-50/40 border-emerald-200" :
+                    isFailed ? "bg-red-50/50 border-red-200" :
+                    isPartial ? "bg-amber-50/40 border-amber-200" :
+                    "bg-white border-zinc-200 shadow-sm"
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="text-[15px] font-bold text-zinc-800 flex items-center gap-2">
+                        {job.name}
+                        {isRunning && (
+                          <span className="inline-flex items-center gap-1 text-[12px] text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                            <svg className="animate-spin h-3 w-3 text-amber-600" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Memproses...
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[12px] text-zinc-400 font-mono mt-0.5">
+                        JOB ID: {job.id} · PLATFORM: {job.platform?.toUpperCase()}
+                      </div>
+                    </div>
+                    <span className={`text-[12px] font-bold uppercase px-3 py-1 rounded-full ${
+                      isSuccess ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                      isFailed ? "bg-red-100 text-red-800 border border-red-200" :
+                      isPartial ? "bg-amber-100 text-amber-800 border border-amber-200" :
+                      "bg-blue-100 text-blue-800 border border-blue-200"
+                    }`}>
+                      {job.status}
+                    </span>
+                  </div>
+                  
+                  {/* Progress Bar & Percentage */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[12px] font-semibold text-zinc-600">
+                      <span>Proses Push & Verifikasi</span>
+                      <span>{job.progress_pct || 0}%</span>
+                    </div>
+                    <div className="w-full bg-zinc-100 rounded-full h-2 overflow-hidden border border-zinc-200/60">
+                      <div 
+                        className={`h-full transition-all duration-500 rounded-full ${
+                          isSuccess ? "bg-emerald-500" :
+                          isFailed ? "bg-red-500" :
+                          isPartial ? "bg-amber-500" :
+                          "bg-gradient-to-r from-red-500 to-amber-500"
+                        }`} 
+                        style={{ width: `${job.progress_pct || 0}%` }} 
+                      />
                     </div>
                   </div>
-                  <span className={`text-[13px] font-bold uppercase px-2.5 py-1 rounded-full ${
-                    job.status === "SUCCESS" ? "bg-emerald-100 text-emerald-700" :
-                    job.status === "FAILED" ? "bg-red-100 text-red-700" :
-                    job.status === "PARTIAL_SUCCESS" ? "bg-amber-100 text-amber-700" :
-                    "bg-amber-100 text-amber-700"
-                  }`}>{job.status}</span>
-                </div>
-                
-                {/* progress bar */}
-                <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
-                  <div className={`h-full transition-all duration-500 ${
-                    job.status === "SUCCESS" ? "bg-emerald-500" :
-                    job.status === "FAILED" ? "bg-red-500" :
-                    job.status === "PARTIAL_SUCCESS" ? "bg-amber-500" :
-                    "bg-red-600"
-                  }`} style={{ width: `${job.progress_pct}%` }} />
-                </div>
-                
-                <div className="text-[13px] text-zinc-500 font-medium">
-                  {job.current_step || "Mengantre..."}
-                </div>
-                {job.error_message && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-[13px] text-red-700">
-                    Error: {job.error_message}
+                  
+                  {/* Live Step Description */}
+                  <div className="text-[13px] text-zinc-700 font-medium flex items-center gap-2 bg-white/70 p-2.5 rounded-lg border border-zinc-100">
+                    <span>{job.current_step || "Mengantrekan tugas..."}</span>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* Explicit Error Banner when Failed or Partial */}
+                  {(job.error_message || isFailed) && (
+                    <div className="rounded-xl border border-red-200 bg-red-50/90 p-3 flex items-start gap-2 text-[13px] text-red-800 font-medium shadow-sm">
+                      <div className="flex-1">
+                        <div className="font-bold text-red-900 mb-0.5">Detail Kesalahan Pembaruan:</div>
+                        <div>{job.error_message || "Pembaruan harga tidak dapat diselesaikan atau 0 item terverifikasi."}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rincian Verifikasi Hasil Per Item */}
+                  {job.result_metadata?.items_breakdown && job.result_metadata.items_breakdown.length > 0 && (
+                    <div className="mt-1 space-y-2">
+                      <div className="text-[12px] font-bold text-zinc-700 uppercase tracking-wider flex items-center justify-between">
+                        <span>Rincian Hasil Verifikasi Per Item ({job.result_metadata.items_breakdown.length} Menu)</span>
+                      </div>
+                      <div className="overflow-x-auto border border-zinc-200/80 rounded-xl bg-white shadow-xs">
+                        <table className="w-full text-left text-[12px]">
+                          <thead className="bg-zinc-50 border-b border-zinc-200/80 font-semibold text-zinc-600">
+                            <tr>
+                              <th className="py-2 px-3">Nama Menu</th>
+                              <th className="py-2 px-3">Harga Asli</th>
+                              <th className="py-2 px-3">Harga Diminta</th>
+                              <th className="py-2 px-3">Verified Live</th>
+                              <th className="py-2 px-3">Status</th>
+                              <th className="py-2 px-3">Keterangan / Error</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-100">
+                            {job.result_metadata.items_breakdown.map((item, idx) => (
+                              <tr key={idx} className={item.status === 'SUCCESS' ? 'bg-emerald-50/20' : 'bg-red-50/20'}>
+                                <td className="py-2 px-3 font-semibold text-zinc-800">{item.item_name}</td>
+                                <td className="py-2 px-3 text-zinc-500">{item.old_price ? `Rp ${Number(item.old_price).toLocaleString('id-ID')}` : '-'}</td>
+                                <td className="py-2 px-3 font-medium text-zinc-800">{item.requested_price ? `Rp ${Number(item.requested_price).toLocaleString('id-ID')}` : '-'}</td>
+                                <td className="py-2 px-3 font-medium text-emerald-700">{item.verified_price ? `Rp ${Number(item.verified_price).toLocaleString('id-ID')}` : '-'}</td>
+                                <td className="py-2 px-3">
+                                  <span className={`inline-flex px-2 py-0.5 font-bold rounded-md text-[11px] ${
+                                    item.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {item.status === 'SUCCESS' ? 'SUKSES' : 'GAGAL'}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 text-[11px] text-zinc-500">
+                                  {item.error_message ? (
+                                    <span className="text-red-700 font-medium">{item.error_message}</span>
+                                  ) : (
+                                    <span className="text-emerald-700 font-medium">Terverifikasi di portal</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
@@ -1304,6 +1388,22 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
               </div>
               <p className="text-base font-semibold text-slate-700">Belum ada brand dipilih</p>
               <p className="mt-1 text-[15px] text-slate-500">Selesaikan langkah 1–3 lalu klik tombol tarik real-time untuk mulai mengedit harga.</p>
+            </div>
+          ) : isPushInProgress ? (
+            null
+          ) : isPushCompleted && !showPostPushMenu ? (
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <button
+                type="button"
+                onClick={() => setShowPostPushMenu(true)}
+                className="px-5 py-2.5 bg-red-800 hover:bg-red-900 text-white font-bold text-[14px] rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span>Buka Menu Hasil Verifikasi Terbaru</span>
+              </button>
             </div>
           ) : (
             <div className={`grid gap-4 ${

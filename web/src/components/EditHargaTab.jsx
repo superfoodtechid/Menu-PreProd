@@ -280,29 +280,7 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
         )}
       </div>
 
-      {/* footer */}
-      <div className="flex items-center justify-between gap-2 border-t border-red-100 bg-red-50/30 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => onReset(branch.id, items)}
-            className="text-[13px] font-semibold text-zinc-500 hover:text-zinc-700 bg-zinc-100 hover:bg-zinc-200 px-2 py-1 rounded transition-all shadow-sm"
-          >Reset</button>
-          {totalBranches > 1 && (
-            <button type="button" onClick={() => onApplyToAll(branch.id)}
-              title="Salin harga brand ini ke semua brand terpilih"
-              className="text-[13px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 px-2 py-1 rounded transition-colors"
-            >
-              Terapkan ke Semua Brand
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {saving && <span className="text-[13px] text-zinc-400 animate-pulse">Menyimpan...</span>}
-          {saved && <span className="text-[13px] font-semibold text-emerald-700">Tersimpan ✓</span>}
-          <button type="button" onClick={() => onSave([branch.id])} disabled={saving || changed === 0}
-            className="rounded-lg bg-red-700 px-3 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-          >Simpan</button>
-        </div>
-      </div>
+
     </div>
   );
 }

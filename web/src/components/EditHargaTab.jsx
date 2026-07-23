@@ -153,26 +153,9 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
               {changed} berubah
             </span>
           )}
-          <button type="button" onClick={() => setShowAdj(!showAdj)}
-            title="Sesuaikan semua harga brand ini"
-            className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
-              showAdj ? "bg-red-700 text-white" : "bg-red-50 text-red-600 hover:bg-red-100"
-            }`}
-          >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
-          </button>
         </div>
       </div>
 
-      {/* Quick per-card adjust (toggle) */}
-      {showAdj && (
-        <div className="px-4 pb-3 border-b border-zinc-100 pt-3 bg-slate-50/50">
-          <AdjustBar onApply={(m, t, v) => onBulkAdj([branch.id], m, t, v)} buttonText="Terapkan" />
-        </div>
-      )}
 
       {/* menu items container (expanded vertically) */}
       <div className="flex-1 overflow-y-auto max-h-[750px] px-4 pb-3">

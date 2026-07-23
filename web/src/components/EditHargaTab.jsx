@@ -21,12 +21,11 @@ function checkViolation(platform, oldPrice, newPrice) {
   const pct = (diff / oldPrice) * 100;
   
   if (platform === "gofood") {
-    const limit = Math.min(oldPrice * 0.15, 5000);
-    if (diff > limit) return { isViolation: true, message: "GoFood: Maksimal kenaikan 15% atau Rp 5.000 per item." };
+    if (pct > 15) return { isViolation: true, message: "GoFood: Maksimal kenaikan 15%." };
   } else if (platform === "grab") {
-    if (pct > 15) return { isViolation: true, message: "GrabFood: Maksimal kenaikan 15% (Maks. 10x percobaan per item, maks 15x sebulan)." };
+    if (pct > 15) return { isViolation: true, message: "GrabFood: Maksimal kenaikan 15% dan maks. 15x per bulan." };
   } else if (platform === "shopee") {
-    if (pct > 25) return { isViolation: true, message: "ShopeeFood: Maksimal kenaikan 25% per 24 jam per item." };
+    if (pct > 25) return { isViolation: true, message: "ShopeeFood: Maksimal kenaikan 25% dan maks. 1x per hari." };
   }
   return { isViolation: false, message: "" };
 }
@@ -1109,7 +1108,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
             <div>
               <h3 className="text-lg font-bold text-slate-900">Periksa batas perubahan harga</h3>
               <p className="text-[15px] text-zinc-500 mt-1">
-                Terdapat <strong>{pushViolations.length} item</strong> yang melebihi batas maksimal kenaikan harga OFD (GoFood 15%/5k, Grab 15%, Shopee 25%).
+                Terdapat <strong>{pushViolations.length} item</strong> yang melebihi batas maksimal kenaikan harga OFD (GoFood 15%, GrabFood 15% & 15x/bulan, ShopeeFood 25% & 1x/hari).
               </p>
               <p className="text-[13px] text-zinc-455 mt-2 italic">
                 Lanjutkan hanya jika perubahan ini memang sudah diverifikasi.

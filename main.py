@@ -3,6 +3,7 @@ import sys
 import uuid
 import logging
 import threading
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
@@ -1008,7 +1009,9 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
             db.commit()
 
             with sync_playwright() as p:
-                session_path = os.path.join(GO_SESSION_DIR, f"session_{email}.json")
+                import re
+                sanitized_email = re.sub(r'[^a-zA-Z0-9_.-]', '_', email.strip().lower())
+                session_path = os.path.join(BASE_DIR, "Gofood", f"session_gofood_{sanitized_email}.json")
                 storage_state = session_path if os.path.exists(session_path) else None
 
                 headless_env = os.getenv("HEADLESS") or os.getenv("HEADLESS_GOFOOD")
@@ -1025,58 +1028,100 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
 
                 api_headers = {}
                 def capture_headers(request):
-                    if "api.gojekapi.com" in request.url or "api.gobiz.co.id" in request.url:
+                    url_lower = request.url.lower()
+                    if "api.gojekapi.com" in url_lower or "api.gobiz.co.id" in url_lower:
                         h = request.headers
                         if 'authorization' in h:
                             api_headers['authorization'] = h['authorization']
                         if 'x-passkey' in h:
                             api_headers['x-passkey'] = h['x-passkey']
-                    if "restaurants/" in request.url and "v1" in request.url:
+                    if "restaurants/" in url_lower:
                         parts = request.url.split("/")
                         for i, part in enumerate(parts):
-                            if part == "restaurants" and i + 1 < len(parts):
+                            if part.lower() == "restaurants" and i + 1 < len(parts):
                                 candidate = parts[i + 1].split("?")[0]
-                                if len(candidate) == 36:
+                                if len(candidate) == 36 and "-" in candidate:
                                     api_headers['restaurant_uuid'] = candidate
-                    if "/v2/menu_groups/" in request.url:
+                    if "menu_groups/" in url_lower:
                         parts = request.url.split("/")
                         for i, part in enumerate(parts):
-                            if part == "menu_groups" and i + 1 < len(parts):
+                            if part.lower() == "menu_groups" and i + 1 < len(parts):
                                 candidate = parts[i + 1].split("?")[0]
-                                if len(candidate) == 36:
+                                if len(candidate) == 36 and "-" in candidate:
                                     api_headers['menu_group_id'] = candidate
 
                 page.on("request", capture_headers)
 
-                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}", wait_until="domcontentloaded")
+                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/", wait_until="domcontentloaded")
                 time.sleep(3)
 
                 if "/auth" in page.url or "login" in page.url:
                     page.goto("https://portal.gofoodmerchant.co.id/auth/login/email", wait_until="domcontentloaded")
                     time.sleep(2)
-                    email_input = page.locator('input[type="email"]')
+                    email_input = page.locator('input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible').first
                     email_input.fill(email)
-                    submit_btn = page.locator('button:has-text("Lanjut")')
+                    submit_btn = page.locator('button:has-text("Lanjut"), button:has-text("Masuk"), button[type="submit"]')
                     submit_btn.first.click()
                     time.sleep(2)
-                    pass_input = page.locator('input[type="password"]')
+                    pass_input = page.locator('input[type="password"]:visible, input[name*="password" i]:visible').first
                     pass_input.fill(password)
-                    page.locator('button:has-text("Masuk")').first.click()
+                    page.locator('button:has-text("Masuk"), button[type="submit"]').first.click()
                     
                     page.wait_for_url(lambda url: "/auth/login" not in url, timeout=45000)
                     context.storage_state(path=session_path)
-                    page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}", wait_until="domcontentloaded")
+                    page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/", wait_until="domcontentloaded")
                     time.sleep(3)
 
-                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu", wait_until="domcontentloaded")
-                time.sleep(5)
+                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/", wait_until="domcontentloaded")
+
+                # Wait dynamically (up to 15s) for restaurant_uuid and authorization token to be captured
+                start_wait = time.time()
+                while (time.time() - start_wait) < 15:
+                    if api_headers.get('restaurant_uuid') and api_headers.get('authorization'):
+                        break
+                    page.wait_for_timeout(500)
 
                 token = api_headers.get('authorization')
-                rest_uuid = api_headers.get('restaurant_uuid')
-                group_id = api_headers.get('menu_group_id')
+                if not token:
+                    cookies = context.cookies()
+                    for c in cookies:
+                        if c['name'] == 'access_token':
+                            token = f"Bearer {c['value']}"
+                            break
 
-                if not token or not rest_uuid:
-                    raise Exception("Gagal menangkap Authorization Token atau Restaurant UUID untuk GoFood.")
+                rest_uuid = api_headers.get('restaurant_uuid')
+                if not rest_uuid:
+                    # Coba baca dari cached menu response hasil Pull sebelumnya
+                    import json
+                    cache_path = os.path.join(BASE_DIR, "Gofood", "API", f"menu-response-{merchant_id}.json")
+                    if os.path.exists(cache_path):
+                        try:
+                            with open(cache_path, "r") as f:
+                                cdata = json.load(f)
+                                menus = cdata.get("menus") or cdata.get("categories") or []
+                                if menus and len(menus) > 0:
+                                    rest_uuid = menus[0].get("restaurant_id") or menus[0].get("restaurant_uuid")
+                        except Exception as e:
+                            logger.error(f"Gagal membaca cached restaurant_id: {e}")
+                if not rest_uuid:
+                    rest_uuid = merchant_id
+
+                group_id = api_headers.get('menu_group_id')
+                if not group_id and rest_uuid:
+                    try:
+                        mg_data = go_api.fetch_menu_groups(page, token, rest_uuid)
+                        if isinstance(mg_data, list) and len(mg_data) > 0:
+                            group_id = mg_data[0].get('id') or mg_data[0].get('common_id')
+                        elif isinstance(mg_data, dict):
+                            mgs = mg_data.get('menu_groups') or mg_data.get('data') or []
+                            if mgs and len(mgs) > 0:
+                                group_id = mgs[0].get('id') or mgs[0].get('common_id')
+                        logger.info(f"🔑 Retrived menu_group_id via API fallback: {group_id}")
+                    except Exception as e:
+                        logger.warning(f"Could not fetch menu_groups fallback: {e}")
+
+                if not token:
+                    raise Exception("Gagal menangkap Authorization Token untuk GoFood.")
 
                 menu_data = go_api.fetch_menus(page, token, rest_uuid)
                 if not menu_data:
@@ -1130,7 +1175,8 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                     }
 
                     patch_group_id = group_id if group_id else cat_common_id
-                    res = go_api.update_v2_menu_item(page, token, patch_group_id, item_id, v2_payload)
+                    passkey = api_headers.get('x-passkey')
+                    res = go_api.update_v2_menu_item(page, token, patch_group_id, item_id, v2_payload, passkey=passkey)
 
                     if not res or not res.get('ok'):
                         v1_payload = {
@@ -1141,7 +1187,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                             "image": orig_item.get('image_url', orig_item.get('image', ''))
                         }
                         v1_item_id = orig_item.get('id')
-                        res = go_api.update_item(page, token, rest_uuid, v1_item_id, v1_payload)
+                        res = go_api.update_item(page, token, rest_uuid, v1_item_id, v1_payload, passkey=passkey)
 
                     if res and res.get('ok'):
                         success_count += 1
@@ -1209,13 +1255,67 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 "error_message": t.error_message
             })
 
+        # Update local Excel catalog file with the new prices so that get_outlet_menu_items returns updated prices
+        excel_path = None
+        if success_count > 0:
+            try:
+                import openpyxl
+                latest_pull = db.query(Job).filter(
+                    Job.outlet_id == outlet_id,
+                    Job.job_type == "PULL",
+                    Job.status.in_(["SUCCESS", "PARTIAL_SUCCESS"])
+                ).order_by(Job.completed_at.desc()).first()
+                if latest_pull and latest_pull.result_metadata:
+                    excel_path = latest_pull.result_metadata.get("excel_path")
+                
+                if not excel_path or not os.path.exists(excel_path):
+                    import re
+                    raw_outlet = outlet.nama_outlet or outlet.nama_resto_final or outlet.merchant_name or 'unknown'
+                    clean_outlet = "".join(c for c in raw_outlet if c.isalnum() or c in (' ', '_', '-')).strip()
+                    clean_outlet = re.sub(r'\s+', ' ', clean_outlet).lower()
+                    exports_dir = BASE_DIR / "data" / "exports" / outlet.platform / clean_outlet
+                    excel_files = list(exports_dir.glob("*.xlsx")) if exports_dir.exists() else []
+                    if excel_files:
+                        excel_path = str(excel_files[0])
+
+                if excel_path and os.path.exists(excel_path):
+                    wb = openpyxl.load_workbook(excel_path)
+                    if 'Item' in wb.sheetnames:
+                        sheet = wb['Item']
+                        header_row = [cell.value for cell in sheet[1]]
+                        try:
+                            item_id_idx = header_row.index('Item ID') + 1
+                            price_idx = header_row.index('Current Real Price (Rp)') + 1
+                            
+                            successful_updates = {}
+                            for t in trails:
+                                if t.status == "SUCCESS":
+                                    try:
+                                        successful_updates[str(t.item_id).strip()] = int(float(t.new_value))
+                                    except:
+                                        pass
+                                        
+                            for row_idx in range(2, sheet.max_row + 1):
+                                cell_item_id = str(sheet.cell(row=row_idx, column=item_id_idx).value).strip()
+                                if cell_item_id in successful_updates:
+                                    sheet.cell(row=row_idx, column=price_idx).value = successful_updates[cell_item_id]
+                                    
+                            wb.save(excel_path)
+                            logger.info(f"💾 Updated Excel catalog with new prices at: {excel_path}")
+                        except ValueError as ve:
+                            logger.error(f"Excel column missing during update: {ve}")
+                    wb.close()
+            except Exception as e:
+                logger.error(f"Gagal memperbarui file Excel lokal dengan harga baru: {e}")
+
         job.progress_pct = 100
         job.result_metadata = {
             "total_updates": total_updates,
             "success_count": success_count,
             "fail_count": fail_count,
             "items_breakdown": breakdown_list,
-            "completed_at": datetime.utcnow().isoformat()
+            "completed_at": datetime.utcnow().isoformat(),
+            "excel_path": excel_path
         }
         job.completed_at = datetime.utcnow()
         db.commit()

@@ -443,8 +443,8 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
       }
     }));
 
-    setBranchMenus(menusMap);
-    setEdits(editsMap);
+    setBranchMenus(prev => ({ ...prev, ...menusMap }));
+    setEdits(prev => ({ ...prev, ...editsMap }));
     setVerificationMap(newVerifications);
     setLoading(false);
   }, [API_BASE_URL, intendedPushPrices, verificationMap]);
@@ -1205,13 +1205,56 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 Terapkan ke <strong>{preview.length} brand</strong> terpilih. Saat ini ada <strong className="text-red-700">{totalChanges} perubahan</strong>.
               </p>
             </div>
+            <div className="flex items-center gap-1 bg-zinc-150 p-1 rounded-xl shrink-0 self-start lg:self-auto border border-zinc-200">
+              <button
+                type="button"
+                onClick={() => {
+                  setItemEditMode("single");
+                  deselectAllItems();
+                }}
+                className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer ${
+                  itemEditMode === "single"
+                    ? "bg-white text-zinc-800 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-800"
+                }`}
+              >
+                Semua Menu
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setItemEditMode("multi");
+                }}
+                className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer ${
+                  itemEditMode === "multi"
+                    ? "bg-white text-zinc-800 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-800"
+                }`}
+              >
+                Centang Manual
+              </button>
+            </div>
           </div>
 
           {/* Adjust Bar & Actions */}
           <div className="pt-1">
             <AdjustBar
-              onApply={(m, t, v) => bulkAdj([], m, t, v)}
-              buttonText="Terapkan Perubahan"
+              onApply={(m, t, v) => {
+                if (itemEditMode === "multi") {
+                  if (selectedItemIds.length === 0) {
+                    alert("Silakan pilih/centang item yang ingin diubah terlebih dahulu.");
+                    return;
+                  }
+                  bulkAdj([], m, t, v, selectedItemIds);
+                } else {
+                  bulkAdj([], m, t, v);
+                }
+              }}
+              buttonText={
+                itemEditMode === "multi"
+                  ? `Terapkan ke ${selectedItemIds.length} Pilihan`
+                  : "Terapkan ke Semua"
+              }
               extraActions={
                 <>
                   <button type="button" onClick={resetAll}
@@ -1264,28 +1307,29 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                     <div>
                       <div className="text-[15px] font-bold text-zinc-800 flex items-center gap-2">
                         {job.name}
-                        {isRunning && (
-                          <span className="inline-flex items-center gap-1 text-[12px] text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                            <svg className="animate-spin h-3 w-3 text-amber-600" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Memproses...
-                          </span>
-                        )}
                       </div>
                       <div className="text-[12px] text-zinc-400 font-mono mt-0.5">
                         JOB ID: {job.id} · PLATFORM: {job.platform?.toUpperCase()}
                       </div>
                     </div>
-                    <span className={`text-[12px] font-bold uppercase px-3 py-1 rounded-full ${
-                      isSuccess ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
-                      isFailed ? "bg-red-100 text-red-800 border border-red-200" :
-                      isPartial ? "bg-amber-100 text-amber-800 border border-amber-200" :
-                      "bg-blue-100 text-blue-800 border border-blue-200"
-                    }`}>
-                      {job.status}
-                    </span>
+                    {isRunning ? (
+                      <span className="text-[12px] font-bold uppercase px-3 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200 inline-flex items-center gap-1.5 shadow-sm">
+                        <svg className="animate-spin h-3.5 w-3.5 text-blue-700" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Memproses
+                      </span>
+                    ) : (
+                      <span className={`text-[12px] font-bold uppercase px-3 py-1 rounded-full ${
+                        isSuccess ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                        isFailed ? "bg-red-100 text-red-800 border border-red-200" :
+                        isPartial ? "bg-amber-100 text-amber-800 border border-amber-200" :
+                        "bg-blue-100 text-blue-800 border border-blue-200"
+                      }`}>
+                        {job.status}
+                      </span>
+                    )}
                   </div>
                   
                   {/* Progress Bar & Percentage */}
@@ -1406,27 +1450,51 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
               </button>
             </div>
           ) : (
-            <div className={`grid gap-4 ${
-              preview.length === 1 ? "grid-cols-1 max-w-lg" :
-              preview.length === 2 ? "grid-cols-1 lg:grid-cols-2" :
-              "grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
-            }`}>
-              {preview.map(branch => (
-                <BranchCard key={branch.id} branch={branch}
-                  items={branchMenus[branch.id] || []}
-                  edits={edits[branch.id] || {}}
-                  verification={verificationMap[branch.id] || {}}
-                  itemEditMode={itemEditMode}
-                  selectedItemIds={selectedItemIds}
-                  onToggleSelectItem={toggleSelectItem}
-                  onChange={changePrice} onBulkAdj={bulkAdj}
-                  onReset={resetOne} onSave={(bids) => openPushConfirmationModal(bids)}
-                  onApplyToAll={applyBranchToAll}
-                  totalBranches={preview.length}
-                  saving={saveState[branch.id] === "saving"}
-                  saved={saveState[branch.id] === "saved"}
-                />
-              ))}
+            <div className="space-y-3">
+              {itemEditMode === "multi" && (
+                <div className="flex items-center gap-2 text-[13px] text-zinc-650 bg-amber-50/70 border border-amber-200/80 px-4 py-2.5 rounded-xl">
+                  <span>Centang item pada menu di bawah yang ingin disesuaikan harganya:</span>
+                  <div className="flex items-center gap-2 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => selectAllVisibleItems(preview)}
+                      className="text-amber-800 font-bold hover:underline cursor-pointer"
+                    >
+                      Pilih Semua
+                    </button>
+                    <span className="text-zinc-300">|</span>
+                    <button
+                      type="button"
+                      onClick={deselectAllItems}
+                      className="text-zinc-600 font-bold hover:underline cursor-pointer"
+                    >
+                      Batal Pilih
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className={`grid gap-4 ${
+                preview.length === 1 ? "grid-cols-1 max-w-lg" :
+                preview.length === 2 ? "grid-cols-1 lg:grid-cols-2" :
+                "grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
+              }`}>
+                {preview.map(branch => (
+                  <BranchCard key={branch.id} branch={branch}
+                    items={branchMenus[branch.id] || []}
+                    edits={edits[branch.id] || {}}
+                    verification={verificationMap[branch.id] || {}}
+                    itemEditMode={itemEditMode}
+                    selectedItemIds={selectedItemIds}
+                    onToggleSelectItem={toggleSelectItem}
+                    onChange={changePrice} onBulkAdj={bulkAdj}
+                    onReset={resetOne} onSave={(bids) => openPushConfirmationModal(bids)}
+                    onApplyToAll={applyBranchToAll}
+                    totalBranches={preview.length}
+                    saving={saveState[branch.id] === "saving"}
+                    saved={saveState[branch.id] === "saved"}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </section>

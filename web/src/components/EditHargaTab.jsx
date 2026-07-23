@@ -579,6 +579,9 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
               if (Object.keys(syncPollingRef.current).length === 0) {
                 fetchMenusAndVerify(targetBranches, customIntendedPrices);
                 setSyncPhase("done");
+                if (targetBranches[0]?.id) {
+                  fetchCacheStatus(targetBranches[0].id);
+                }
               }
             }
           })
@@ -1114,7 +1117,9 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                   type="button"
                   disabled={syncPhase === "syncing"}
                   onClick={handleSkipSync}
-                  className="px-4 py-2.5 rounded-xl font-bold text-[14px] bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+                  className={`px-4 py-2.5 rounded-xl font-bold text-[14px] bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm flex items-center gap-2 transition-all ${
+                    syncPhase === "syncing" ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"
+                  }`}
                   title="Tampilkan data menu cached tanpa membuka browser"
                 >
                   <span>Buka Menu Cached ({cacheInfo.human_age})</span>
@@ -1127,6 +1132,8 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 disabled={syncPhase === "syncing"}
                 onClick={handleStartPullAndEdit}
                 className={`primary-action gap-2 px-5 py-2.5 text-[14px] ${
+                  syncPhase === "syncing" ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
+                } ${
                   cacheInfo?.has_cache ? "bg-red-800 hover:bg-red-900" : ""
                 }`}
                 title="Meluncurkan browser untuk tarik menu ter-fresh dari portal merchant"
@@ -1163,12 +1170,6 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 </p>
               </div>
             </div>
-
-            <button type="button" onClick={handleSkipSync}
-              className="self-start sm:self-auto rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-[13px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-            >
-              Lewati & Edit Langsung
-            </button>
           </div>
 
           <div className="space-y-3 max-h-80 overflow-y-auto pr-1">

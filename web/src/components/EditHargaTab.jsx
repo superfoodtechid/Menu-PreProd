@@ -1390,25 +1390,13 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
               <p className="mt-1 text-[15px] text-slate-500">Selesaikan langkah 1–3 lalu klik tombol tarik real-time untuk mulai mengedit harga.</p>
             </div>
           ) : isPushInProgress ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-red-100 bg-red-50/25 py-12 text-center animate-pulse">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-750 text-white shadow-md mb-3">
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              </div>
-              <p className="text-[15px] font-bold text-red-900">Menyembunyikan daftar menu lama...</p>
-              <p className="mt-1 text-[13px] text-slate-500">Sedang memproses pembaruan harga & menarik data menu terbaru dari portal merchant.</p>
-            </div>
+            null
           ) : isPushCompleted && !showPostPushMenu ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50/20 py-12 text-center">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 font-bold">✓</div>
-              <p className="text-[15px] font-bold text-emerald-900">Pembaruan & Verifikasi Selesai</p>
-              <p className="mt-1 text-[13px] text-slate-500 mb-4">Silakan buka list menu terbaru untuk melihat status live di portal merchant.</p>
+            <div className="flex flex-col items-center justify-center py-6 text-center">
               <button
                 type="button"
                 onClick={() => setShowPostPushMenu(true)}
-                className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[14px] rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                className="px-5 py-2.5 bg-red-800 hover:bg-red-900 text-white font-bold text-[14px] rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

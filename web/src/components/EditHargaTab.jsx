@@ -320,6 +320,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
   const [intendedPushPrices, setIntendedPushPrices] = useState({}); // { [bid]: { [itemId]: targetPrice } }
 
   const [activeJobs, setActiveJobs] = useState([]);
+  const [showPostPushMenu, setShowPostPushMenu] = useState(false);
   const pushPollingIntervalsRef = useRef({});
 
   // Item Selection Edit Controls state in Step 4
@@ -598,6 +599,8 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
   // Start Pull & Edit
   const handleStartPullAndEdit = () => {
+    setActiveJobs([]);
+    setShowPostPushMenu(false);
     const targetBranches = branches.filter(b => b.id === selectedBrandId);
     if (targetBranches.length > 0) {
       triggerAutoPull(targetBranches);
@@ -606,11 +609,16 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
   // Skip pull and jump straight to editing
   const handleSkipSync = () => {
+    setActiveJobs([]);
+    setShowPostPushMenu(false);
     clearSyncPolling();
     const targetBranches = branches.filter(b => b.id === selectedBrandId);
     fetchMenusAndVerify(targetBranches);
     setSyncPhase("done");
   };
+
+  const isPushInProgress = activeJobs.length > 0 && activeJobs.some(j => j.status === "PENDING" || j.status === "RUNNING");
+  const isPushCompleted = activeJobs.length > 0 && activeJobs.every(j => j.status === "SUCCESS" || j.status === "FAILED" || j.status === "PARTIAL_SUCCESS");
 
   const filtered = uniqueParents.filter(n => n.toLowerCase().includes(search.toLowerCase()));
   const selectedBrandObj = branches.find(b => b.id === selectedBrandId);
@@ -693,6 +701,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
 
   const triggerPriceUpdate = async (bidsToUpdate) => {
     setPushing(true);
+    setShowPostPushMenu(false);
     const targets = Array.isArray(bidsToUpdate) ? bidsToUpdate : [bidsToUpdate];
     const newJobsList = [];
     const newIntended = { ...intendedPushPrices };
@@ -873,7 +882,7 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
           </div>
           <div className="flex items-center gap-2 text-[13px] font-medium shrink-0">
             {gsheetSyncing ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-amber-700 border border-amber-200 animate-pulse">
+              <span className="inline-flex items-center gap-1.5 text-amber-700 font-semibold">
                 <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -881,9 +890,8 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
                 Syncing GSheet...
               </span>
             ) : gsheetSyncedAt ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 border border-emerald-200">
-                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                GSheet Synced ({gsheetSyncedAt})
+              <span className="text-emerald-700 font-bold uppercase tracking-wider">
+                Gsheet Synced
               </span>
             ) : null}
           </div>
@@ -1373,6 +1381,34 @@ export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }
               </div>
               <p className="text-base font-semibold text-slate-700">Belum ada brand dipilih</p>
               <p className="mt-1 text-[15px] text-slate-500">Selesaikan langkah 1–3 lalu klik tombol tarik real-time untuk mulai mengedit harga.</p>
+            </div>
+          ) : isPushInProgress ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-red-100 bg-red-50/25 py-12 text-center animate-pulse">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-750 text-white shadow-md mb-3">
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              </div>
+              <p className="text-[15px] font-bold text-red-900">Menyembunyikan daftar menu lama...</p>
+              <p className="mt-1 text-[13px] text-slate-500">Sedang memproses pembaruan harga & menarik data menu terbaru dari portal merchant.</p>
+            </div>
+          ) : isPushCompleted && !showPostPushMenu ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50/20 py-12 text-center">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 font-bold">✓</div>
+              <p className="text-[15px] font-bold text-emerald-900">Pembaruan & Verifikasi Selesai</p>
+              <p className="mt-1 text-[13px] text-slate-500 mb-4">Silakan buka list menu terbaru untuk melihat status live di portal merchant.</p>
+              <button
+                type="button"
+                onClick={() => setShowPostPushMenu(true)}
+                className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[14px] rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span>Buka Menu Hasil Verifikasi Terbaru</span>
+              </button>
             </div>
           ) : (
             <div className={`grid gap-4 ${

@@ -292,7 +292,7 @@ function StepLabel({ number, label, active, done, className = "mb-2.5" }) {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function EditHargaTab({ API_BASE_URL = "http://localhost:18800" }) {
+export default function EditHargaTab({ API_BASE_URL }) {
   const [platform, setPlatform] = useState("");
   const [allOutlets, setAllOutlets] = useState([]);
   const [loading, setLoading] = useState(false);

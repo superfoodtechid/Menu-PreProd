@@ -2,20 +2,65 @@ import os
 import uuid
 from datetime import datetime
 from sqlalchemy import (
-    create_engine, Column, String, Boolean, DateTime, Integer, Text, ForeignKey, UniqueConstraint
+    create_engine, Column, String, Boolean, DateTime, Integer, Text, ForeignKey, UniqueConstraint, JSON
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB as PG_JSONB
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
-# Database URL pointing to docker-based postgres container (clipper-pg)
+from sqlalchemy.types import TypeDecorator, CHAR
+
+# Cross-database compatible types (PostgreSQL native + SQLite fallback)
+JSONB = JSON().with_variant(PG_JSONB, "postgresql")
+
+class GUID(TypeDecorator):
+    """Platform-independent GUID type. Uses PostgreSQL's UUID type, otherwise uses CHAR(36)."""
+    impl = CHAR(36)
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PG_UUID(as_uuid=True))
+        else:
+            return dialect.type_descriptor(CHAR(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        if not isinstance(value, uuid.UUID):
+            try:
+                return uuid.UUID(value)
+            except ValueError:
+                return value
+        return value
+
+def UUID(*args, **kwargs):
+    return GUID()
+
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/foodmaster_menu")
 
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20
-)
+try:
+    if "sqlite" in DATABASE_URL:
+        engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    else:
+        engine = create_engine(
+            DATABASE_URL,
+            pool_pre_ping=True,
+            pool_size=10,
+            max_overflow=20
+        )
+    with engine.connect() as conn:
+        pass
+except Exception as e:
+    sqlite_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+    os.makedirs(sqlite_dir, exist_ok=True)
+    sqlite_path = os.path.join(sqlite_dir, "foodmaster_menu.db")
+    DATABASE_URL = f"sqlite:///{sqlite_path}"
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -124,7 +169,21 @@ class AuditTrail(Base):
 
 def init_db():
     """Initializes the database, creating all tables if they do not exist."""
-    Base.metadata.create_all(bind=engine)
+    global engine, SessionLocal, DATABASE_URL
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        sqlite_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+        os.makedirs(sqlite_dir, exist_ok=True)
+        sqlite_path = os.path.join(sqlite_dir, "foodmaster_menu.db")
+        DATABASE_URL = f"sqlite:///{sqlite_path}"
+        engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+        SessionLocal.configure(bind=engine)
+        # Note: In SQLite, PostgreSQL UUID fields fallback safely
+        try:
+            Base.metadata.create_all(bind=engine)
+        except Exception:
+            pass
 
 
 def get_db():

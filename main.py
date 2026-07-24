@@ -295,12 +295,14 @@ def sync_sheets(db: Session = Depends(get_db)):
                 is_active=True
             )
             db.add(db_outlet)
+            db.flush()
             added_outlets += 1
         else:
             db_outlet.store_id = store_id
             db_outlet.nama_resto_final = nama_resto_final
             db_outlet.brand = brand
             db_outlet.is_active = True
+            db.flush()
             updated_outlets += 1
 
     db.commit()
@@ -765,7 +767,25 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                     session_path = os.path.join(SESSION_DIR, f"{username}.json")
                     storage_state = session_path if os.path.exists(session_path) else None
                     
-                    browser = await p.chromium.launch(headless=True)
+                    use_system_chromium = os.path.exists("/usr/lib/chromium/chromium") or os.path.exists("/usr/bin/chromium")
+                    if use_system_chromium:
+                        import socket, subprocess
+                        def get_free_port():
+                            s = socket.socket()
+                            s.bind(('', 0))
+                            port = s.getsockname()[1]
+                            s.close()
+                            return port
+                        cdp_port = get_free_port()
+                        chromium_bin = "/usr/lib/chromium/chromium" if os.path.exists("/usr/lib/chromium/chromium") else "/usr/bin/chromium"
+                        proc = subprocess.Popen([
+                            chromium_bin, "--no-sandbox", "--no-zygote", "--in-process-gpu", "--disable-gpu",
+                            "--disable-dev-shm-usage", "--disable-gpu-sandbox", "--dbus-stub", f"--remote-debugging-port={cdp_port}", "--headless=new"
+                        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        await asyncio.sleep(3.0)
+                        browser = await p.chromium.connect_over_cdp(f"http://127.0.0.1:{cdp_port}")
+                    else:
+                        browser = await p.chromium.launch(headless=True)
                     context = await browser.new_context(
                         storage_state=storage_state,
                         user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
@@ -1015,9 +1035,9 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 session_path = os.path.join(BASE_DIR, "Gofood", f"session_gofood_{sanitized_email}.json")
                 storage_state = session_path if os.path.exists(session_path) else None
 
-                headless_env = os.getenv("HEADLESS") or os.getenv("HEADLESS_GOFOOD")
                 is_headless = headless_env.lower() in ("true", "1", "yes") if headless_env else True
-                browser = p.chromium.launch(headless=is_headless)
+                from src.core.browser_factory import launch_universal_playwright_browser
+                browser, proc = launch_universal_playwright_browser(p, headless=is_headless)
                 context = browser.new_context(
                     storage_state=storage_state,
                     user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -1762,3 +1782,4 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error parsing excel menu file at {excel_path}: {e}")
         return []
+

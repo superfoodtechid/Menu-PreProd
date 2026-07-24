@@ -9,7 +9,8 @@ export default function Home() {
     const requestedTab = new URLSearchParams(window.location.search).get("tab");
     return ["pull", "push", "edit-harga"].includes(requestedTab) ? requestedTab : "pull";
   });
-  const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:18800").replace(/\/+$/, "");
+  const defaultApiHost = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8000` : 'http://localhost:8000';
+  const API_BASE_URL = (import.meta.env.VITE_API_URL || defaultApiHost).replace(/\/+$/, "");
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);

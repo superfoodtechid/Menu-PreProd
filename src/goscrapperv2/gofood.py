@@ -669,15 +669,70 @@ def login_outlet_gofood_flow(outlet_info):
         except Exception:
             pass
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=headless_mode,
-            args=[
-                '--disable-blink-features=AutomationControlled',
-                '--disable-infobars',
-                '--no-sandbox'
+    chrome_process = None
+    chrome_log = None
+    try:
+        import socket
+        import subprocess
+        import time
+        use_system_chromium = os.path.exists("/usr/lib/chromium/chromium") or os.path.exists("/usr/bin/chromium")
+
+        if use_system_chromium:
+            def get_free_port():
+                s = socket.socket()
+                s.bind(('', 0))
+                port = s.getsockname()[1]
+                s.close()
+                return port
+
+            cdp_port = get_free_port()
+            chromium_bin = "/usr/lib/chromium/chromium" if os.path.exists("/usr/lib/chromium/chromium") else "/usr/bin/chromium"
+            chrome_args = [
+                chromium_bin,
+                "--no-sandbox",
+                "--no-zygote",
+                "--in-process-gpu",
+                "--disable-gpu",
+                "--disable-dev-shm-usage",
+                "--disable-gpu-sandbox",
+                "--dbus-stub",
+                f"--remote-debugging-port={cdp_port}",
+                '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                '--window-size=1366,768'
             ]
-        )
+            if use_proxy and proxy_server:
+                chrome_args.append(f"--proxy-server={proxy_server}")
+
+            if headless_mode:
+                chrome_args.append("--headless=new")
+
+            os.makedirs("logs", exist_ok=True)
+            chrome_log = open("logs/chrome_err.log", "a")
+            chrome_process = subprocess.Popen(
+                chrome_args,
+                stdout=subprocess.DEVNULL,
+                stderr=chrome_log
+            )
+            time.sleep(4.0)
+            poll = chrome_process.poll()
+            if poll is not None:
+                print(f"ERROR: Chromium process exited immediately with code {poll}!")
+
+            p = sync_playwright().start()
+            browser = p.chromium.connect_over_cdp(f"http://127.0.0.1:{cdp_port}")
+        else:
+            p = sync_playwright().start()
+            browser = p.chromium.launch(
+                headless=headless_mode,
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-infobars',
+                    '--no-sandbox',
+                    '--disable-gpu',
+                    '--disable-dev-shm-usage'
+                ]
+            )
+
         context = browser.new_context(
             user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             viewport={'width': 1366, 'height': 768},
@@ -996,8 +1051,24 @@ def login_outlet_gofood_flow(outlet_info):
             browser.close()
         except Exception:
             pass
+        try:
+            p.stop()
+        except Exception:
+            pass
+    finally:
+        if chrome_process:
+            try:
+                chrome_process.terminate()
+                chrome_process.wait()
+            except Exception:
+                pass
+        if chrome_log:
+            try:
+                chrome_log.close()
+            except Exception:
+                pass
 
-        return access_token
+    return access_token
 
 
 def ambil_data_dashboard():

@@ -1206,18 +1206,18 @@ def main():
             sanitized_name = re.sub(r'[^a-zA-Z0-9]', '', outlet['nama_outlet'])
             suffix = f"_{phone_norm}_{sanitized_name}"
 
-            # Simpan ke .env di core folder
+            # Simpan ke .env di folder Gofood
+            gofood_env = MENU_DIR / "Gofood" / ".env"
             try:
-                set_key(str(ENV_PATH), "BEARER_TOKEN", token)
-                set_key(str(ENV_PATH), f"BEARER_TOKEN{suffix}", token)
-                set_key(str(ENV_PATH), "ACTIVE_NOMOR_HP", phone_norm)
-                set_key(str(ENV_PATH), f"NAMA_OUTLET{suffix}", outlet['nama_outlet'])
-                if outlet['cabang']:
-                    set_key(str(ENV_PATH), f"CABANG{suffix}", outlet['cabang'])
-                if outlet['store_id']:
-                    set_key(str(ENV_PATH), f"STORE_ID{suffix}", outlet['store_id'])
-
-                print(f"   ✅ Token disimpan: BEARER_TOKEN{suffix}")
+                set_key(str(gofood_env), "BEARER_TOKEN", token)
+                set_key(str(gofood_env), f"BEARER_TOKEN{suffix}", token)
+                set_key(str(gofood_env), "ACTIVE_NOMOR_HP", phone_norm)
+                set_key(str(gofood_env), f"NAMA_OUTLET{suffix}", outlet['nama_outlet'])
+                if outlet.get('cabang'):
+                    set_key(str(gofood_env), f"CABANG{suffix}", outlet['cabang'])
+                if outlet.get('store_id'):
+                    set_key(str(gofood_env), f"STORE_ID{suffix}", outlet['store_id'])
+                print(f"   ✅ Token disimpan: BEARER_TOKEN{suffix} di Gofood/.env")
                 success_count += 1
             except Exception as e:
                 print(f"   ❌ Gagal simpan ke .env: {e}")

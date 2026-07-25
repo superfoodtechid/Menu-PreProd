@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: foodmaster-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "18800:8000"
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./data:/app/data
+      - ./Gofood:/app/Gofood
+      - ./shopee:/app/shopee
+      - ./grab:/app/grab
+      - ./menu_core:/app/menu_core
+    networks:
+      - foodmaster-network
+
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: foodmaster-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - foodmaster-network
+
+networks:
+  foodmaster-network:
+    driver: bridge

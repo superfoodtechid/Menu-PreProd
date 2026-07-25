@@ -35,101 +35,116 @@ const CHIPS_NOM = [500, 1000, 2000, 5000];
 const CHIPS_PCT = [5, 10, 15, 20];
 
 function AdjustBar({ onApply, buttonText = "OK", extraActions = null }) {
-  const [mode, setMode] = useState("add");
   const [type, setType] = useState("nominal");
   const [val, setVal] = useState("");
 
-  const fire = (m, t, v) => { const n = parseFloat(v); if (n) onApply(m, t, n); };
-  const chips = type === "nominal" ? CHIPS_NOM : CHIPS_PCT;
+  const parsedNum = parseFloat(val);
+  const isNegative = !isNaN(parsedNum) && (parsedNum < 0 || String(val).trim().startsWith("-"));
+  const isValid = !isNaN(parsedNum) && parsedNum !== 0;
+
+  const fire = () => {
+    if (!isValid) return;
+    const mode = isNegative ? "sub" : "add";
+    onApply(mode, type, Math.abs(parsedNum));
+  };
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-wrap items-end gap-3 bg-zinc-50/80 p-3.5 rounded-2xl border border-zinc-200/80">
       <div>
-        <p className="mb-1.5 text-[13px] font-bold uppercase tracking-wider text-slate-500">Arah perubahan harga</p>
-        <div className="grid grid-cols-2 gap-2" role="group" aria-label="Arah perubahan harga">
-          <button
-            type="button"
-            onClick={() => setMode("add")}
-            aria-pressed={mode === "add"}
-            className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-[13px] font-bold transition ${
-              mode === "add"
-                ? "border-emerald-700 bg-emerald-700 text-white shadow-sm"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300"
-            }`}
-          >
-            <span aria-hidden="true">↑</span>
-            Increase Price
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("sub")}
-            aria-pressed={mode === "sub"}
-            className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-[13px] font-bold transition ${
-              mode === "sub"
-                ? "border-red-700 bg-red-700 text-white shadow-sm"
-                : "border-red-200 bg-red-50 text-red-700 hover:border-red-300"
-            }`}
-          >
-            <span aria-hidden="true">↓</span>
-            Decrease Price
-          </button>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-end gap-2">
-        <div>
-          <p className="mb-1 text-[13px] font-semibold text-slate-500">Metode</p>
-          <div className="inline-flex overflow-hidden rounded-lg border border-slate-200">
-            {[["nominal", "Rp"], ["pct", "%"]].map(([t, label]) => (
-              <button key={t} type="button" onClick={() => setType(t)} aria-pressed={type === t}
-                className={`px-3 py-2 text-[13px] font-semibold leading-none transition-colors ${
-                  type === t ? "bg-slate-800 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
-                }`}
-              >{label}</button>
-            ))}
-          </div>
-        </div>
-        <label className="min-w-[110px] flex-1">
-          <span className="mb-1 block text-[13px] font-semibold text-slate-500">Nilai perubahan</span>
-          <input type="number" min="0"
-            placeholder={type === "nominal" ? "1000" : "10"}
-            value={val} onChange={(e) => setVal(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && fire(mode, type, val)}
-            className={`w-full rounded-lg border bg-white px-3 py-1.5 text-[15px] text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 ${mode === "add" ? "border-emerald-200 focus:border-emerald-400 focus:ring-emerald-100" : "border-red-200 focus:border-red-400 focus:ring-red-100"}`}
-          />
-        </label>
-        <button type="button" onClick={() => fire(mode, type, val)} disabled={!val}
-          className={`shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:bg-slate-300 ${mode === "add" ? "bg-emerald-700 hover:bg-emerald-800" : "bg-red-700 hover:bg-red-800"}`}
-        >{buttonText}</button>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="mr-0.5 text-[13px] text-slate-400 font-medium">Nilai cepat:</span>
-          {chips.map((v) => (
-            <button key={v} type="button"
-              onClick={() => setVal(String(v))}
-              className={`rounded-full border bg-white px-2.5 py-0.5 text-[13px] font-semibold transition-colors ${mode === "add" ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50" : "border-red-200 text-red-700 hover:bg-red-50"}`}
-            >{mode === "add" ? "+" : "−"}{type === "nominal" ? fmt(v) : `${v}%`}</button>
+        <p className="mb-1 text-[12px] font-bold uppercase tracking-wider text-zinc-500">Metode</p>
+        <div className="inline-flex overflow-hidden rounded-xl border border-zinc-200 bg-white p-0.5 shadow-xs">
+          {[["nominal", "Rp"], ["pct", "%"]].map(([t, label]) => (
+            <button key={t} type="button" onClick={() => setType(t)} aria-pressed={type === t}
+              className={`px-3 py-1.5 text-[13px] font-bold rounded-lg transition-colors cursor-pointer ${
+                type === t ? "bg-zinc-800 text-white shadow-xs" : "text-zinc-500 hover:text-zinc-800"
+              }`}
+            >{label}</button>
           ))}
         </div>
-
-        {extraActions && (
-          <div className="flex items-center gap-2 shrink-0">
-            {extraActions}
-          </div>
-        )}
       </div>
+
+      <div className="flex-1 min-w-[200px]">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[12px] font-bold uppercase tracking-wider text-zinc-500">Nilai Perubahan (Positif / Negatif)</span>
+          {val && isValid && (
+            <span className={`text-[11px] font-bold uppercase px-2 py-0.5 rounded-md ${
+              isNegative ? "bg-red-100 text-red-700 border border-red-200" : "bg-emerald-100 text-emerald-700 border border-emerald-200"
+            }`}>
+              {isNegative ? "↓ Potongan / Diskon" : "↑ Kenaikan Harga"}
+            </span>
+          )}
+        </div>
+        <div className="relative flex items-center">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder={type === "nominal" ? "Contoh: 2000 atau -2000" : "Contoh: 10 atau -10"}
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && fire()}
+            className={`w-full rounded-xl border bg-white px-3.5 py-2 text-[14px] font-semibold text-zinc-800 placeholder:text-zinc-300 focus:outline-none transition-all ${
+              !val ? "border-zinc-200 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100" :
+              isNegative ? "border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 text-red-800" :
+              "border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-emerald-800"
+            }`}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+          <span className="text-[11px] font-semibold text-zinc-400">Pintas:</span>
+          {(type === "nominal" ? [1000, 2000, -1000, -2000] : [5, 10, -5, -10]).map((num) => {
+            const isNeg = num < 0;
+            const labelStr = type === "nominal"
+              ? (isNeg ? `-${Math.abs(num).toLocaleString('id-ID')}` : `+${num.toLocaleString('id-ID')}`)
+              : (isNeg ? `-${Math.abs(num)}%` : `+${num}%`);
+            const valStr = String(num);
+            const isSelected = val === valStr;
+
+            return (
+              <button
+                key={num}
+                type="button"
+                onClick={() => setVal(valStr)}
+                className={`px-2 py-0.5 text-[11px] font-bold rounded-lg border transition-all cursor-pointer ${
+                  isSelected
+                    ? isNeg ? "bg-red-700 text-white border-red-700 shadow-xs" : "bg-emerald-700 text-white border-emerald-700 shadow-xs"
+                    : isNeg ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100" : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                }`}
+              >
+                {labelStr}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={fire}
+        disabled={!isValid}
+        className={`px-4 py-2 text-[13px] font-bold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400 ${
+          !isValid ? "" :
+          isNegative ? "bg-red-700 hover:bg-red-800 text-white" :
+          "bg-emerald-700 hover:bg-emerald-800 text-white"
+        }`}
+      >
+        {buttonText}
+      </button>
+
+      {extraActions && (
+        <div className="flex items-center gap-2 shrink-0 ml-auto pt-2 sm:pt-0">
+          {extraActions}
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Branch Card ──────────────────────────────────────────────────────────────
-// ─── Branch Card ──────────────────────────────────────────────────────────────
 function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode = "single", selectedItemIds = [], onToggleSelectItem, onChange, onBulkAdj, onReset, onSave, onApplyToAll, totalBranches, saving, saved }) {
   const label = branch.brand || branch.nama_resto_final || branch.merchant_name;
   const groups = group(items);
-  const changed = items.filter((i) => (edits[i.id] ?? i.price) !== i.price).length;
+  const changed = items.filter((i) => !i.is_in_promo && (edits[i.id] ?? i.price) !== i.price).length;
+  const selectedCount = items.filter((i) => !i.is_in_promo && selectedItemIds.includes(i.id)).length;
   const [showAdj, setShowAdj] = useState(false);
 
   return (
@@ -148,8 +163,13 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0 ml-2">
+          {itemEditMode === "multi" && selectedCount > 0 && (
+            <span className="rounded-full border border-amber-300 bg-amber-100/90 px-2.5 py-0.5 text-[12px] font-bold text-amber-900 shadow-xs animate-fade-in">
+              {selectedCount} terpilih
+            </span>
+          )}
           {changed > 0 && (
-            <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[13px] font-bold text-amber-700">
+            <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-[12px] font-bold text-emerald-800 shadow-xs">
               {changed} berubah
             </span>
           )}
@@ -178,7 +198,9 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                   return (
                     <div key={item.id}
                       className={`flex flex-col gap-1 py-1.5 px-2 rounded-lg transition-colors ${
-                        isViolation
+                        item.is_in_promo
+                          ? "bg-purple-50/40 border border-purple-100/60 opacity-85 cursor-not-allowed"
+                          : isViolation
                           ? "border border-red-200 bg-red-50"
                           : isChecked
                           ? "bg-amber-100/70 border border-amber-200"
@@ -191,14 +213,18 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                         <div className="min-w-0 flex-1 mr-3 flex items-center gap-2">
                           {itemEditMode === "multi" && (
                             <input type="checkbox"
-                              checked={isChecked}
-                              onChange={() => onToggleSelectItem && onToggleSelectItem(item.id)}
-                              className="h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer shrink-0"
+                              disabled={item.is_in_promo}
+                              checked={!item.is_in_promo && isChecked}
+                              title={item.is_in_promo ? "Item sedang dalam promo aktif (tidak dapat diubah)" : ""}
+                              onChange={() => !item.is_in_promo && onToggleSelectItem && onToggleSelectItem(item.id)}
+                              className={`h-4 w-4 rounded border-slate-300 ${
+                                item.is_in_promo ? "opacity-40 cursor-not-allowed bg-zinc-100" : "text-red-600 focus:ring-red-500 cursor-pointer"
+                              } shrink-0`}
                             />
                           )}
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1 flex-wrap">
-                              <p className="text-[15px] truncate font-medium text-zinc-700">{item.name}</p>
+                            <div className="flex items-start gap-1.5 flex-wrap">
+                              <p className="text-[15px] font-medium text-zinc-800 leading-snug text-wrap break-words flex-1 min-w-0">{item.name}</p>
                               {item.is_in_promo && (
                                 <span title="Item sedang dalam promo aktif di portal. Harga dasar dikunci." className="inline-flex items-center gap-1 rounded bg-purple-100 border border-purple-200 px-1.5 py-0.5 text-[11px] font-bold text-purple-800 shrink-0">
                                   PROMO AKTIF
@@ -341,12 +367,14 @@ export default function EditHargaTab({ API_BASE_URL }) {
   };
 
   const selectAllVisibleItems = (previewBranches) => {
-    const allIds = [];
+    const validIds = [];
     previewBranches.forEach(b => {
       const items = branchMenus[b.id] || [];
-      items.forEach(i => allIds.push(i.id));
+      items.forEach(i => {
+        if (!i.is_in_promo) validIds.push(i.id);
+      });
     });
-    setSelectedItemIds(allIds);
+    setSelectedItemIds(validIds);
   };
 
   const deselectAllItems = () => {
@@ -633,10 +661,14 @@ export default function EditHargaTab({ API_BASE_URL }) {
 
   const totalChanges = preview.reduce((total, branch) => {
     const items = branchMenus[branch.id] || [];
-    return total + items.filter(item => (edits[branch.id]?.[item.id] ?? item.price) !== item.price).length;
+    return total + items.filter(item => !item.is_in_promo && (edits[branch.id]?.[item.id] ?? item.price) !== item.price).length;
   }, 0);
 
   const changePrice = (bid, iid, raw) => {
+    const items = branchMenus[bid] || [];
+    const targetItem = items.find(i => i.id === iid);
+    if (targetItem?.is_in_promo) return;
+
     setEdits(p => ({ ...p, [bid]: { ...p[bid], [iid]: parse(raw) } }));
     setSaveState(p => ({ ...p, [bid]: null }));
   };
@@ -649,6 +681,7 @@ export default function EditHargaTab({ API_BASE_URL }) {
         const items = branchMenus[bid] || [];
         const be = { ...(p[bid] || {}) };
         items.forEach(i => {
+          if (i.is_in_promo) return;
           if (!targetItemIds || targetItemIds.includes(i.id)) {
             be[i.id] = applyAdj(be[i.id] ?? i.price, mode, type, val);
           }
@@ -724,6 +757,7 @@ export default function EditHargaTab({ API_BASE_URL }) {
       const branchIntendedMap = {};
 
       branchItems.forEach(i => {
+        if (i.is_in_promo) return;
         const curPrice = branchEdits[i.id];
         if (curPrice !== undefined && curPrice !== i.price) {
           updates.push({
@@ -897,8 +931,11 @@ export default function EditHargaTab({ API_BASE_URL }) {
                 Syncing GSheet...
               </span>
             ) : gsheetSyncedAt ? (
-              <span className="text-emerald-700 font-bold uppercase tracking-wider">
-                Gsheet Synced
+              <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold uppercase tracking-wider">
+                <span>Gsheet Synced</span>
+                <span className="text-[11px] font-medium tracking-normal text-emerald-600/90 lowercase">
+                  ({gsheetSyncedAt})
+                </span>
               </span>
             ) : null}
           </div>
@@ -1104,9 +1141,9 @@ export default function EditHargaTab({ API_BASE_URL }) {
                   className={`px-4 py-2.5 rounded-xl font-bold text-[14px] bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm flex items-center gap-2 transition-all ${
                     syncPhase === "syncing" ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"
                   }`}
-                  title="Tampilkan data menu cached tanpa membuka browser"
+                  title="Tampilkan data menu lokal terakhir tanpa membuka browser"
                 >
-                  <span>Buka Menu Cached ({cacheInfo.human_age})</span>
+                  <span>Buka Data Terakhir ({cacheInfo.human_age})</span>
                 </button>
               )}
 
@@ -1120,7 +1157,7 @@ export default function EditHargaTab({ API_BASE_URL }) {
                 } ${
                   cacheInfo?.has_cache ? "bg-red-800 hover:bg-red-900" : ""
                 }`}
-                title="Meluncurkan browser untuk tarik menu ter-fresh dari portal merchant"
+                title="Meluncurkan browser untuk tarik menu live terbaru dari portal merchant"
               >
                 <svg className={`w-4 h-4 ${syncPhase === "syncing" ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -1128,7 +1165,7 @@ export default function EditHargaTab({ API_BASE_URL }) {
                 {syncPhase === "syncing"
                   ? "Sedang Menarik Menu Real-Time..."
                   : cacheInfo?.has_cache
-                  ? "Tarik Ulang Menu Fresh (Live)"
+                  ? "Update Menu Live"
                   : "Tarik Real-Time Menu & Edit Harga"}
               </button>
             </div>
@@ -1534,7 +1571,7 @@ export default function EditHargaTab({ API_BASE_URL }) {
                     {summary.updates.map(u => (
                       <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg bg-white p-2.5 border border-zinc-100 gap-1 text-[13px]">
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-slate-800 truncate">{u.name}</p>
+                          <p className="font-medium text-slate-800 leading-snug text-wrap break-words">{u.name}</p>
                           <span className="text-[12px] text-slate-400 uppercase tracking-wider">{u.category}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">

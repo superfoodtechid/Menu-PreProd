@@ -1,0 +1,16 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+*.log
+web/node_modules
+web/dist
+.pytest_cache
+.idea
+.vscode
+Dockerfile*
+docker-compose*.yml

@@ -1153,11 +1153,8 @@ def login_outlet(outlet_info, proxy_config=None):
             pass
     finally:
         if chrome_process:
-            try:
-                chrome_process.terminate()
-                chrome_process.wait()
-            except Exception:
-                pass
+            from src.core.browser_factory import kill_process_tree
+            kill_process_tree(chrome_process)
         if chrome_log:
             try:
                 chrome_log.close()

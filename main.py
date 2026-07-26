@@ -44,6 +44,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup_event():
+    from src.core.browser_factory import cleanup_zombie_chromium
+    cleanup_zombie_chromium()
     logger.info("🚀 Initializing database tables...")
     init_db()
     # Ensure export directories exist dynamically
@@ -1034,6 +1036,8 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 sanitized_email = re.sub(r'[^a-zA-Z0-9_.-]', '_', email.strip().lower())
                 session_path = os.path.join(BASE_DIR, "Gofood", f"session_gofood_{sanitized_email}.json")
                 storage_state = session_path if os.path.exists(session_path) else None
+
+
 
                 is_headless = headless_env.lower() in ("true", "1", "yes") if headless_env else True
                 from src.core.browser_factory import launch_universal_playwright_browser

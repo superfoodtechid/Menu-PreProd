@@ -43,19 +43,7 @@ jobs:
             exit 1
           fi
           mkdir -p ~/.ssh
-          python3 -c "
-import os, base64
-key = os.environ.get('SSH_KEY', '')
-if 'BEGIN' in key:
-    out = key.replace('\r', '')
-else:
-    try:
-        out = base64.b64decode(key.strip()).decode('utf-8')
-    except Exception:
-        out = key.replace('\r', '')
-with open('/home/runner/.ssh/id_ed25519', 'w') as f:
-    f.write(out.strip() + '\n')
-"
+          python3 -c "import os, base64; k=os.environ.get('SSH_KEY',''); out=k.replace('\r','') if 'BEGIN' in k else (base64.b64decode(k.strip()).decode('utf-8') if k.strip() else ''); open('/home/runner/.ssh/id_ed25519','w').write(out.strip()+'\n')"
           chmod 600 ~/.ssh/id_ed25519
           ssh-keygen -l -f ~/.ssh/id_ed25519 || { echo "ERROR: Invalid SSH private key format!"; exit 1; }
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts

@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  deploy-frontend-vps:
-    name: Build & Deploy Frontend to DigitalOcean VPS
+  deploy:
+    name: Build & Deploy FoodMaster (Frontend & Backend)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -24,17 +24,18 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy Dist to DigitalOcean VPS via SSH
+      - name: Deploy Frontend Dist to DigitalOcean VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DO_VPS_HOST }}
           username: ${{ secrets.DO_VPS_USER }}
           key: ${{ secrets.DO_VPS_SSH_KEY }}
-          source: "web/dist/*"
-          target: "~/web-frontend/"
+          source: "web/dist"
+          target: "/home/akbar/web-frontend"
           strip_components: 2
+          overwrite: true
 
-      - name: Restart PM2 Frontend Service
+      - name: Restart Frontend PM2 & Trigger Mini PC Backend
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DO_VPS_HOST }}
@@ -42,16 +43,4 @@ jobs:
           key: ${{ secrets.DO_VPS_SSH_KEY }}
           script: |
             pm2 restart foodmaster-frontend
-
-  deploy-backend-minipc:
-    name: Deploy Backend to Mini PC
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Mini PC Backend Update via SSH Tunnel
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DO_VPS_HOST }}
-          username: ${{ secrets.DO_VPS_USER }}
-          key: ${{ secrets.DO_VPS_SSH_KEY }}
-          script: |
             ssh -p 2222 -o StrictHostKeyChecking=no pi@localhost "cd /home/pi/project/menu-prod && git pull origin main && sudo docker build -t foodmaster-backend-api:latest . && sudo docker rm -f foodmaster_backend_container 2>/dev/null || true && sudo docker run -d --name foodmaster_backend_container --restart unless-stopped --net=host -v /home/pi/project/menu-prod/data:/app/data -v /home/pi/project/menu-prod/.env:/app/.env -v /home/pi/project/menu-prod/src/goscrapperv2/.env:/app/src/goscrapperv2/.env foodmaster-backend-api:latest"

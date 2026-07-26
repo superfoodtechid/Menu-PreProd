@@ -43,12 +43,14 @@ jobs:
             exit 1
           fi
           mkdir -p ~/.ssh
-          if echo "$SSH_KEY" | grep -q "BEGIN"; then
-            printf "%s\n" "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          if echo "$SSH_KEY" | base64 -d 2>/dev/null | grep -q "BEGIN"; then
+            echo "$SSH_KEY" | base64 -d > ~/.ssh/id_ed25519
           else
-            echo "$SSH_KEY" | tr -d '\r\n ' | base64 -d > ~/.ssh/id_ed25519
+            printf "%s\n" "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
           fi
+          echo "" >> ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -l -f ~/.ssh/id_ed25519 || { echo "ERROR: Invalid SSH private key format!"; exit 1; }
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
           rsync -avz -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no" --delete web/dist/ "$USER@$HOST":/home/akbar/web-frontend/
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no "$USER@$HOST" "pm2 restart foodmaster-frontend && ssh -p 2222 -o StrictHostKeyChecking=no pi@localhost 'cd /home/pi/project/menu-prod && git pull origin main && sudo docker build -t foodmaster-backend-api:latest . && sudo docker rm -f foodmaster_backend_container 2>/dev/null || true && sudo docker run -d --name foodmaster_backend_container --restart unless-stopped --net=host -v /home/pi/project/menu-prod/data:/app/data -v /home/pi/project/menu-prod/.env:/app/.env -v /home/pi/project/menu-prod/src/goscrapperv2/.env:/app/src/goscrapperv2/.env foodmaster-backend-api:latest'"

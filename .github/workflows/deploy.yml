@@ -24,14 +24,15 @@ jobs:
           npm ci
           npm run build
 
-      - name: Setup SSH Agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DO_VPS_SSH_KEY }}
-
-      - name: Deploy Frontend Dist & Update Backend
+      - name: Deploy Frontend Dist & Update Backend via SSH
+        env:
+          SSH_KEY: ${{ secrets.DO_VPS_SSH_KEY }}
+          HOST: ${{ secrets.DO_VPS_HOST }}
+          USER: ${{ secrets.DO_VPS_USER }}
         run: |
+          eval $(ssh-agent -s)
+          echo "$SSH_KEY" | tr -d '\r' | ssh-add -
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.DO_VPS_HOST }} >> ~/.ssh/known_hosts
-          rsync -avz --delete web/dist/ ${{ secrets.DO_VPS_USER }}@${{ secrets.DO_VPS_HOST }}:/home/akbar/web-frontend/
-          ssh ${{ secrets.DO_VPS_USER }}@${{ secrets.DO_VPS_HOST }} "pm2 restart foodmaster-frontend && ssh -p 2222 -o StrictHostKeyChecking=no pi@localhost 'cd /home/pi/project/menu-prod && git pull origin main && sudo docker build -t foodmaster-backend-api:latest . && sudo docker rm -f foodmaster_backend_container 2>/dev/null || true && sudo docker run -d --name foodmaster_backend_container --restart unless-stopped --net=host -v /home/pi/project/menu-prod/data:/app/data -v /home/pi/project/menu-prod/.env:/app/.env -v /home/pi/project/menu-prod/src/goscrapperv2/.env:/app/src/goscrapperv2/.env foodmaster-backend-api:latest'"
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+          rsync -avz --delete web/dist/ "$USER@$HOST":/home/akbar/web-frontend/
+          ssh "$USER@$HOST" "pm2 restart foodmaster-frontend && ssh -p 2222 -o StrictHostKeyChecking=no pi@localhost 'cd /home/pi/project/menu-prod && git pull origin main && sudo docker build -t foodmaster-backend-api:latest . && sudo docker rm -f foodmaster_backend_container 2>/dev/null || true && sudo docker run -d --name foodmaster_backend_container --restart unless-stopped --net=host -v /home/pi/project/menu-prod/data:/app/data -v /home/pi/project/menu-prod/.env:/app/.env -v /home/pi/project/menu-prod/src/goscrapperv2/.env:/app/src/goscrapperv2/.env foodmaster-backend-api:latest'"

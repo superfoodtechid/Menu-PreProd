@@ -419,7 +419,15 @@ class GrabAPI:
                 try:
                     res = await self.page.evaluate(js_group_menu)
                     if res and res.get("status") == 200:
-                        return res.get("data", {}), None
+                        data = res.get("data", {})
+                        if isinstance(data, dict):
+                            data["menuGroupID"] = store_id
+                            data["is_menu_group"] = True
+                            for cat in data.get("categories", []):
+                                cat["menuGroupID"] = store_id
+                                for item in cat.get("items") or []:
+                                    item["menuGroupID"] = store_id
+                        return data, None
                     err = res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
                     logger.warning(f"Attempt {attempt+1} to fetch group menu failed: {err}")
                     await asyncio.sleep(2)
@@ -524,7 +532,15 @@ class GrabAPI:
                             try:
                                 res = await self.page.evaluate(js_group_menu)
                                 if res and res.get("status") == 200:
-                                    return res.get("data", {}), None
+                                    data = res.get("data", {})
+                                    if isinstance(data, dict):
+                                        data["menuGroupID"] = menu_group_id
+                                        data["is_menu_group"] = True
+                                        for cat in data.get("categories", []):
+                                            cat["menuGroupID"] = menu_group_id
+                                            for item in cat.get("items") or []:
+                                                item["menuGroupID"] = menu_group_id
+                                    return data, None
                                 err = res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
                                 logger.warning(f"Attempt {attempt+1} to fetch group menu failed: {err}")
                                 await asyncio.sleep(2)
@@ -570,13 +586,13 @@ class GrabAPI:
                 if res and res.get("status") == 200:
                     return res.get("data", {}), None
                 err = res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
-                logger.warning(f"Attempt {attempt+1} to fetch menu failed: {err}")
+                logger.warning(f"Attempt {attempt+1} to fetch standard menu failed: {err}")
                 await asyncio.sleep(2)
             except Exception as e:
-                logger.warning(f"Attempt {attempt+1} to evaluate fetch_menu failed: {e}")
+                logger.warning(f"Attempt {attempt+1} to evaluate fetch standard menu failed: {e}")
                 await asyncio.sleep(2)
                 
-        return None, "Failed to retrieve menu after 3 attempts"
+        return None, "Failed to retrieve standard menu after 3 attempts"
 
     async def create_category(self, group_id, store_id, name, selling_time_id):
         """POST /food/merchant/v2/categories"""
@@ -668,46 +684,132 @@ class GrabAPI:
             return True, None
         return False, res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
 
-    async def validate_item(self, group_id, store_id, category_id, item_data):
-        """POST /food/merchant/v2/item-validation"""
-        url = f"{self.base_url}/food/merchant/v2/item-validation"
+    async def validate_item(self, group_id, store_id, category_id, item_data, is_menu_group: bool = False, menu_group_id: str = None):
+        """POST /food/merchant/v2/item-validation or /food/merchant/v2/menu-groups/item-validation"""
+        mg_id = menu_group_id or item_data.get("menuGroupID") or (store_id if is_menu_group else None)
+        if not mg_id and "-" in str(item_data.get("itemID", "")):
+            parts = str(item_data.get("itemID")).split("-")
+            if len(parts) >= 2 and parts[0].isdigit():
+                mg_id = f"{parts[0]}-{parts[1]}"
+
+        if is_menu_group or mg_id:
+            url = f"{self.base_url}/food/merchant/v2/menu-groups/item-validation"
+        else:
+            url = f"{self.base_url}/food/merchant/v2/item-validation"
+
         headers = {
             "merchantgroupid": group_id,
-            "merchantid": store_id,
+            "merchantid": mg_id or store_id,
             "requestsource": "troyPortal",
             "x-client-id": "GrabMerchant-Portal",
             "x-grabkit-clientid": "grabmerchant-portal"
         }
-        if "categoryID" not in item_data:
-            item_data["categoryID"] = category_id
+        if is_menu_group or mg_id:
+            headers["x-api-source"] = "food-max-api"
+
+        item_copy = dict(item_data)
+        item_copy["categoryID"] = category_id
+        if "categoryName" not in item_copy:
+            item_copy["categoryName"] = ""
+        if is_menu_group or mg_id:
+            item_copy["menuGroupID"] = mg_id or store_id
+        if "nameTranslation" not in item_copy or item_copy["nameTranslation"] is None:
+            item_copy["nameTranslation"] = {"translation": {}}
+        if "descriptionTranslation" not in item_copy or item_copy["descriptionTranslation"] is None:
+            item_copy["descriptionTranslation"] = {"translation": {}}
+        if "advancedPricing" not in item_copy or item_copy["advancedPricing"] is None:
+            item_copy["advancedPricing"] = {}
+        if "purchasability" not in item_copy or item_copy["purchasability"] is None:
+            item_copy["purchasability"] = {}
+        if "prediction" not in item_copy or item_copy["prediction"] is None:
+            item_copy["prediction"] = {}
+
         body = {
             "categoryID": category_id,
-            "item": item_data
+            "item": item_copy
         }
+        if is_menu_group or mg_id:
+            body["menuGroupID"] = mg_id or store_id
+
         res = await self.call_api(url, method="POST", headers=headers, body=body)
         if res.get("status") in (200, 204):
             return True, None
+
+        err_detail = str(res.get("error") or res.get("data") or "")
+        # Automatic fallback if store-level failed with menu group v2 error
+        if not is_menu_group and ("menu group v2" in err_detail.lower() or res.get("status") == 403):
+            extracted_mg_id = item_data.get("menuGroupID")
+            if not extracted_mg_id and "-" in str(item_data.get("itemID", "")):
+                parts = str(item_data.get("itemID")).split("-")
+                if len(parts) >= 2 and parts[0].isdigit():
+                    extracted_mg_id = f"{parts[0]}-{parts[1]}"
+            target_id = extracted_mg_id or store_id
+            logger.info(f"  [Fallback] Store level validation received 403/Menu Group V2 error. Retrying with Menu Group V2 endpoint and menuGroupID='{target_id}'...")
+            return await self.validate_item(group_id, store_id, category_id, item_data, is_menu_group=True, menu_group_id=target_id)
+
         return False, res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
 
-    async def upsert_item(self, group_id, store_id, category_id, item_data):
-        """POST /food/merchant/v2/upsert-item"""
-        url = f"{self.base_url}/food/merchant/v2/upsert-item"
+    async def upsert_item(self, group_id, store_id, category_id, item_data, is_menu_group: bool = False, menu_group_id: str = None):
+        """POST /food/merchant/v2/upsert-item or /food/merchant/v2/menu-groups/upsert-item"""
+        mg_id = menu_group_id or item_data.get("menuGroupID") or (store_id if is_menu_group else None)
+        if not mg_id and "-" in str(item_data.get("itemID", "")):
+            parts = str(item_data.get("itemID")).split("-")
+            if len(parts) >= 2 and parts[0].isdigit():
+                mg_id = f"{parts[0]}-{parts[1]}"
+
+        if is_menu_group or mg_id:
+            url = f"{self.base_url}/food/merchant/v2/menu-groups/upsert-item"
+        else:
+            url = f"{self.base_url}/food/merchant/v2/upsert-item"
+
         headers = {
             "merchantgroupid": group_id,
-            "merchantid": store_id,
+            "merchantid": mg_id or store_id,
             "requestsource": "troyPortal",
             "x-client-id": "GrabMerchant-Portal",
             "x-grabkit-clientid": "grabmerchant-portal"
         }
-        if "categoryID" not in item_data:
-            item_data["categoryID"] = category_id
+        if is_menu_group or mg_id:
+            headers["x-api-source"] = "food-max-api"
+        item_copy = dict(item_data)
+        item_copy["categoryID"] = category_id
+        if "categoryName" not in item_copy:
+            item_copy["categoryName"] = ""
+        if is_menu_group or mg_id:
+            item_copy["menuGroupID"] = mg_id or store_id
+        if "nameTranslation" not in item_copy or item_copy["nameTranslation"] is None:
+            item_copy["nameTranslation"] = {"translation": {}}
+        if "descriptionTranslation" not in item_copy or item_copy["descriptionTranslation"] is None:
+            item_copy["descriptionTranslation"] = {"translation": {}}
+        if "advancedPricing" not in item_copy or item_copy["advancedPricing"] is None:
+            item_copy["advancedPricing"] = {}
+        if "purchasability" not in item_copy or item_copy["purchasability"] is None:
+            item_copy["purchasability"] = {}
+        if "prediction" not in item_copy or item_copy["prediction"] is None:
+            item_copy["prediction"] = {}
+
         body = {
             "categoryID": category_id,
-            "item": item_data
+            "item": item_copy
         }
+        if is_menu_group or mg_id:
+            body["menuGroupID"] = mg_id or store_id
         res = await self.call_api(url, method="POST", headers=headers, body=body)
         if res.get("status") == 200:
             return res.get("data", {}), None
+
+        err_detail = str(res.get("error") or res.get("data") or "")
+        # Automatic fallback if store-level failed with menu group v2 error
+        if not is_menu_group and ("menu group v2" in err_detail.lower() or res.get("status") == 403):
+            extracted_mg_id = item_data.get("menuGroupID")
+            if not extracted_mg_id and "-" in str(item_data.get("itemID", "")):
+                parts = str(item_data.get("itemID")).split("-")
+                if len(parts) >= 2 and parts[0].isdigit():
+                    extracted_mg_id = f"{parts[0]}-{parts[1]}"
+            target_id = extracted_mg_id or store_id
+            logger.info(f"  [Fallback] Store level upsert received 403/Menu Group V2 error. Retrying with Menu Group V2 endpoint and menuGroupID='{target_id}'...")
+            return await self.upsert_item(group_id, store_id, category_id, item_data, is_menu_group=True, menu_group_id=target_id)
+
         return None, res.get("error") or f"Status {res.get('status')}: {res.get('data')}"
 
     async def delete_item(self, group_id, store_id, item_id):

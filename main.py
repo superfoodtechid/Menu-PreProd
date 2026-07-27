@@ -853,6 +853,23 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         await browser.close()
                         return f"Failed to fetch Grab menu: {err}"
 
+                    # Detect if menu_data is from a Menu Group V2
+                    is_menu_group_detected = bool(menu_data.get("is_menu_group"))
+                    detected_menu_group_id = menu_data.get("menuGroupID")
+                    if not is_menu_group_detected:
+                        for cat in menu_data.get("categories", []):
+                            if cat.get("menuGroupID"):
+                                is_menu_group_detected = True
+                                detected_menu_group_id = cat.get("menuGroupID")
+                                break
+                            for item in cat.get("items") or []:
+                                if item.get("menuGroupID"):
+                                    is_menu_group_detected = True
+                                    detected_menu_group_id = item.get("menuGroupID")
+                                    break
+                            if is_menu_group_detected:
+                                break
+
                     grab_items_by_id = {}
                     grab_items_by_name = {}
                     for cat in menu_data.get("categories", []):
@@ -916,26 +933,26 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                             selling_time_id = item_info["sellingTimeID"]
                             old_p = float(orig_item.get("priceInMin", 0)) / 100.0
                             
-                            item_data = {
-                                "itemID": real_item_id,
-                                "itemName": orig_item.get("itemName"),
-                                "description": orig_item.get("description", ""),
-                                "priceInMin": int(new_price * 100),
-                                "availableStatus": orig_item.get("availableStatus", 1),
-                                "sellingTimeID": selling_time_id,
-                                "advancedPricing": orig_item.get("advancedPricing") or {},
-                                "purchasability": orig_item.get("purchasability") or {},
-                                "imageURL": orig_item.get("imageURL") or "",
-                                "imageURLs": orig_item.get("imageURLs") or [],
-                                "weight": orig_item.get("weight"),
-                                "itemAttributeValues": orig_item.get("itemAttributeValues") or []
-                            }
+                            item_data = dict(orig_item)
+                            item_data["priceInMin"] = int(new_price * 100)
+                            if category_id and "categoryID" not in item_data:
+                                item_data["categoryID"] = category_id
+                            if selling_time_id and "sellingTimeID" not in item_data:
+                                item_data["sellingTimeID"] = selling_time_id
 
-                            val_ok, val_err = await api.validate_item(mgid, store_id, category_id, item_data)
+                            val_ok, val_err = await api.validate_item(
+                                mgid, store_id, category_id, item_data,
+                                is_menu_group=is_menu_group_detected,
+                                menu_group_id=detected_menu_group_id
+                            )
                             if val_err:
                                 logger.warning(f"Grab validation warning for item {real_item_id}: {val_err}")
 
-                            upsert_res, upsert_err = await api.upsert_item(mgid, store_id, category_id, item_data)
+                            upsert_res, upsert_err = await api.upsert_item(
+                                mgid, store_id, category_id, item_data,
+                                is_menu_group=is_menu_group_detected,
+                                menu_group_id=detected_menu_group_id
+                            )
                             if upsert_res and not upsert_err:
                                 success_count += 1
                                 status_str = "SUCCESS"

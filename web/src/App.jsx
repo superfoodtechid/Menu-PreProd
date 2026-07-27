@@ -22,6 +22,7 @@ export default function Home() {
     return "http://localhost:18800";
   };
   const API_BASE_URL = getApiBaseUrl();
+  const API_SECRET_KEY = import.meta.env.VITE_API_KEY || "foodmaster-secret-api-key-2026";
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -35,11 +36,11 @@ export default function Home() {
     <div className="min-h-screen bg-[#fff9f8] text-slate-900">
       <NavHeader activeTab={activeTab} onTabChange={handleTabChange} />
 
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <div className={activeTab === "pull" ? "" : "hidden"}><MenuPullTab API_BASE_URL={API_BASE_URL} /></div>
-        <div className={activeTab === "push" ? "" : "hidden"}><MenuPushTab /></div>
-        <div className={activeTab === "edit-harga" ? "" : "hidden"}><EditHargaTab API_BASE_URL={API_BASE_URL} /></div>
-      </div>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className={activeTab === "pull" ? "" : "hidden"}><MenuPullTab API_BASE_URL={API_BASE_URL} API_SECRET_KEY={API_SECRET_KEY} /></div>
+        <div className={activeTab === "push" ? "" : "hidden"}><MenuPushTab API_BASE_URL={API_BASE_URL} API_SECRET_KEY={API_SECRET_KEY} /></div>
+        <div className={activeTab === "edit-harga" ? "" : "hidden"}><EditHargaTab API_BASE_URL={API_BASE_URL} API_SECRET_KEY={API_SECRET_KEY} /></div>
+      </main>
     </div>
   );
 }

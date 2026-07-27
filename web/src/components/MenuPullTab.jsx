@@ -18,7 +18,7 @@ function StepLabel({ number, label, active, done }) {
   );
 }
 
-export default function MenuPullTab({ API_BASE_URL }) {
+export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
   const [allOutlets, setAllOutlets] = useState([]);
   const [loadingOutlets, setLoadingOutlets] = useState(false);
@@ -69,7 +69,10 @@ export default function MenuPullTab({ API_BASE_URL }) {
     selectedPlatforms.forEach((platform) => params.append("platform", platform));
     const url = `${API_BASE_URL}/api/outlets?${params.toString()}`;
 
-    fetch(url, { signal: controller.signal })
+    fetch(url, {
+      signal: controller.signal,
+      headers: { "X-API-Key": API_SECRET_KEY || "" }
+    })
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch outlets");
         return res.json();
@@ -190,7 +193,9 @@ export default function MenuPullTab({ API_BASE_URL }) {
     }
 
     pollingIntervalsRef.current[jobId] = setInterval(() => {
-      fetch(`${API_BASE_URL}/api/jobs/${jobId}`)
+      fetch(`${API_BASE_URL}/api/jobs/${jobId}`, {
+        headers: { "X-API-Key": API_SECRET_KEY || "" }
+      })
         .then((res) => {
           if (!res.ok) throw new Error("Failed to fetch job status");
           return res.json();
@@ -252,6 +257,7 @@ export default function MenuPullTab({ API_BASE_URL }) {
       try {
         const res = await fetch(`${API_BASE_URL}/api/jobs/pull?outlet_id=${target.id}`, {
           method: "POST",
+          headers: { "X-API-Key": API_SECRET_KEY || "" }
         });
         if (!res.ok) throw new Error("Failed to trigger job");
         const job = await res.json();
@@ -303,6 +309,7 @@ export default function MenuPullTab({ API_BASE_URL }) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/jobs/pull?outlet_id=${outletId}`, {
         method: "POST",
+        headers: { "X-API-Key": API_SECRET_KEY || "" }
       });
       if (!res.ok) throw new Error("Gagal memulai kembali tugas penarikan");
       const newJob = await res.json();

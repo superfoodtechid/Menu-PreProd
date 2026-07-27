@@ -318,7 +318,7 @@ function StepLabel({ number, label, active, done, className = "mb-2.5" }) {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function EditHargaTab({ API_BASE_URL }) {
+export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
   const [platform, setPlatform] = useState("");
   const [allOutlets, setAllOutlets] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -385,7 +385,10 @@ export default function EditHargaTab({ API_BASE_URL }) {
   const triggerGSheetSync = useCallback(async () => {
     setGsheetSyncing(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/sync-sheets`, { method: "POST" });
+      const res = await fetch(`${API_BASE_URL}/api/sync-sheets`, {
+        method: "POST",
+        headers: { "X-API-Key": API_SECRET_KEY || "" }
+      });
       if (res.ok) {
         setGsheetSyncedAt(new Date().toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
       }
@@ -394,7 +397,7 @@ export default function EditHargaTab({ API_BASE_URL }) {
     } finally {
       setGsheetSyncing(false);
     }
-  }, [API_BASE_URL]);
+  }, [API_BASE_URL, API_SECRET_KEY]);
 
   // Clear auto-pull polling intervals
   const clearSyncPolling = useCallback(() => {
@@ -420,14 +423,14 @@ export default function EditHargaTab({ API_BASE_URL }) {
     // Sync GSheet first when platform is selected
     triggerGSheetSync().then(() => {
       const url = `${API_BASE_URL}/api/outlets?platform=${platform}`;
-      return fetch(url).then(r => r.json())
+      return fetch(url, { headers: { "X-API-Key": API_SECRET_KEY || "" } }).then(r => r.json())
         .then(data => {
           setAllOutlets(data);
           setUniqueParents(Array.from(new Set(data.map(o => o.nama_outlet).filter(Boolean))).sort());
         });
     }).catch((err) => console.error("Error fetching outlets:", err))
       .finally(() => setLoading(false));
-  }, [platform, API_BASE_URL, clearSyncPolling, triggerGSheetSync]);
+  }, [platform, API_BASE_URL, API_SECRET_KEY, clearSyncPolling, triggerGSheetSync]);
 
   // Fetch menu items and run verification check against intended push prices
   const fetchMenusAndVerify = useCallback(async (targetBranches, targetIntendedPrices = intendedPushPrices) => {
@@ -438,7 +441,9 @@ export default function EditHargaTab({ API_BASE_URL }) {
 
     await Promise.all(targetBranches.map(async (b) => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/outlets/${b.id}/menu-items`);
+        const res = await fetch(`${API_BASE_URL}/api/outlets/${b.id}/menu-items`, {
+          headers: { "X-API-Key": API_SECRET_KEY || "" }
+        });
         if (res.ok) {
           const items = await res.json();
           menusMap[b.id] = items;
@@ -511,7 +516,8 @@ export default function EditHargaTab({ API_BASE_URL }) {
       const label = b.brand || b.nama_resto_final || b.merchant_name;
       try {
         const res = await fetch(`${API_BASE_URL}/api/jobs/pull?outlet_id=${b.id}`, {
-          method: "POST"
+          method: "POST",
+          headers: { "X-API-Key": API_SECRET_KEY || "" }
         });
         if (res.ok) {
           const job = await res.json();
@@ -565,7 +571,9 @@ export default function EditHargaTab({ API_BASE_URL }) {
 
     activeJobIds.forEach(jobId => {
       syncPollingRef.current[jobId] = setInterval(() => {
-        fetch(`${API_BASE_URL}/api/jobs/${jobId}`)
+        fetch(`${API_BASE_URL}/api/jobs/${jobId}`, {
+          headers: { "X-API-Key": API_SECRET_KEY || "" }
+        })
           .then(r => r.ok ? r.json() : null)
           .then(job => {
             if (!job) return;
@@ -594,13 +602,15 @@ export default function EditHargaTab({ API_BASE_URL }) {
       }, 2000);
     });
 
-  }, [API_BASE_URL, clearSyncPolling, fetchMenusAndVerify, intendedPushPrices]);
+  }, [API_BASE_URL, API_SECRET_KEY, clearSyncPolling, fetchMenusAndVerify, intendedPushPrices]);
 
   const [cacheInfo, setCacheInfo] = useState(null);
 
   const fetchCacheStatus = (branchId) => {
     if (!branchId) return;
-    fetch(`${API_BASE_URL}/api/outlets/${branchId}/menu-cache-status`)
+    fetch(`${API_BASE_URL}/api/outlets/${branchId}/menu-cache-status`, {
+      headers: { "X-API-Key": API_SECRET_KEY || "" }
+    })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data) setCacheInfo(data);
@@ -699,7 +709,9 @@ export default function EditHargaTab({ API_BASE_URL }) {
     }
 
     pushPollingIntervalsRef.current[jobId] = setInterval(() => {
-      fetch(`${API_BASE_URL}/api/jobs/${jobId}`)
+      fetch(`${API_BASE_URL}/api/jobs/${jobId}`, {
+        headers: { "X-API-Key": API_SECRET_KEY || "" }
+      })
         .then((res) => {
           if (!res.ok) throw new Error("Failed to fetch job");
           return res.json();
@@ -778,7 +790,10 @@ export default function EditHargaTab({ API_BASE_URL }) {
         setSaveState(p => ({ ...p, [bid]: "saving" }));
         const res = await fetch(`${API_BASE_URL}/api/jobs/push-price`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": API_SECRET_KEY || ""
+          },
           body: JSON.stringify({
             outlet_id: bid,
             updates: updates

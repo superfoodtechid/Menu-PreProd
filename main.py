@@ -1812,3 +1812,97 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
         logger.error(f"Error parsing excel menu file at {excel_path}: {e}")
         return []
 
+@app.get("/api/sessions")
+def get_sessions_status(db: Session = Depends(get_db)):
+    """
+    Returns the session ingestion status for all outlets (Shopee and GoFood).
+    """
+    import os
+    import json
+    import re
+    import pandas as pd
+    from pathlib import Path
+    
+    # Load phone mapping from sheets cache
+    phone_map = {}
+    try:
+        cache_path = BASE_DIR / "master_merchants_cache.csv"
+        if cache_path.exists():
+            df = pd.read_csv(cache_path)
+            phone_cols = [col for col in df.columns if 'nomor hp' in str(col).lower()]
+            col_phone = phone_cols[1] if len(phone_cols) > 1 else (phone_cols[0] if phone_cols else None)
+            if col_phone:
+                for _, row in df.iterrows():
+                    sid = str(row.get('Store ID', '')).strip().split('.')[0]
+                    if not sid or sid == '-' or sid.lower() == 'nan':
+                        sid = str(row.get('Merchant ID', '')).strip().split('.')[0]
+                    p_val = str(row.get(col_phone, '')).strip()
+                    if sid and p_val and p_val not in ('-', 'nan', ''):
+                        phone_map[sid] = p_val
+    except Exception as e:
+        logger.error(f"Error loading phone mapping in /api/sessions: {e}")
+
+    outlets = db.query(Outlet).all()
+    
+    result = []
+    for o in outlets:
+        platform = o.platform
+        if platform not in ("shopee", "gofood"):
+            continue
+            
+        # Get phone number from mapping or fallback
+        phone = phone_map.get(o.store_id)
+        if not phone and o.account and "@" in o.account.username:
+            phone = o.account.username
+            
+        status_info = {
+            "id": str(o.id),
+            "store_id": o.store_id,
+            "merchant_name": o.merchant_name,
+            "nama_outlet": o.nama_outlet,
+            "nama_resto_final": o.nama_resto_final,
+            "brand": o.brand,
+            "platform": platform,
+            "has_session": False,
+            "session_file": None,
+            "last_active": None,
+            "phone": phone or o.store_id or "-"
+        }
+        
+        if platform == "shopee":
+            # Sanitize profile name
+            merchant_name = o.merchant_name or o.nama_resto_final or o.nama_outlet or ''
+            profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name)
+            profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
+            
+            session_file = BASE_DIR / "shopee" / "data" / f"session_{profile_name}.json"
+            if session_file.exists():
+                status_info["has_session"] = True
+                status_info["session_file"] = f"session_{profile_name}.json"
+                try:
+                    with open(session_file, "r") as f:
+                        data = json.load(f)
+                        ts = data.get("timestamp") or data.get("saved_at")
+                        if ts:
+                            status_info["last_active"] = ts
+                except: pass
+                
+        elif platform == "gofood" and o.account:
+            ident_str = str(o.account.username).strip().lower()
+            sanitized = re.sub(r'[^a-zA-Z0-9_.-]', '_', ident_str)
+            session_file = BASE_DIR / "Gofood" / f"session_gofood_{sanitized}.json"
+            if session_file.exists():
+                status_info["has_session"] = True
+                status_info["session_file"] = f"session_gofood_{sanitized}.json"
+                try:
+                    with open(session_file, "r") as f:
+                        data = json.load(f)
+                        ts = data.get("timestamp") or data.get("saved_at")
+                        if ts:
+                            status_info["last_active"] = ts
+                except: pass
+                
+        result.append(status_info)
+        
+    return result
+

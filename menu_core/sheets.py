@@ -102,7 +102,10 @@ def get_outlets_for_applicator(applicator_choice: str):
                 return v
             return ''
             
-        if app_lower in ['grab', 'shopee']:
+        if app_lower == 'shopee':
+            username = ''
+            password = ''
+        elif app_lower == 'grab':
             username = get_valid('Nama Pengguna.1', 'Nama Pengguna')
             password = get_valid('Kata Sandi.1', 'Kata Sandi')
         else:

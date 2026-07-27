@@ -9,8 +9,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Query, status
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Query, status, Request
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -33,14 +34,38 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for Next.js frontend (Vercel)
+# Parse restricted CORS origins from environment variable
+raw_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://168.144.143.203:3000"
+)
+allowed_origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to the Vercel domain
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# API Key Middleware enforcing authentication on all /api/ routes
+@app.middleware("http")
+async def api_key_middleware(request: Request, call_next):
+    # Allow OPTIONS (CORS preflight requests) and non-/api/ paths (docs, health)
+    if request.method == "OPTIONS" or not request.url.path.startswith("/api/"):
+        return await call_next(request)
+
+    expected_key = os.getenv("API_SECRET_KEY", "foodmaster-secret-api-key-2026")
+    if expected_key:
+        api_key = request.headers.get("X-API-Key")
+        if not api_key or api_key != expected_key:
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"detail": "Invalid or missing X-API-Key header"}
+            )
+
+    return await call_next(request)
 
 @app.on_event("startup")
 def startup_event():
@@ -1601,7 +1626,7 @@ def get_menu_cache_status(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
 
     job = db.query(Job).filter(
         Job.outlet_id == outlet_id,
-        Job.job_type.in_(["PULL", "PUSH_UPDATE"]),
+        Job.job_type == "PULL",
         Job.status.in_(["SUCCESS", "PARTIAL_SUCCESS"])
     ).order_by(Job.completed_at.desc()).first()
 

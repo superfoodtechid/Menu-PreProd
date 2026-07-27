@@ -202,9 +202,9 @@ def interactive_menu():
                 sys.exit(0)
             elif choice == "6":
                 print(f"\n  {CYAN}=== PERBAIKI LOGIN SHOPEE ==={RESET}")
-                uname = input(f"  {BOLD}Username Shopee:{RESET} ").strip()
-                upass = input(f"  {BOLD}Password Shopee:{RESET} ").strip()
-                if uname and upass:
+                phone = input(f"  {BOLD}Nomor HP Shopee:{RESET} ").strip()
+                merchant_name = input(f"  {BOLD}Nama Merchant (untuk nama profile):{RESET} ").strip()
+                if phone:
                     print(f"  [*] Membuka browser Chrome (headless=False) untuk login manual...")
                     # Set up session file path for shopee
                     automation_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "shopee-omzet-automation")
@@ -212,23 +212,27 @@ def interactive_menu():
                         sys.path.insert(0, automation_dir)
                     from core import browser as shopee_browser
                     
-                    session_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shopee", "data", "session.json")
+                    import re
+                    profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name or "custom_merchant")
+                    profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
+
+                    session_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shopee", "data", f"session_{profile_name}.json")
                     shopee_browser.set_session_file(session_file)
                     
                     session_data = shopee_browser.get_session(
-                        username=uname, 
-                        password=upass, 
+                        phone=phone, 
                         headless=False, 
                         close_browser=True, 
                         interactive=True,
-                        allow_otp=True
+                        allow_otp=True,
+                        profile_name=profile_name
                     )
                     if session_data and "shopee_tob_token" in session_data:
                         print(f"  {GREEN}✔ Login berhasil diperbaiki dan session tersimpan!{RESET}\n")
                     else:
                         print(f"  {RED}✘ Gagal memperbaiki login.{RESET}\n")
                 else:
-                    print(f"  {RED}✘ Username dan Password tidak boleh kosong!{RESET}\n")
+                    print(f"  {RED}✘ Nomor HP tidak boleh kosong!{RESET}\n")
                 state = "applicator"
             elif choice == "5":
                 clear_all_caches()

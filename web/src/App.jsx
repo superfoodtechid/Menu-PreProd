@@ -3,10 +3,15 @@ import NavHeader from "./components/NavHeader";
 import MenuPullTab from "./components/MenuPullTab";
 import MenuPushTab from "./components/MenuPushTab";
 import EditHargaTab from "./components/EditHargaTab";
+import SessionTab from "./components/SessionTab";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState(() => {
+    const isSessionPath = window.location.pathname === "/session";
     const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    if (isSessionPath || requestedTab === "session") {
+      return "session";
+    }
     return ["pull", "push", "edit-harga"].includes(requestedTab) ? requestedTab : "pull";
   });
   const getApiBaseUrl = () => {
@@ -27,6 +32,9 @@ export default function Home() {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     const url = new URL(window.location.href);
+    if (url.pathname === "/session") {
+      url.pathname = "/";
+    }
     if (tab === "pull") url.searchParams.delete("tab");
     else url.searchParams.set("tab", tab);
     window.history.replaceState({}, "", url);
@@ -40,6 +48,7 @@ export default function Home() {
         <div className={activeTab === "pull" ? "" : "hidden"}><MenuPullTab API_BASE_URL={API_BASE_URL} API_SECRET_KEY={API_SECRET_KEY} /></div>
         <div className={activeTab === "push" ? "" : "hidden"}><MenuPushTab API_BASE_URL={API_BASE_URL} API_SECRET_KEY={API_SECRET_KEY} /></div>
         <div className={activeTab === "edit-harga" ? "" : "hidden"}><EditHargaTab API_BASE_URL={API_BASE_URL} API_SECRET_KEY={API_SECRET_KEY} /></div>
+        <div className={activeTab === "session" ? "" : "hidden"}><SessionTab API_BASE_URL={API_BASE_URL} API_SECRET_KEY={API_SECRET_KEY} /></div>
       </main>
     </div>
   );

@@ -853,6 +853,23 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         await browser.close()
                         return f"Failed to fetch Grab menu: {err}"
 
+                    # Detect if menu_data is from a Menu Group V2
+                    is_menu_group_detected = bool(menu_data.get("is_menu_group"))
+                    detected_menu_group_id = menu_data.get("menuGroupID")
+                    if not is_menu_group_detected:
+                        for cat in menu_data.get("categories", []):
+                            if cat.get("menuGroupID"):
+                                is_menu_group_detected = True
+                                detected_menu_group_id = cat.get("menuGroupID")
+                                break
+                            for item in cat.get("items") or []:
+                                if item.get("menuGroupID"):
+                                    is_menu_group_detected = True
+                                    detected_menu_group_id = item.get("menuGroupID")
+                                    break
+                            if is_menu_group_detected:
+                                break
+
                     grab_items_by_id = {}
                     grab_items_by_name = {}
                     for cat in menu_data.get("categories", []):
@@ -916,26 +933,26 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                             selling_time_id = item_info["sellingTimeID"]
                             old_p = float(orig_item.get("priceInMin", 0)) / 100.0
                             
-                            item_data = {
-                                "itemID": real_item_id,
-                                "itemName": orig_item.get("itemName"),
-                                "description": orig_item.get("description", ""),
-                                "priceInMin": int(new_price * 100),
-                                "availableStatus": orig_item.get("availableStatus", 1),
-                                "sellingTimeID": selling_time_id,
-                                "advancedPricing": orig_item.get("advancedPricing") or {},
-                                "purchasability": orig_item.get("purchasability") or {},
-                                "imageURL": orig_item.get("imageURL") or "",
-                                "imageURLs": orig_item.get("imageURLs") or [],
-                                "weight": orig_item.get("weight"),
-                                "itemAttributeValues": orig_item.get("itemAttributeValues") or []
-                            }
+                            item_data = dict(orig_item)
+                            item_data["priceInMin"] = int(new_price * 100)
+                            if category_id and "categoryID" not in item_data:
+                                item_data["categoryID"] = category_id
+                            if selling_time_id and "sellingTimeID" not in item_data:
+                                item_data["sellingTimeID"] = selling_time_id
 
-                            val_ok, val_err = await api.validate_item(mgid, store_id, category_id, item_data)
+                            val_ok, val_err = await api.validate_item(
+                                mgid, store_id, category_id, item_data,
+                                is_menu_group=is_menu_group_detected,
+                                menu_group_id=detected_menu_group_id
+                            )
                             if val_err:
                                 logger.warning(f"Grab validation warning for item {real_item_id}: {val_err}")
 
-                            upsert_res, upsert_err = await api.upsert_item(mgid, store_id, category_id, item_data)
+                            upsert_res, upsert_err = await api.upsert_item(
+                                mgid, store_id, category_id, item_data,
+                                is_menu_group=is_menu_group_detected,
+                                menu_group_id=detected_menu_group_id
+                            )
                             if upsert_res and not upsert_err:
                                 success_count += 1
                                 status_str = "SUCCESS"
@@ -1811,4 +1828,98 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error parsing excel menu file at {excel_path}: {e}")
         return []
+
+@app.get("/api/sessions")
+def get_sessions_status(db: Session = Depends(get_db)):
+    """
+    Returns the session ingestion status for all outlets (Shopee and GoFood).
+    """
+    import os
+    import json
+    import re
+    import pandas as pd
+    from pathlib import Path
+    
+    # Load phone mapping from sheets cache
+    phone_map = {}
+    try:
+        cache_path = BASE_DIR / "master_merchants_cache.csv"
+        if cache_path.exists():
+            df = pd.read_csv(cache_path)
+            phone_cols = [col for col in df.columns if 'nomor hp' in str(col).lower()]
+            col_phone = phone_cols[1] if len(phone_cols) > 1 else (phone_cols[0] if phone_cols else None)
+            if col_phone:
+                for _, row in df.iterrows():
+                    sid = str(row.get('Store ID', '')).strip().split('.')[0]
+                    if not sid or sid == '-' or sid.lower() == 'nan':
+                        sid = str(row.get('Merchant ID', '')).strip().split('.')[0]
+                    p_val = str(row.get(col_phone, '')).strip()
+                    if sid and p_val and p_val not in ('-', 'nan', ''):
+                        phone_map[sid] = p_val
+    except Exception as e:
+        logger.error(f"Error loading phone mapping in /api/sessions: {e}")
+
+    outlets = db.query(Outlet).all()
+    
+    result = []
+    for o in outlets:
+        platform = o.platform
+        if platform not in ("shopee", "gofood"):
+            continue
+            
+        # Get phone number from mapping or fallback
+        phone = phone_map.get(o.store_id)
+        if not phone and o.account and "@" in o.account.username:
+            phone = o.account.username
+            
+        status_info = {
+            "id": str(o.id),
+            "store_id": o.store_id,
+            "merchant_name": o.merchant_name,
+            "nama_outlet": o.nama_outlet,
+            "nama_resto_final": o.nama_resto_final,
+            "brand": o.brand,
+            "platform": platform,
+            "has_session": False,
+            "session_file": None,
+            "last_active": None,
+            "phone": phone or o.store_id or "-"
+        }
+        
+        if platform == "shopee":
+            # Sanitize profile name
+            merchant_name = o.merchant_name or o.nama_resto_final or o.nama_outlet or ''
+            profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name)
+            profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
+            
+            session_file = BASE_DIR / "shopee" / "data" / f"session_{profile_name}.json"
+            if session_file.exists():
+                status_info["has_session"] = True
+                status_info["session_file"] = f"session_{profile_name}.json"
+                try:
+                    with open(session_file, "r") as f:
+                        data = json.load(f)
+                        ts = data.get("timestamp") or data.get("saved_at")
+                        if ts:
+                            status_info["last_active"] = ts
+                except: pass
+                
+        elif platform == "gofood" and o.account:
+            ident_str = str(o.account.username).strip().lower()
+            sanitized = re.sub(r'[^a-zA-Z0-9_.-]', '_', ident_str)
+            session_file = BASE_DIR / "Gofood" / f"session_gofood_{sanitized}.json"
+            if session_file.exists():
+                status_info["has_session"] = True
+                status_info["session_file"] = f"session_gofood_{sanitized}.json"
+                try:
+                    with open(session_file, "r") as f:
+                        data = json.load(f)
+                        ts = data.get("timestamp") or data.get("saved_at")
+                        if ts:
+                            status_info["last_active"] = ts
+                except: pass
+                
+        result.append(status_info)
+        
+    return result
 

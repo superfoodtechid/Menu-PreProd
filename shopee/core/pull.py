@@ -44,19 +44,22 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
     nama_panjang = store_metadata.get('nama_resto_final') or store_metadata.get('nama_outlet') or target_name
     nama_pendek = store_metadata.get('brand') or store_metadata.get('nama_pendek') or store_metadata.get('nama_outlet') or target_name
     
-    username = store_metadata.get("username", "allvbadmin")
-    password = store_metadata.get("password", "Master!00!")
-    session_file = MENU_DIR / "data" / "session.json"
+    import re
+    merchant_name = store_metadata.get('merchant_name') or store_metadata.get('nama_resto_final') or store_metadata.get('nama_outlet') or ''
+    profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name)
+    profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
+
+    session_file = MENU_DIR / "data" / f"session_{profile_name}.json"
     browser.set_session_file(session_file)
             
-    print(f"[*] Membuka browser (headless=True) dan memilih merchant: '{target_name}'...")
+    print(f"[*] Membuka browser (headless=True) dan memilih merchant: '{target_name}' dengan profile '{profile_name}'...")
     session_data = browser.get_session(
-        username=username,
-        password=password,
+        phone=store_metadata.get("phone"),
         headless=True,
         close_browser=True,
         target_name=target_name,
-        interactive=False
+        interactive=False,
+        profile_name=profile_name
     )
     
     if not session_data or "shopee_tob_token" not in session_data:

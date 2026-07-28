@@ -29,9 +29,9 @@ export default function PlatformBadge({ platform, storeId, selected = false, cla
   const style = PLATFORM_STYLES[getPlatformKey(platform)];
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-semibold leading-none ${selected ? style.solid : style.soft} ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-semibold leading-none ${selected ? style.solid : style.soft} dark:bg-transparent dark:border-transparent dark:text-white dark:px-0.5 ${className}`}>
       <span>{platform?.toUpperCase()}</span>
-      {storeId && <span className="font-medium opacity-65">· {storeId}</span>}
+      {storeId && <span className="font-medium opacity-65 dark:text-zinc-400">· {storeId}</span>}
     </span>
   );
 }

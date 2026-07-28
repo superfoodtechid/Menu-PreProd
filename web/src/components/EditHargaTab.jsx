@@ -49,14 +49,14 @@ function AdjustBar({ onApply, buttonText = "OK", extraActions = null }) {
   };
 
   return (
-    <div className="flex flex-wrap items-end gap-3 bg-zinc-50/80 p-3.5 rounded-2xl border border-zinc-200/80">
+    <div className="flex flex-wrap items-end gap-3 bg-zinc-50/80 dark:bg-zinc-950/80 p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80">
       <div>
-        <p className="mb-1 text-[12px] font-bold uppercase tracking-wider text-zinc-500">Metode</p>
-        <div className="inline-flex overflow-hidden rounded-xl border border-zinc-200 bg-white p-0.5 shadow-xs">
+        <p className="mb-1 text-[12px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Metode</p>
+        <div className="inline-flex overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-0.5 shadow-xs">
           {[["nominal", "Rp"], ["pct", "%"]].map(([t, label]) => (
             <button key={t} type="button" onClick={() => setType(t)} aria-pressed={type === t}
               className={`px-3 py-1.5 text-[13px] font-bold rounded-lg transition-colors cursor-pointer ${
-                type === t ? "bg-zinc-800 text-white shadow-xs" : "text-zinc-500 hover:text-zinc-800"
+                type === t ? "bg-zinc-800 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-xs" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}
             >{label}</button>
           ))}
@@ -82,10 +82,10 @@ function AdjustBar({ onApply, buttonText = "OK", extraActions = null }) {
             value={val}
             onChange={(e) => setVal(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && fire()}
-            className={`w-full rounded-xl border bg-white px-3.5 py-2 text-[14px] font-semibold text-zinc-800 placeholder:text-zinc-300 focus:outline-none transition-all ${
-              !val ? "border-zinc-200 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100" :
-              isNegative ? "border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 text-red-800" :
-              "border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-emerald-800"
+            className={`w-full rounded-xl border bg-white dark:bg-zinc-900 px-3.5 py-2 text-[14px] font-semibold text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none transition-all ${
+              !val ? "border-zinc-200 dark:border-zinc-700 focus:border-zinc-400 dark:focus:border-zinc-500 focus:ring-2 focus:ring-zinc-100 dark:focus:ring-zinc-800" :
+              isNegative ? "border-red-300 dark:border-red-800 focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:focus:ring-red-950/40 text-red-800 dark:text-red-300" :
+              "border-emerald-300 dark:border-emerald-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-950/40 text-emerald-800 dark:text-emerald-300"
             }`}
           />
         </div>
@@ -104,10 +104,10 @@ function AdjustBar({ onApply, buttonText = "OK", extraActions = null }) {
                 key={num}
                 type="button"
                 onClick={() => setVal(valStr)}
-                className={`px-2 py-0.5 text-[11px] font-bold rounded-lg border transition-all cursor-pointer ${
+                className={`px-2 py-0.5 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
                   isSelected
-                    ? isNeg ? "bg-red-700 text-white border-red-700 shadow-xs" : "bg-emerald-700 text-white border-emerald-700 shadow-xs"
-                    : isNeg ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100" : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                    ? isNeg ? "text-red-600 dark:text-red-400 underline underline-offset-2" : "text-emerald-600 dark:text-emerald-400 underline underline-offset-2"
+                    : isNeg ? "text-red-500 dark:text-red-500 hover:text-red-700 dark:hover:text-red-300" : "text-emerald-600 dark:text-emerald-500 hover:text-emerald-800 dark:hover:text-emerald-300"
                 }`}
               >
                 {labelStr}
@@ -148,15 +148,15 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
   const [showAdj, setShowAdj] = useState(false);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-red-100 bg-white shadow-[0_14px_35px_-28px_rgba(127,29,29,0.5)] transition-all hover:border-red-200">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-red-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-[0_14px_35px_-28px_rgba(127,29,29,0.5)] dark:shadow-none transition-all hover:border-red-200 dark:hover:border-zinc-700">
       {/* header */}
       <div className="px-4 pt-4 pb-3 flex items-start justify-between">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold text-zinc-800 truncate">{label}</h3>
+          <h3 className="text-base font-semibold text-zinc-800 dark:text-zinc-100 truncate">{label}</h3>
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[12px]">
             <PlatformBadge platform={branch.platform} storeId={branch.store_id || "No Store ID"} />
             {branch.cabang && (
-              <span className="rounded bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
+              <span className="rounded bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 font-medium text-slate-600 dark:text-zinc-300">
                 Cabang: {branch.cabang}
               </span>
             )}
@@ -184,7 +184,7 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
         ) : (
           Object.entries(groups).map(([cat, items]) => (
             <div key={cat} className="mt-3 first:mt-0">
-              <p className="text-[13px] font-bold uppercase tracking-wider text-zinc-455 mb-1.5">{cat}</p>
+              <p className="text-[13px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-1.5">{cat}</p>
               <div className="space-y-1">
                 {items.map((item) => {
                   const cur = edits[item.id] ?? item.price;
@@ -199,14 +199,14 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                     <div key={item.id}
                       className={`flex flex-col gap-1 py-1.5 px-2 rounded-lg transition-colors ${
                         item.is_in_promo
-                          ? "bg-purple-50/40 border border-purple-100/60 opacity-85 cursor-not-allowed"
+                          ? "bg-purple-50/40 dark:bg-purple-950/20 border border-purple-100/60 dark:border-purple-900/40 opacity-85 cursor-not-allowed"
                           : isViolation
-                          ? "border border-red-200 bg-red-50"
+                          ? "border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/20"
                           : isChecked
-                          ? "bg-amber-100/70 border border-amber-200"
+                          ? "bg-amber-100/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50"
                           : diff
-                          ? "bg-amber-50/70"
-                          : "hover:bg-slate-50"
+                          ? "bg-amber-50/70 dark:bg-amber-950/20"
+                          : "hover:bg-slate-50 dark:hover:bg-zinc-900/60"
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -224,7 +224,7 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start gap-1.5 flex-wrap">
-                              <p className="text-[15px] font-medium text-zinc-800 leading-snug text-wrap break-words flex-1 min-w-0">{item.name}</p>
+                              <p className="text-[15px] font-medium text-zinc-800 dark:text-zinc-200 leading-snug text-wrap break-words flex-1 min-w-0">{item.name}</p>
                               {item.is_in_promo && (
                                 <span title="Item sedang dalam promo aktif di portal. Harga dasar dikunci." className="inline-flex items-center gap-1 rounded bg-purple-100 border border-purple-200 px-1.5 py-0.5 text-[11px] font-bold text-purple-800 shrink-0">
                                   PROMO AKTIF
@@ -243,10 +243,10 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                             )}
                             {diff && (
                               <p className="text-[13px] font-medium text-zinc-650 flex items-center gap-1 mt-0.5 flex-wrap">
-                                <span className="line-through text-zinc-400 font-normal">Rp {fmt(item.price)}</span>
-                                <span className="text-zinc-400">→</span>
-                                <span className="font-semibold text-zinc-750">Rp {fmt(cur)}</span>
-                                <span className={`rounded px-1 text-[13px] font-bold ${pct > 0 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                <span className="line-through text-zinc-400 dark:text-zinc-600 font-normal">Rp {fmt(item.price)}</span>
+                                <span className="text-zinc-400 dark:text-zinc-600">→</span>
+                                <span className={`font-bold text-[14px] ${pct > 0 ? "text-amber-600 dark:text-amber-300" : "text-emerald-600 dark:text-emerald-300"}`}>Rp {fmt(cur)}</span>
+                                <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${pct > 0 ? "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300" : "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"}`}>
                                   ({pctFmt})
                                 </span>
                               </p>
@@ -262,12 +262,12 @@ function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode
                             onChange={(e) => onChange(branch.id, item.id, e.target.value)}
                             className={`w-24 text-right text-[15px] font-semibold rounded-md px-2 py-1 border transition-colors focus:outline-none focus:ring-1 ${
                               item.is_in_promo
-                                ? "border-purple-200 bg-purple-50/50 text-purple-900 cursor-not-allowed opacity-80"
+                                ? "border-purple-200 dark:border-purple-900/60 bg-purple-50/50 dark:bg-purple-950/30 text-purple-900 dark:text-purple-300 cursor-not-allowed opacity-80"
                                 : isViolation
-                                ? "border-red-400 bg-white text-red-700 focus:border-red-500 focus:ring-red-200"
+                                ? "border-red-400 dark:border-red-700 bg-white dark:bg-zinc-900 text-red-700 dark:text-red-300 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-950/40"
                                 : diff
-                                ? "border-amber-300 bg-white text-slate-700 focus:ring-amber-200"
-                                : "border-slate-200 bg-slate-50 text-slate-700 focus:ring-red-200 focus:bg-white"
+                                ? "border-amber-300 dark:border-amber-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 focus:ring-amber-200 dark:focus:ring-amber-950/40"
+                                : "border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 focus:ring-red-200 dark:focus:ring-zinc-700 focus:bg-white dark:focus:bg-zinc-800"
                             }`}
                           />
                         </div>
@@ -306,12 +306,12 @@ function StepLabel({ number, label, active, done, className = "mb-2.5" }) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <span className={`w-6 h-6 rounded-full text-[13px] font-bold flex items-center justify-center shrink-0 transition-colors ${
-        done ? "bg-red-700 text-white"
-        : active ? "bg-red-100 text-red-700 ring-4 ring-red-50"
-        : "bg-slate-100 text-slate-400"
+        done ? "bg-red-700 text-white dark:bg-white dark:text-black"
+        : active ? "bg-red-100 text-red-700 ring-4 ring-red-50 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700"
+        : "bg-slate-100 text-slate-400 dark:bg-zinc-900 dark:text-zinc-500"
       }`}>{done ? "✓" : number}</span>
       <span className={`text-[15px] font-bold uppercase tracking-wider transition-colors ${
-        active || done ? "text-slate-700" : "text-slate-400"
+        active || done ? "text-slate-700 dark:text-white" : "text-slate-400 dark:text-zinc-500"
       }`}>{label}</span>
     </div>
   );
@@ -931,15 +931,15 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
     <main className="flex flex-col gap-6">
       {/* ── Top: Controls ── */}
       <section className="surface-card p-5 sm:p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-red-100 pb-4 gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-red-100 dark:border-zinc-800 pb-4 gap-2">
           <div>
-            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600">Pengaturan harga</p>
-            <h2 className="mt-1 text-xl font-bold text-slate-900">Tentukan target perubahan</h2>
-            <p className="mt-1 text-[15px] text-slate-500">Pilih aplikator, outlet, dan brand (single-select), lalu lakukan tarik menu real-time sebelum melakukan perubahan harga.</p>
+            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600 dark:text-zinc-400">Pengaturan harga</p>
+            <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Tentukan target perubahan</h2>
+            <p className="mt-1 text-[15px] text-slate-500 dark:text-zinc-400">Pilih aplikator, outlet, dan brand (single-select), lalu lakukan tarik menu real-time sebelum melakukan perubahan harga.</p>
           </div>
           <div className="flex items-center gap-2 text-[13px] font-medium shrink-0">
             {gsheetSyncing ? (
-              <span className="inline-flex items-center gap-1.5 text-amber-700 font-semibold">
+              <span className="inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-semibold">
                 <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -947,9 +947,9 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                 Syncing GSheet...
               </span>
             ) : gsheetSyncedAt ? (
-              <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider">
                 <span>Gsheet Synced</span>
-                <span className="text-[11px] font-medium tracking-normal text-emerald-600/90 lowercase">
+                <span className="text-[11px] font-medium tracking-normal text-emerald-600/90 dark:text-emerald-400/90 lowercase">
                   ({gsheetSyncedAt})
                 </span>
               </span>
@@ -975,7 +975,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                 {platform ? (
                   <PlatformBadge platform={platform} />
                 ) : (
-                  <span className="text-zinc-400">Pilih Aplikator...</span>
+                  <span className="text-zinc-400 dark:text-slate-500">Pilih Aplikator...</span>
                 )}
               </span>
               <svg className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${openPlatformDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -986,7 +986,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
             {openPlatformDropdown && (
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setOpenPlatformDropdown(false)} />
-                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-xl shadow-xl border border-red-100 p-1.5 space-y-0.5 animate-scale-up">
+                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white dark:bg-black rounded-xl shadow-xl border border-red-100 dark:border-zinc-800 p-1.5 space-y-0.5 animate-scale-up">
                   {[
                     ["shopee", "ShopeeFood"],
                     ["gofood", "GoFood"],
@@ -998,13 +998,11 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                         setOpenPlatformDropdown(false);
                       }}
                       className={`w-full text-left px-3 py-2 rounded-md text-[15px] flex items-center justify-between transition-all ${
-                        platform === val
-                          ? "bg-slate-50 text-slate-800 font-medium"
-                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        platform === val ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
                       }`}
                     >
-                      <PlatformBadge platform={val} selected={platform === val} />
-                      {platform === val && <span className="text-[15px]">✓</span>}
+                      <PlatformBadge platform={val} />
+                      {platform === val && <span className="text-red-700 dark:text-white font-bold">✓</span>}
                     </button>
                   ))}
                 </div>
@@ -1024,7 +1022,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
               }}
               className="field-control flex items-center justify-between text-left font-medium"
             >
-              <span className={`truncate ${selectedParent ? "text-zinc-800 font-semibold" : "text-zinc-400"}`}>
+              <span className={`truncate ${selectedParent ? "text-zinc-800 dark:text-white font-semibold" : "text-zinc-400 dark:text-zinc-500"}`}>
                 {loading
                   ? "Memuat..."
                   : !platform
@@ -1039,14 +1037,14 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
             {openOutletDropdown && (
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setOpenOutletDropdown(false)} />
-                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-xl shadow-xl border border-red-100 p-2.5 space-y-2 animate-scale-up min-w-[240px]">
+                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white dark:bg-black rounded-xl shadow-xl border border-red-100 dark:border-zinc-800 p-2.5 space-y-2 animate-scale-up min-w-[240px]">
                   <input type="text" placeholder="Cari outlet..." value={search} onChange={e => setSearch(e.target.value)}
                     className="field-control py-2" autoFocus
                   />
 
                   <div className="max-h-48 overflow-y-auto space-y-0.5 pr-1">
                     {filtered.length === 0 ? (
-                      <p className="text-center text-[15px] text-zinc-400 py-3">Tidak ada outlet cocok</p>
+                      <p className="text-center text-[15px] text-zinc-400 dark:text-zinc-500 py-3">Tidak ada outlet cocok</p>
                     ) : (
                       filtered.map(name => {
                         const isSelected = selectedParent === name;
@@ -1054,11 +1052,11 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                           <button key={name} type="button"
                             onClick={() => handleSelectOutlet(name)}
                             className={`w-full text-left px-2.5 py-2 rounded-md text-[15px] flex items-center justify-between transition-colors ${
-                              isSelected ? "bg-red-50 text-red-700 font-bold" : "text-slate-700 hover:bg-slate-50"
+                              isSelected ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
                             }`}
                           >
                             <span className="truncate">{name}</span>
-                            {isSelected && <span className="text-red-700 font-bold">✓</span>}
+                            {isSelected && <span className="text-red-700 dark:text-white font-bold">✓</span>}
                           </button>
                         );
                       })
@@ -1081,7 +1079,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
               }}
               className="field-control flex items-center justify-between text-left font-medium"
             >
-              <span className={`truncate font-semibold ${!selectedBrandObj ? "text-slate-400" : "text-slate-800"}`}>
+              <span className={`truncate font-semibold ${!selectedBrandObj ? "text-slate-400 dark:text-zinc-500" : "text-slate-800 dark:text-white"}`}>
                 {!selectedParent
                   ? "Pilih Outlet dulu"
                   : selectedBrandObj
@@ -1096,7 +1094,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
             {openBranchDropdown && (
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setOpenBranchDropdown(false)} />
-                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-xl shadow-xl border border-red-100 p-2.5 space-y-2 animate-scale-up min-w-[280px]">
+                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white dark:bg-black rounded-xl shadow-xl border border-red-100 dark:border-zinc-800 p-2.5 space-y-2 animate-scale-up min-w-[280px]">
                   <div className="max-h-48 overflow-y-auto space-y-0.5 pr-1">
                     {branches.map(b => {
                       const isSelected = selectedBrandId === b.id;
@@ -1105,17 +1103,17 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                         <button key={b.id} type="button"
                           onClick={() => handleSelectBrand(b.id)}
                           className={`w-full text-left px-2.5 py-2 rounded-md text-[15px] flex items-center justify-between transition-colors ${
-                            isSelected ? "bg-red-50 text-red-700 font-bold" : "text-slate-700 hover:bg-slate-50"
+                            isSelected ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
                           }`}
                         >
                           <div className="min-w-0 flex-1">
                             <span className="block truncate">{l}</span>
                             <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[12px] font-normal">
                               <PlatformBadge platform={b.platform} storeId={b.store_id || "No Store ID"} />
-                              {b.cabang && <span className="text-slate-400">· Cabang: {b.cabang}</span>}
+                              {b.cabang && <span className="text-slate-400 dark:text-zinc-400">· Cabang: {b.cabang}</span>}
                             </div>
                           </div>
-                          {isSelected && <span className="text-red-700 font-bold ml-2">✓</span>}
+                          {isSelected && <span className="text-red-700 dark:text-white font-bold ml-2">✓</span>}
                         </button>
                       );
                     })}
@@ -1129,21 +1127,19 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
 
         {/* Pull Actions & 24h Cache Section */}
         {selectedBrandId && (
-          <div className="pt-3 border-t border-red-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="text-[13px] text-zinc-600 font-medium flex items-center gap-2">
+          <div className="pt-3 border-t border-red-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-[13px] text-zinc-600 dark:text-zinc-400 font-medium flex items-center gap-2">
               {cacheInfo?.has_cache ? (
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${
-                  cacheInfo.is_valid_24h 
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
-                    : "bg-amber-50 text-amber-800 border-amber-200"
+                <span className={`text-[13px] font-medium ${
+                  cacheInfo.is_valid_24h
+                    ? "text-zinc-500 dark:text-zinc-400"
+                    : "text-amber-600 dark:text-amber-400"
                 }`}>
-                  <span>
-                    Terakhir ditarik: <strong>{cacheInfo.human_age}</strong>
-                    {!cacheInfo.is_valid_24h && " (>24 jam)"}
-                  </span>
+                  Terakhir ditarik: <strong>{cacheInfo.human_age}</strong>
+                  {!cacheInfo.is_valid_24h && " (>24 jam)"}
                 </span>
               ) : (
-                <span className="text-zinc-400 font-normal">Belum ada cache menu lokal.</span>
+                <span className="text-zinc-400 dark:text-zinc-500 font-normal">Belum ada cache menu lokal.</span>
               )}
             </div>
 
@@ -1168,10 +1164,10 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                 type="button"
                 disabled={syncPhase === "syncing"}
                 onClick={handleStartPullAndEdit}
-                className={`inline-flex items-center justify-center rounded-xl font-bold text-white shadow-md transition gap-2 px-5 py-2.5 text-[14px] ${
+                className={`inline-flex items-center justify-center rounded-xl font-bold text-white dark:text-black shadow-md transition gap-2 px-5 py-2.5 text-[14px] ${
                   syncPhase === "syncing" ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
                 } ${
-                  cacheInfo?.has_cache ? "bg-black hover:bg-zinc-800" : "bg-red-700 hover:bg-red-800"
+                  cacheInfo?.has_cache ? "bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200" : "bg-red-700 hover:bg-red-800 dark:bg-white dark:hover:bg-zinc-200"
                 }`}
                 title="Meluncurkan browser untuk tarik menu live terbaru dari portal merchant"
               >
@@ -1251,14 +1247,14 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
       {/* ── Middle: Global Bulk Adjust & Mode Switcher (Step 4: Sesuaikan Harga) ── */}
       {syncPhase === "done" && preview.length > 0 && (
         <section className="surface-card p-5 lg:p-6 space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-red-100 pb-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-red-100 dark:border-zinc-800 pb-4">
             <div>
               <StepLabel number={4} label="Sesuaikan Harga" active={true} done={false} className="mb-1" />
-              <p className="text-[13px] text-zinc-500 ml-8">
-                Terapkan ke <strong>{preview.length} brand</strong> terpilih. Saat ini ada <strong className="text-red-700">{totalChanges} perubahan</strong>.
+              <p className="text-[13px] text-zinc-500 dark:text-zinc-400 ml-8">
+                Terapkan ke <strong>{preview.length} brand</strong> terpilih. Saat ini ada <strong className="text-red-700 dark:text-red-400">{totalChanges} perubahan</strong>.
               </p>
             </div>
-            <div className="flex items-center gap-1 bg-zinc-150 p-1 rounded-xl shrink-0 self-start lg:self-auto border border-zinc-200">
+            <div className="flex items-center gap-1 bg-zinc-150 dark:bg-zinc-900 p-1 rounded-xl shrink-0 self-start lg:self-auto border border-zinc-200 dark:border-zinc-700">
               <button
                 type="button"
                 onClick={() => {
@@ -1350,18 +1346,18 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                 <div 
                   key={job.id} 
                   className={`p-4 rounded-xl border transition-all flex flex-col gap-3 ${
-                    isSuccess ? "bg-emerald-50/40 border-emerald-200" :
-                    isFailed ? "bg-red-50/50 border-red-200" :
-                    isPartial ? "bg-amber-50/40 border-amber-200" :
-                    "bg-white border-zinc-200 shadow-sm"
+                    isSuccess ? "bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50" :
+                    isFailed ? "bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50" :
+                    isPartial ? "bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50" :
+                    "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm"
                   }`}
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="text-[15px] font-bold text-zinc-800 flex items-center gap-2">
+                      <div className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
                         {job.name}
                       </div>
-                      <div className="text-[12px] text-zinc-400 font-mono mt-0.5">
+                      <div className="text-[12px] text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">
                         JOB ID: {job.id} · PLATFORM: {job.platform?.toUpperCase()}
                       </div>
                     </div>
@@ -1387,11 +1383,11 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                   
                   {/* Progress Bar & Percentage */}
                   <div className="space-y-1">
-                    <div className="flex justify-between text-[12px] font-semibold text-zinc-600">
+                    <div className="flex justify-between text-[12px] font-semibold text-zinc-600 dark:text-zinc-400">
                       <span>Proses Push & Verifikasi</span>
                       <span>{job.progress_pct || 0}%</span>
                     </div>
-                    <div className="w-full bg-zinc-100 rounded-full h-2 overflow-hidden border border-zinc-200/60">
+                    <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden border border-zinc-200/60 dark:border-zinc-700/60">
                       <div 
                         className={`h-full transition-all duration-500 rounded-full ${
                           isSuccess ? "bg-emerald-500" :
@@ -1405,7 +1401,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                   </div>
                   
                   {/* Live Step Description */}
-                  <div className="text-[13px] text-zinc-700 font-medium flex items-center gap-2 bg-white/70 p-2.5 rounded-lg border border-zinc-100">
+                  <div className="text-[13px] text-zinc-700 dark:text-zinc-300 font-medium flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/60 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-700/60">
                     <span>{job.current_step || "Mengantrekan tugas..."}</span>
                   </div>
 
@@ -1425,9 +1421,9 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                       <div className="text-[12px] font-bold text-zinc-700 uppercase tracking-wider flex items-center justify-between">
                         <span>Rincian Hasil Verifikasi Per Item ({job.result_metadata.items_breakdown.length} Menu)</span>
                       </div>
-                      <div className="overflow-x-auto border border-zinc-200/80 rounded-xl bg-white shadow-xs">
+                      <div className="overflow-x-auto border border-zinc-200/80 dark:border-zinc-700/80 rounded-xl bg-white dark:bg-zinc-900 shadow-xs">
                         <table className="w-full text-left text-[12px]">
-                          <thead className="bg-zinc-50 border-b border-zinc-200/80 font-semibold text-zinc-600">
+                          <thead className="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200/80 dark:border-zinc-700/80 font-semibold text-zinc-600 dark:text-zinc-300">
                             <tr>
                               <th className="py-2 px-3">Nama Menu</th>
                               <th className="py-2 px-3">Harga Asli</th>
@@ -1437,13 +1433,13 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                               <th className="py-2 px-3">Keterangan / Error</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-zinc-100">
+                          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                             {job.result_metadata.items_breakdown.map((item, idx) => (
-                              <tr key={idx} className={item.status === 'SUCCESS' ? 'bg-emerald-50/20' : 'bg-red-50/20'}>
-                                <td className="py-2 px-3 font-semibold text-zinc-800">{item.item_name}</td>
-                                <td className="py-2 px-3 text-zinc-500">{item.old_price ? `Rp ${Number(item.old_price).toLocaleString('id-ID')}` : '-'}</td>
-                                <td className="py-2 px-3 font-medium text-zinc-800">{item.requested_price ? `Rp ${Number(item.requested_price).toLocaleString('id-ID')}` : '-'}</td>
-                                <td className="py-2 px-3 font-medium text-emerald-700">{item.verified_price ? `Rp ${Number(item.verified_price).toLocaleString('id-ID')}` : '-'}</td>
+                              <tr key={idx} className={item.status === 'SUCCESS' ? 'bg-emerald-50/20 dark:bg-emerald-950/10' : 'bg-red-50/20 dark:bg-red-950/10'}>
+                                <td className="py-2 px-3 font-semibold text-zinc-800 dark:text-zinc-100">{item.item_name}</td>
+                                <td className="py-2 px-3 text-zinc-500 dark:text-zinc-400">{item.old_price ? `Rp ${Number(item.old_price).toLocaleString('id-ID')}` : '-'}</td>
+                                <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">{item.requested_price ? `Rp ${Number(item.requested_price).toLocaleString('id-ID')}` : '-'}</td>
+                                <td className="py-2 px-3 font-medium text-emerald-700 dark:text-emerald-400">{item.verified_price ? `Rp ${Number(item.verified_price).toLocaleString('id-ID')}` : '-'}</td>
                                 <td className="py-2 px-3">
                                   <span className={`inline-flex px-2 py-0.5 font-bold rounded-md text-[11px] ${
                                     item.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
@@ -1476,7 +1472,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
       {syncPhase === "done" && (
         <section>
           {preview.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-red-200 bg-white/60 py-16 text-center">
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-red-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-950/60 py-16 text-center">
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
                 <svg className="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -1558,7 +1554,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
           onClick={() => setShowPushConfirmModal(false)}
         >
-          <div className="bg-white rounded-2xl p-6 max-w-xl w-full shadow-2xl border border-red-100 space-y-4 animate-scale-up max-h-[85vh] flex flex-col"
+          <div className="bg-white dark:bg-zinc-950 rounded-2xl p-6 max-w-xl w-full shadow-2xl border border-red-100 dark:border-zinc-800 space-y-4 animate-scale-up max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -1585,7 +1581,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
 
                   <div className="space-y-2">
                     {summary.updates.map(u => (
-                      <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg bg-white p-2.5 border border-zinc-100 gap-1 text-[13px]">
+                      <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg bg-zinc-50 dark:bg-zinc-900 p-2.5 border border-zinc-100 dark:border-zinc-800 gap-1 text-[13px]">
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-slate-800 leading-snug text-wrap break-words">{u.name}</p>
                           <span className="text-[12px] text-slate-400 uppercase tracking-wider">{u.category}</span>
@@ -1633,7 +1629,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
           onClick={() => setShowSuccessModal(false)}
         >
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-red-100 text-center space-y-4 animate-scale-up"
+          <div className="bg-white dark:bg-zinc-950 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-red-100 dark:border-zinc-800 text-center space-y-4 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-8 ring-emerald-50/60">

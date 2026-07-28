@@ -23,6 +23,7 @@ def _boot_client(store_metadata: dict, headless: bool = True) -> tuple[ShopeeMod
     store_id = store_metadata["store_id"]
     import re
     merchant_name = store_metadata.get('merchant_name') or store_metadata.get('nama_resto_final') or store_metadata.get('nama_outlet') or ''
+    target_name = _resolve_target_merchant_name('', merchant_name, store_metadata)
     profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name)
     profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
 
@@ -86,6 +87,7 @@ def edit_dish_upload_image(store_metadata: dict, dish_id: str, image_path: str, 
     store_id = store_metadata["store_id"]
     import re
     merchant_name = store_metadata.get('merchant_name') or store_metadata.get('nama_resto_final') or store_metadata.get('nama_outlet') or ''
+    target_name = _resolve_target_merchant_name('', merchant_name, store_metadata)
     profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name)
     profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
     

@@ -1126,20 +1126,35 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/", wait_until="domcontentloaded")
                 time.sleep(3)
 
-                if "/auth" in page.url or "login" in page.url:
+                def perform_fresh_login():
+                    logger.info(f"🔄 Token GoFood expired/tidak ditemukan. Melakukan fresh login untuk {email}...")
+                    if session_path and os.path.exists(session_path):
+                        try: os.remove(session_path)
+                        except Exception: pass
+                    
                     page.goto("https://portal.gofoodmerchant.co.id/auth/login/email", wait_until="domcontentloaded")
                     time.sleep(2)
                     email_input = page.locator('input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible').first
-                    email_input.fill(email)
-                    submit_btn = page.locator('button:has-text("Lanjut"), button:has-text("Masuk"), button[type="submit"]')
-                    submit_btn.first.click()
-                    time.sleep(2)
-                    pass_input = page.locator('input[type="password"]:visible, input[name*="password" i]:visible').first
-                    pass_input.fill(password)
-                    page.locator('button:has-text("Masuk"), button[type="submit"]').first.click()
+                    if email_input.count() > 0:
+                        email_input.fill(email)
+                        submit_btn = page.locator('button:has-text("Lanjut"), button:has-text("Masuk"), button[type="submit"]')
+                        if submit_btn.count() > 0:
+                            submit_btn.first.click()
+                            time.sleep(2)
                     
-                    page.wait_for_url(lambda url: "/auth/login" not in url, timeout=45000)
-                    context.storage_state(path=session_path)
+                    pass_input = page.locator('input[type="password"]:visible, input[name*="password" i]:visible').first
+                    if pass_input.count() > 0:
+                        pass_input.fill(password)
+                        page.locator('button:has-text("Masuk"), button[type="submit"]').first.click()
+                    
+                    try:
+                        page.wait_for_url(lambda url: "/auth/login" not in url, timeout=45000)
+                        context.storage_state(path=session_path)
+                    except Exception as e:
+                        logger.warning(f"Tunggu redirect login timeout: {e}")
+
+                if "/auth" in page.url or "login" in page.url:
+                    perform_fresh_login()
                     page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
                     time.sleep(3)
 
@@ -1147,7 +1162,11 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 time.sleep(2)
                 page.reload(wait_until="domcontentloaded")
                 time.sleep(2)
-                page.reload(wait_until="domcontentloaded")
+
+                if "/auth" in page.url or "login" in page.url:
+                    perform_fresh_login()
+                    page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
+                    time.sleep(3)
 
                 def tutup_semua_popup(p):
                     cookie_sels = ['button:has-text("Terima Semua Cookie")', 'button:has-text("Accept All Cookies")', 'button:has-text("Terima")', 'button:has-text("Accept")']
@@ -1170,7 +1189,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                                     time.sleep(0.5)
                         except Exception: pass
 
-                for _ in range(3):
+                for _ in range(2):
                     tutup_semua_popup(page)
                     time.sleep(1)
 
@@ -1191,7 +1210,6 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
 
                 rest_uuid = api_headers.get('restaurant_uuid')
                 if not rest_uuid:
-                    # Coba baca dari cached menu response hasil Pull sebelumnya
                     cache_path = os.path.join(BASE_DIR, "Gofood", "API", f"menu-response-{merchant_id}.json")
                     if os.path.exists(cache_path):
                         try:
@@ -1205,24 +1223,55 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 if not rest_uuid:
                     rest_uuid = merchant_id
 
+                menu_data = None
+                if token and rest_uuid:
+                    menu_data = go_api.fetch_menus(page, token, rest_uuid)
+
+                # Jika token missing atau menu_data 401 / None, picu fresh login
+                if not token or not menu_data:
+                    logger.warning("⚠️ GoFood session expired (token tidak valid/401). Memicu fresh login ulang...")
+                    perform_fresh_login()
+                    page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
+                    time.sleep(3)
+
+                    start_wait = time.time()
+                    while (time.time() - start_wait) < 15:
+                        if api_headers.get('authorization'):
+                            break
+                        page.wait_for_timeout(500)
+
+                    token = api_headers.get('authorization')
+                    if not token:
+                        cookies = context.cookies()
+                        for c in cookies:
+                            if c['name'] == 'access_token':
+                                token = f"Bearer {c['value']}"
+                                break
+
+                    if token and rest_uuid:
+                        menu_data = go_api.fetch_menus(page, token, rest_uuid)
+
                 group_id = api_headers.get('menu_group_id')
-                if not group_id and rest_uuid:
+                if not group_id and rest_uuid and token:
                     try:
                         mg_data = go_api.fetch_menu_groups(page, token, rest_uuid)
-                        if isinstance(mg_data, list) and len(mg_data) > 0:
+                        if isinstance(mg_data, str):
+                            group_id = mg_data
+                        elif isinstance(mg_data, list) and len(mg_data) > 0:
                             group_id = mg_data[0].get('id') or mg_data[0].get('common_id')
                         elif isinstance(mg_data, dict):
-                            mgs = mg_data.get('menu_groups') or mg_data.get('data') or []
-                            if mgs and len(mgs) > 0:
-                                group_id = mgs[0].get('id') or mgs[0].get('common_id')
+                            group_id = mg_data.get('menu_group_id') or mg_data.get('v2_menus_group_id') or mg_data.get('id')
+                            if not group_id:
+                                mgs = mg_data.get('menu_groups') or mg_data.get('data') or []
+                                if mgs and len(mgs) > 0:
+                                    group_id = mgs[0].get('id') or mgs[0].get('common_id')
                         logger.info(f"🔑 Retrived menu_group_id via API fallback: {group_id}")
                     except Exception as e:
                         logger.warning(f"Could not fetch menu_groups fallback: {e}")
 
                 if not token:
-                    raise Exception("Gagal menangkap Authorization Token untuk GoFood.")
+                    raise Exception("Gagal menangkap Authorization Token untuk GoFood setelah percobaan fresh login.")
 
-                menu_data = go_api.fetch_menus(page, token, rest_uuid)
                 if not menu_data:
                     raise Exception("Gagal menarik menu GoFood untuk perbandingan harga.")
 
@@ -1270,8 +1319,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         "description": orig_item.get('description', ''),
                         "price": int(new_price),
                         "active": orig_item.get('is_active', orig_item.get('active', True)),
-                        "signature": orig_item.get('signature', False),
-                        "variant_category_common_ids": orig_item.get('variant_category_common_ids') or orig_item.get('variant_category_ids') or []
+                        "signature": orig_item.get('signature', False)
                     }
 
                     patch_group_id = group_id or api_headers.get('menu_group_id') or orig_item.get('menu_common_id') or cat_common_id
@@ -1289,18 +1337,42 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         'Referer': 'https://portal.gofoodmerchant.co.id/'
                     }
 
-                    # V2 PATCH via context.request (bypass CORS)
+                    # V2 PATCH via context.request (bypass CORS) — Opsi Utama tanpa variant_category_common_ids
                     v2_url = f'https://api.gojekapi.com/gofood/merchant/v2/menu_groups/{patch_group_id}/menu_items/{item_id}'
-                    try:
-                        cr = context.request.fetch(
-                            v2_url,
-                            method='PATCH',
-                            headers=headers_direct,
-                            data=json.dumps(v2_payload)
-                        )
-                        res = {'ok': cr.ok, 'status': cr.status, 'body': cr.text()}
-                    except Exception as e:
-                        res = {'ok': False, 'error': str(e)}
+                    
+                    # Function helper dengan auto-retry jika terkena Rate Limit (HTTP 429/403/503)
+                    def send_patch_request(payload_data, max_retries=2):
+                        for attempt_idx in range(max_retries + 1):
+                            try:
+                                cr_res = context.request.fetch(
+                                    v2_url,
+                                    method='PATCH',
+                                    headers=headers_direct,
+                                    data=json.dumps(payload_data)
+                                )
+                                status_code = cr_res.status
+                                if status_code in (429, 403, 503, 504) and attempt_idx < max_retries:
+                                    logger.warning(f"⚠️ Terdeteksi Rate Limit (HTTP {status_code}) pada item {item_id}. Menunggu 2.5 detik (attempt {attempt_idx+1}/{max_retries})...")
+                                    time.sleep(2.5)
+                                    continue
+                                return {'ok': cr_res.ok, 'status': status_code, 'body': cr_res.text()}
+                            except Exception as ex:
+                                if attempt_idx < max_retries:
+                                    time.sleep(2.0)
+                                    continue
+                                return {'ok': False, 'error': str(ex)}
+
+                    res = send_patch_request(v2_payload)
+
+                    # Fallback 1: Jika gagal dan ada variant_category_common_ids, coba sertakan
+                    if not res or not res.get('ok'):
+                        vars_ids = orig_item.get('variant_category_common_ids') or orig_item.get('variant_category_ids')
+                        if vars_ids and isinstance(vars_ids, list) and len(vars_ids) > 0:
+                            v2_payload_with_vars = dict(v2_payload)
+                            v2_payload_with_vars["variant_category_common_ids"] = vars_ids
+                            res_var = send_patch_request(v2_payload_with_vars, max_retries=1)
+                            if res_var and res_var.get('ok'):
+                                res = res_var
 
                     if not res or not res.get('ok'):
                         status_code = res.get('status', '?') if res else '?'
@@ -1309,7 +1381,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
 
                         v1_payload = {
                             "name": orig_item.get('name'),
-                            "price": str(int(new_price)),
+                            "price": int(new_price),
                             "active": orig_item.get('is_active', orig_item.get('active', True)),
                             "description": orig_item.get('description', ''),
                             "image": orig_item.get('image_url', orig_item.get('image', ''))
@@ -1340,6 +1412,21 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         fail_count += 1
                         status_str = "FAILED"
                         err_msg = res.get('body') or "GoFood API error."
+
+                    # Pacing delay bervariatif (random jitter 180ms - 420ms) untuk menghindari deteksi pola bot
+                    import random
+                    time.sleep(random.uniform(0.18, 0.42))
+
+                    # Jeda istirahat (batch breather) setiap 25 item agar token bucket rate-limit GoFood pulih
+                    if (idx + 1) % 25 == 0 and (idx + 1) < total_updates:
+                        logger.info(f"☕ Batch pause (item {idx+1}/{total_updates}): istirahat 1.8 detik untuk mendinginkan rate-limit GoFood...")
+                        time.sleep(random.uniform(1.5, 2.2))
+
+                    # Update progress setiap 5 item
+                    if (idx + 1) % 5 == 0 or (idx + 1) == total_updates:
+                        job.progress_pct = int(40 + ((idx + 1) / total_updates) * 55)
+                        job.current_step = f"Memproses update harga GoFood ({idx + 1}/{total_updates})..."
+                        db.commit()
 
                     trail = AuditTrail(
                         job_id=job.id,

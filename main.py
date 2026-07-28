@@ -1303,13 +1303,33 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         res = {'ok': False, 'error': str(e)}
 
                     if not res or not res.get('ok'):
+                        body_err = (res.get('body') or '')
+                        status_code = res.get('status', '?') if res else '?'
+                        
+                        # Handle HTTP 422 due to stale/deleted variant_category_common_ids
+                        if "variant_category" in body_err.lower() or "variant category" in body_err.lower():
+                            logger.warning(f"GoFood V2 PATCH HTTP {status_code} - Variant Category ID tidak valid/stale di GoFood. Mengulang V2 PATCH tanpa variant_category_common_ids...")
+                            v2_payload_clean = dict(v2_payload)
+                            v2_payload_clean.pop("variant_category_common_ids", None)
+                            try:
+                                cr_retry = context.request.fetch(
+                                    v2_url,
+                                    method='PATCH',
+                                    headers=headers_direct,
+                                    data=json.dumps(v2_payload_clean)
+                                )
+                                res = {'ok': cr_retry.ok, 'status': cr_retry.status, 'body': cr_retry.text()}
+                            except Exception as e:
+                                res = {'ok': False, 'error': str(e)}
+
+                    if not res or not res.get('ok'):
                         status_code = res.get('status', '?') if res else '?'
                         body_err = (res.get('body') or '')[:500] if res else ''
                         logger.warning(f"GoFood V2 PATCH gagal (HTTP {status_code}), Body: {body_err}, Error: {res.get('error')}. Fallback ke V1 PUT...")
 
                         v1_payload = {
                             "name": orig_item.get('name'),
-                            "price": str(int(new_price)),
+                            "price": int(new_price),
                             "active": orig_item.get('is_active', orig_item.get('active', True)),
                             "description": orig_item.get('description', ''),
                             "image": orig_item.get('image_url', orig_item.get('image', ''))

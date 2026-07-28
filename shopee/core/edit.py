@@ -21,22 +21,20 @@ def _resolve_target_merchant_name(username: str, merchant_name: str, store_metad
 
 def _boot_client(store_metadata: dict, headless: bool = True) -> tuple[ShopeeModifyClient | None, str]:
     store_id = store_metadata["store_id"]
-    import re
-    merchant_name = store_metadata.get('merchant_name') or store_metadata.get('nama_resto_final') or store_metadata.get('nama_outlet') or ''
-    target_name = _resolve_target_merchant_name('', merchant_name, store_metadata)
-    profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name)
-    profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
-
-    session_file = WORKSPACE_DIR / "shopee" / "data" / f"session_{profile_name}.json"
+    username = store_metadata.get("username", "allvbadmin")
+    password = store_metadata.get("password", "Master!00!")
+    target_name = _resolve_target_merchant_name(username, store_metadata.get("merchant_name", ""), store_metadata)
+    
+    session_file = WORKSPACE_DIR / "shopee" / "data" / "session.json"
     browser.set_session_file(session_file)
     
     session_data = browser.get_session(
-        phone=store_metadata.get("phone"),
+        username=username,
+        password=password,
         headless=headless,
         close_browser=True,
         target_name=target_name,
-        interactive=False,
-        profile_name=profile_name
+        interactive=False
     )
     if not session_data or "shopee_tob_token" not in session_data:
         return None, "Gagal menginisialisasi browser session"
@@ -89,22 +87,20 @@ def _dismiss_popups(driver) -> None:
 
 def edit_dish_upload_image(store_metadata: dict, dish_id: str, image_path: str, headless: bool = True) -> bool:
     store_id = store_metadata["store_id"]
-    import re
-    merchant_name = store_metadata.get('merchant_name') or store_metadata.get('nama_resto_final') or store_metadata.get('nama_outlet') or ''
-    target_name = _resolve_target_merchant_name('', merchant_name, store_metadata)
-    profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name)
-    profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
+    username = store_metadata.get("username", "allvbadmin")
+    password = store_metadata.get("password", "Master!00!")
+    target_name = _resolve_target_merchant_name(username, store_metadata.get("merchant_name", ""), store_metadata)
     
-    session_file = WORKSPACE_DIR / "shopee" / "data" / f"session_{profile_name}.json"
+    session_file = WORKSPACE_DIR / "shopee" / "data" / "session.json"
     browser.set_session_file(session_file)
     
     session_data = browser.get_session(
-        phone=store_metadata.get("phone"),
+        username=username,
+        password=password,
         headless=headless,
         close_browser=False,
         target_name=target_name,
-        interactive=False,
-        profile_name=profile_name
+        interactive=False
     )
     if not session_data or "driver" not in session_data:
         return False

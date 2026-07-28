@@ -28,7 +28,7 @@ def list_menu_shopee(store_metadata: dict) -> tuple[bool, list | str]:
     catalogs = client.get_store_dishes(store_id)
     return True, catalogs
 
-def extract_shopee_menu(store_metadata: dict, output_dir: str, headless: bool = False):
+def extract_shopee_menu(store_metadata: dict, output_dir: str):
     store_id = store_metadata.get('store_id', '')
     if isinstance(store_id, str):
         store_id = store_id.strip().split('.')[0]
@@ -44,22 +44,19 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str, headless: bool = 
     nama_panjang = store_metadata.get('nama_resto_final') or store_metadata.get('nama_outlet') or target_name
     nama_pendek = store_metadata.get('brand') or store_metadata.get('nama_pendek') or store_metadata.get('nama_outlet') or target_name
     
-    import re
-    merchant_name = store_metadata.get('merchant_name') or store_metadata.get('nama_resto_final') or store_metadata.get('nama_outlet') or ''
-    profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name)
-    profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
-
-    session_file = MENU_DIR / "data" / f"session_{profile_name}.json"
+    username = store_metadata.get("username", "allvbadmin")
+    password = store_metadata.get("password", "Master!00!")
+    session_file = MENU_DIR / "data" / "session.json"
     browser.set_session_file(session_file)
             
-    print(f"[*] Membuka browser (headless={headless}) dan memilih merchant: '{target_name}' dengan profile '{profile_name}'...")
+    print(f"[*] Membuka browser (headless=True) dan memilih merchant: '{target_name}'...")
     session_data = browser.get_session(
-        phone=store_metadata.get("phone"),
-        headless=headless,
+        username=username,
+        password=password,
+        headless=True,
         close_browser=True,
         target_name=target_name,
-        interactive=False,
-        profile_name=profile_name
+        interactive=False
     )
     
     if not session_data or "shopee_tob_token" not in session_data:

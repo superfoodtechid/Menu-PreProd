@@ -694,16 +694,7 @@ def get_all_cookies_dict(driver) -> dict:
     return {c["name"]: c["value"] for c in driver.get_cookies()}
 
 def _trigger_and_extract_tokens(driver) -> tuple:
-    log.debug("  🔄 Triggering fresh token issuance...")
-    try:
-        try: driver.delete_cookie("shopee_tob_token")
-        except: pass
-        driver.get(TOKEN_TRIGGER_PAGE)
-        for _ in range(10):
-            tob_token, entity_id = extract_tokens_from_driver(driver)
-            if tob_token: return tob_token, entity_id
-            time.sleep(1)
-    except: pass
+    log.debug("  🔄 Extracting session tokens...")
     return extract_tokens_from_driver(driver)
 
 
@@ -725,11 +716,11 @@ def _init_driver(headless: bool, profile_name: str = None):
     else:
         options.add_argument("--start-maximized")
     
-    script_dir = Path(__file__).resolve().parent.parent.parent.parent / "shopee"
-    if profile_name:
-        profile_dir = script_dir / "data" / f"chrome_profile_{profile_name}"
-    else:
-        profile_dir = script_dir / "data" / "chrome_profile"
+    # if profile_name:
+    #     profile_dir = script_dir / "data" / f"chrome_profile_{profile_name}"
+    # else:
+    #     profile_dir = script_dir / "data" / "chrome_profile"
+    profile_dir = PROJECT_DIR / "src" / "shopee-omzet-automation" / "data" / "chrome_profile"
     options.add_argument(f"--user-data-dir={profile_dir.resolve()}")
     options.add_argument("--profile-directory=shopee_profile")
 
@@ -766,7 +757,7 @@ def _init_driver(headless: bool, profile_name: str = None):
 
 
 def _load_fallback_credentials(username: str = None, password: str = None, phone: str = None) -> tuple[str | None, str | None, str | None]:
-    if not (username and password) and not phone:
+    if not (username and password):
         creds_paths = [
             PROJECT_DIR / "shopee" / "credentials.json",
             PROJECT_DIR / "credentials.json"
@@ -810,25 +801,67 @@ def _perform_login(driver, wait, username: str = None, password: str = None, pho
         log.debug(f"  Current URL: {driver.current_url}")
         time.sleep(2)
         
-        user_input = None
+        # Switch from Phone Login mode to Username & Password mode if necessary
         try:
-            inputs = driver.find_elements(By.CSS_SELECTOR, "input")
-            for inp in inputs:
-                p = (inp.get_attribute("placeholder") or "").lower()
-                n = (inp.get_attribute("name") or "").lower()
-                t = (inp.get_attribute("type") or "").lower()
-                if inp.is_displayed() and (t == "text" or "user" in n or "phone" in n or "handphone" in p or "username" in p):
-                    user_input = inp
+            switch_selectors = [
+                "//a[contains(text(), 'Username') or contains(text(), 'Email') or contains(text(), 'Log in dengan Username') or contains(text(), 'Log In dengan Username')]",
+                "//button[contains(text(), 'Username') or contains(text(), 'Email')]",
+                "//span[contains(text(), 'Username') or contains(text(), 'Email')]",
+                "//*[contains(@class, 'tab') and (contains(text(), 'Username') or contains(text(), 'Email'))]"
+            ]
+            for sel in switch_selectors:
+                elements = driver.find_elements(By.XPATH, sel)
+                switched = False
+                for el in elements:
+                    text_lower = (el.text or "").lower()
+                    if el.is_displayed() and "no. hp" not in text_lower and "nomor" not in text_lower:
+                        log.info(f"👉 Switching to Username/Password login tab: '{el.text}'")
+                        try:
+                            el.click()
+                        except Exception:
+                            driver.execute_script("arguments[0].click();", el)
+                        time.sleep(1.5)
+                        switched = True
+                        break
+                if switched:
                     break
-        except: pass
+        except Exception as sw_err:
+            log.debug(f"  Switch to username tab note: {sw_err}")
+
+        # 1. Find Password Field
+        pass_input = None
+        for sel in ["input[type='password']", "input[name='password']", "input[placeholder*='Password']", "input[placeholder*='Sandi']", "input[placeholder*='sandi']"]:
+            try:
+                els = driver.find_elements(By.CSS_SELECTOR, sel)
+                for el in els:
+                    if el.is_displayed():
+                        pass_input = el
+                        break
+                if pass_input: break
+            except: continue
+
+        # 2. Find Username Field (Any visible input field that is NOT pass_input)
+        user_input = None
+        for sel in ["input[name='loginKey']", "input[name='userName']", "input[name='username']", "input[placeholder*='Username']", "input[placeholder*='Email']", "input[placeholder*='handphone']", "input[placeholder*='HP']", "input[type='text']", "input[type='tel']"]:
+            try:
+                els = driver.find_elements(By.CSS_SELECTOR, sel)
+                for el in els:
+                    if el.is_displayed() and el != pass_input:
+                        user_input = el
+                        break
+                if user_input: break
+            except: continue
 
         if not user_input:
-            for sel in ["input[name='userName']", "input[placeholder*='handphone']", "input[placeholder*='Username']", "input[type='text']"]:
-                try:
-                    el = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, sel)))
-                    if el.is_displayed(): user_input = el; break
-                except: continue
-        
+            # Fallback: any visible non-hidden input element that is not pass_input
+            try:
+                all_inputs = driver.find_elements(By.CSS_SELECTOR, "input")
+                for inp in all_inputs:
+                    if inp.is_displayed() and inp != pass_input and (inp.get_attribute("type") or "").lower() != "hidden":
+                        user_input = inp
+                        break
+            except: pass
+
         if not user_input:
             log.error(f"❌ Failed to find Username field. URL: {driver.current_url}")
             try:
@@ -839,14 +872,8 @@ def _perform_login(driver, wait, username: str = None, password: str = None, pho
             except: pass
             raise Exception("Could not find Username input field")
 
-        pass_input = None
-        for sel in ["input[type='password']", "input[placeholder='Password']"]:
-            try:
-                el = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, sel)))
-                if el.is_displayed(): pass_input = el; break
-            except: continue
-            
-        if not pass_input: raise Exception("Could not find Password input field")
+        if not pass_input:
+            raise Exception("Could not find Password input field")
 
         user_input.send_keys(Keys.CONTROL + "a", Keys.BACKSPACE)
         human_like_typing(user_input, username)
@@ -1498,13 +1525,7 @@ def get_session(username=None, password=None, phone=None, headless=True, close_b
                         log.info("✅ [SESSION] Restored from saved tokens.")
                         is_logged_in = True
 
-            # On retry attempts, try injecting saved session tokens BEFORE resorting
-            # to a full fresh login. Chrome may have crashed mid-session (causing
-            # "Connection refused") but the session_{username}.json written by the
-            # previous successful warm cycle is still valid. Injecting those cookies
-            # into a fresh Chrome instance avoids triggering Shopee OTP.
             if not is_logged_in and attempt > 0:
-                log.info(f"🔄 [SESSION] Attempt {attempt+1}: trying saved tokens before fresh login...")
                 saved = load_session()
                 if saved and saved.get("shopee_tob_token"):
                     try:
@@ -1518,17 +1539,10 @@ def get_session(username=None, password=None, phone=None, headless=True, close_b
                         time.sleep(4)
                         current_url = driver.current_url.lower()
                         if "dashboard" in current_url or "merchant-selector" in current_url:
-                            log.info(f"✅ [SESSION] Restored from saved tokens on retry {attempt+1} — no fresh login needed.")
+                            log.info(f"✅ [SESSION] Restored from saved tokens on retry {attempt+1}.")
                             is_logged_in = True
                     except Exception as _cookie_err:
                         log.warning(f"  ⚠️ Cookie injection on retry failed: {_cookie_err}")
-
-                # Only wipe cookies and force fresh login if the token injection also failed
-                if not is_logged_in:
-                    log.info(f"⚠️ [SESSION] Saved tokens also invalid. Forcing fresh login (Attempt {attempt+1})...")
-                    driver.delete_all_cookies()
-                    driver.get("https://partner.shopee.co.id/login")
-                    time.sleep(4)
 
             # ── Step 3: Login if all above failed ──
             if not is_logged_in:

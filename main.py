@@ -16,6 +16,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # Setup Dynamic Paths to ensure reliable server deployment
 BASE_DIR = Path(__file__).resolve().parent
 sys.path.append(str(BASE_DIR))

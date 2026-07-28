@@ -1209,12 +1209,16 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 if not group_id and rest_uuid:
                     try:
                         mg_data = go_api.fetch_menu_groups(page, token, rest_uuid)
-                        if isinstance(mg_data, list) and len(mg_data) > 0:
+                        if isinstance(mg_data, str):
+                            group_id = mg_data
+                        elif isinstance(mg_data, list) and len(mg_data) > 0:
                             group_id = mg_data[0].get('id') or mg_data[0].get('common_id')
                         elif isinstance(mg_data, dict):
-                            mgs = mg_data.get('menu_groups') or mg_data.get('data') or []
-                            if mgs and len(mgs) > 0:
-                                group_id = mgs[0].get('id') or mgs[0].get('common_id')
+                            group_id = mg_data.get('menu_group_id') or mg_data.get('v2_menus_group_id') or mg_data.get('id')
+                            if not group_id:
+                                mgs = mg_data.get('menu_groups') or mg_data.get('data') or []
+                                if mgs and len(mgs) > 0:
+                                    group_id = mgs[0].get('id') or mgs[0].get('common_id')
                         logger.info(f"🔑 Retrived menu_group_id via API fallback: {group_id}")
                     except Exception as e:
                         logger.warning(f"Could not fetch menu_groups fallback: {e}")

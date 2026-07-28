@@ -1274,8 +1274,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         "description": orig_item.get('description', ''),
                         "price": int(new_price),
                         "active": orig_item.get('is_active', orig_item.get('active', True)),
-                        "signature": orig_item.get('signature', False),
-                        "variant_category_common_ids": orig_item.get('variant_category_common_ids') or orig_item.get('variant_category_ids') or []
+                        "signature": orig_item.get('signature', False)
                     }
 
                     patch_group_id = group_id or api_headers.get('menu_group_id') or orig_item.get('menu_common_id') or cat_common_id
@@ -1293,7 +1292,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         'Referer': 'https://portal.gofoodmerchant.co.id/'
                     }
 
-                    # V2 PATCH via context.request (bypass CORS)
+                    # V2 PATCH via context.request (bypass CORS) — Opsi Utama tanpa variant_category_common_ids
                     v2_url = f'https://api.gojekapi.com/gofood/merchant/v2/menu_groups/{patch_group_id}/menu_items/{item_id}'
                     try:
                         cr = context.request.fetch(
@@ -1306,25 +1305,23 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                     except Exception as e:
                         res = {'ok': False, 'error': str(e)}
 
+                    # Fallback 1: Jika gagal dan ada variant_category_common_ids, coba sertakan
                     if not res or not res.get('ok'):
-                        body_err = (res.get('body') or '')
-                        status_code = res.get('status', '?') if res else '?'
-                        
-                        # Handle HTTP 422 due to stale/deleted variant_category_common_ids
-                        if "variant_category" in body_err.lower() or "variant category" in body_err.lower():
-                            logger.warning(f"GoFood V2 PATCH HTTP {status_code} - Variant Category ID tidak valid/stale di GoFood. Mengulang V2 PATCH tanpa variant_category_common_ids...")
-                            v2_payload_clean = dict(v2_payload)
-                            v2_payload_clean.pop("variant_category_common_ids", None)
+                        vars_ids = orig_item.get('variant_category_common_ids') or orig_item.get('variant_category_ids')
+                        if vars_ids and isinstance(vars_ids, list) and len(vars_ids) > 0:
+                            v2_payload_with_vars = dict(v2_payload)
+                            v2_payload_with_vars["variant_category_common_ids"] = vars_ids
                             try:
                                 cr_retry = context.request.fetch(
                                     v2_url,
                                     method='PATCH',
                                     headers=headers_direct,
-                                    data=json.dumps(v2_payload_clean)
+                                    data=json.dumps(v2_payload_with_vars)
                                 )
-                                res = {'ok': cr_retry.ok, 'status': cr_retry.status, 'body': cr_retry.text()}
-                            except Exception as e:
-                                res = {'ok': False, 'error': str(e)}
+                                if cr_retry.ok:
+                                    res = {'ok': True, 'status': cr_retry.status, 'body': cr_retry.text()}
+                            except Exception:
+                                pass
 
                     if not res or not res.get('ok'):
                         status_code = res.get('status', '?') if res else '?'

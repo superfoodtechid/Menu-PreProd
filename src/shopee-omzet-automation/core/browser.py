@@ -765,21 +765,109 @@ def _init_driver(headless: bool, profile_name: str = None):
     return driver
 
 
+def _load_fallback_credentials(username: str = None, password: str = None, phone: str = None) -> tuple[str | None, str | None, str | None]:
+    if not (username and password) and not phone:
+        creds_paths = [
+            PROJECT_DIR / "shopee" / "credentials.json",
+            PROJECT_DIR / "credentials.json"
+        ]
+        for creds_path in creds_paths:
+            if creds_path.exists():
+                try:
+                    with open(creds_path, "r") as f:
+                        creds = json.load(f)
+                    if not username and creds.get("shopee_username"):
+                        username = creds["shopee_username"]
+                    if not password and creds.get("shopee_password"):
+                        password = creds["shopee_password"]
+                    if not phone and creds.get("shopee_phone"):
+                        phone = creds["shopee_phone"]
+                    break
+                except Exception as e:
+                    log.warning(f"⚠️ Failed to read credentials from {creds_path}: {e}")
+    return username, password, phone
+
 # ── Login Logic ────────────────────────────────────────────────────────────────
 
 def _perform_login(driver, wait, username: str = None, password: str = None, phone: str = None, is_retry: bool = False, allow_otp: bool = False) -> bool:
     log.info("➡️  [AUTH] Starting login sequence...")
-    if not phone:
-        raise Exception("Shopee phone number is not configured! Please configure it in 'credentials.json' or GSheets.")
+    username, password, phone = _load_fallback_credentials(username, password, phone)
     
-    try:
-        wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Log in dengan no. HP')]"))).click()
-        time.sleep(1)
-    except: pass
-    phone_input = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input[type='tel']")))
-    phone_input.send_keys(Keys.CONTROL + "a", Keys.BACKSPACE)
-    human_like_typing(phone_input, phone)
-    wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Selanjutnya')]"))).click()
+    if not phone and (not username or not password):
+        raise Exception("Shopee credentials are not configured! Please configure them in 'credentials.json' (shopee/credentials.json) or GSheets.")
+    
+    use_phone = bool(phone and not (username and password))
+    if use_phone:
+        try:
+            wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Log in dengan no. HP')]"))).click()
+            time.sleep(1)
+        except: pass
+        phone_input = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input[type='tel']")))
+        phone_input.send_keys(Keys.CONTROL + "a", Keys.BACKSPACE)
+        human_like_typing(phone_input, phone)
+        wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Selanjutnya')]"))).click()
+    else:
+        log.debug(f"  Current URL: {driver.current_url}")
+        time.sleep(2)
+        
+        user_input = None
+        try:
+            inputs = driver.find_elements(By.CSS_SELECTOR, "input")
+            for inp in inputs:
+                p = (inp.get_attribute("placeholder") or "").lower()
+                n = (inp.get_attribute("name") or "").lower()
+                t = (inp.get_attribute("type") or "").lower()
+                if inp.is_displayed() and (t == "text" or "user" in n or "phone" in n or "handphone" in p or "username" in p):
+                    user_input = inp
+                    break
+        except: pass
+
+        if not user_input:
+            for sel in ["input[name='userName']", "input[placeholder*='handphone']", "input[placeholder*='Username']", "input[type='text']"]:
+                try:
+                    el = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, sel)))
+                    if el.is_displayed(): user_input = el; break
+                except: continue
+        
+        if not user_input:
+            log.error(f"❌ Failed to find Username field. URL: {driver.current_url}")
+            try:
+                all_inps = driver.find_elements(By.TAG_NAME, "input")
+                log.debug(f"  Found {len(all_inps)} input tags on page.")
+                for i, el in enumerate(all_inps):
+                    log.debug(f"    [{i}] name={el.get_attribute('name')} type={el.get_attribute('type')} placeholder={el.get_attribute('placeholder')} visible={el.is_displayed()}")
+            except: pass
+            raise Exception("Could not find Username input field")
+
+        pass_input = None
+        for sel in ["input[type='password']", "input[placeholder='Password']"]:
+            try:
+                el = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, sel)))
+                if el.is_displayed(): pass_input = el; break
+            except: continue
+            
+        if not pass_input: raise Exception("Could not find Password input field")
+
+        user_input.send_keys(Keys.CONTROL + "a", Keys.BACKSPACE)
+        human_like_typing(user_input, username)
+        
+        pass_input.send_keys(Keys.CONTROL + "a", Keys.BACKSPACE)
+        human_like_typing(pass_input, password)
+        
+        login_btn = None
+        for btn_sel in ["//button[contains(., 'Masuk') or contains(., 'Log In')]", "//button[@type='submit']"]:
+            try:
+                btn = wait.until(EC.element_to_be_clickable((By.XPATH, btn_sel)))
+                if btn.is_displayed(): login_btn = btn; break
+            except: continue
+
+        if login_btn:
+            try:
+                login_btn.click()
+            except Exception as click_err:
+                log.warning(f"⚠️ Native login button click intercepted: {click_err}. Trying JS click...")
+                driver.execute_script("arguments[0].click();", login_btn)
+        else: raise Exception("Could not find Login button")
 
     # Check for immediate credential errors
     time.sleep(3)
@@ -1370,6 +1458,7 @@ def return_to_selector(driver) -> bool:
         return True
 
 def get_session(username=None, password=None, phone=None, headless=True, close_browser=True, target_name=None, interactive=True, allow_otp=False, profile_name=None) -> dict | None:
+    username, password, phone = _load_fallback_credentials(username, password, phone)
     for attempt in range(3):
         log.info(f"🌐 [BROWSER] Launching (headless={headless}, attempt={attempt+1}/3)...")
         driver = _init_driver(headless=headless, profile_name=profile_name)

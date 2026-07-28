@@ -93,11 +93,11 @@ class ShopeeClient:
         return []
 
 
-def extract_shopee_menu(store_metadata: dict, output_dir: str):
+def extract_shopee_menu(store_metadata: dict, output_dir: str, headless: bool = False):
     # Add project root to sys.path to resolve shopee.* absolute imports correctly
     project_root = Path(__file__).resolve().parent.parent
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
         
     from shopee.core.pull import extract_shopee_menu as new_extract
-    return new_extract(store_metadata, output_dir)
+    return new_extract(store_metadata, output_dir, headless=headless)

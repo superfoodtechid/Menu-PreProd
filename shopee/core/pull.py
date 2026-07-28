@@ -28,7 +28,7 @@ def list_menu_shopee(store_metadata: dict) -> tuple[bool, list | str]:
     catalogs = client.get_store_dishes(store_id)
     return True, catalogs
 
-def extract_shopee_menu(store_metadata: dict, output_dir: str):
+def extract_shopee_menu(store_metadata: dict, output_dir: str, headless: bool = False):
     store_id = store_metadata.get('store_id', '')
     if isinstance(store_id, str):
         store_id = store_id.strip().split('.')[0]
@@ -52,10 +52,10 @@ def extract_shopee_menu(store_metadata: dict, output_dir: str):
     session_file = MENU_DIR / "data" / f"session_{profile_name}.json"
     browser.set_session_file(session_file)
             
-    print(f"[*] Membuka browser (headless=True) dan memilih merchant: '{target_name}' dengan profile '{profile_name}'...")
+    print(f"[*] Membuka browser (headless={headless}) dan memilih merchant: '{target_name}' dengan profile '{profile_name}'...")
     session_data = browser.get_session(
         phone=store_metadata.get("phone"),
-        headless=True,
+        headless=headless,
         close_browser=True,
         target_name=target_name,
         interactive=False,

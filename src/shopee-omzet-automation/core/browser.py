@@ -743,12 +743,55 @@ def _init_driver(headless: bool):
         except Exception as e:
             log.warning(f"⚠️ Failed to remove SingletonLock: {e}")
 
-    try:
-        # Use native Selenium Manager (faster, more stable, avoids ChromeDriverManager network hangs)
-        driver = webdriver.Chrome(options=options)
-    except Exception as e:
-        log.warning(f"⚠️ Native Chrome init failed: {e}. Trying ChromeDriverManager fallback...")
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    # Check for system Chromium & ChromeDriver (Linux / ARM64 / Docker)
+    chromium_path = "/usr/lib/chromium/chromium" if os.path.exists("/usr/lib/chromium/chromium") else ("/usr/bin/chromium" if os.path.exists("/usr/bin/chromium") else None)
+    chromedriver_path = "/usr/bin/chromedriver" if os.path.exists("/usr/bin/chromedriver") else ("/usr/lib/chromium/chromedriver" if os.path.exists("/usr/lib/chromium/chromedriver") else None)
+
+    if chromium_path:
+        options.binary_location = chromium_path
+
+    driver = None
+    if chromedriver_path:
+        try:
+            log.info(f"🌐 [BROWSER] Initializing with system ChromeDriver: {chromedriver_path}")
+            driver = webdriver.Chrome(service=Service(chromedriver_path), options=options)
+        except Exception as sys_err:
+            log.warning(f"⚠️ System ChromeDriver init failed: {sys_err}")
+
+    if not driver:
+        try:
+            log.info("🌐 [BROWSER] Initializing with Native Selenium Manager...")
+            driver = webdriver.Chrome(options=options)
+        except Exception as e:
+            log.warning(f"⚠️ Native Chrome init failed: {e}. Trying ChromeDriverManager fallback...")
+            try:
+                driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            except Exception as cdm_err:
+                log.warning(f"⚠️ ChromeDriverManager failed: {cdm_err}. Trying CDP mode fallback...")
+                import socket, subprocess
+                s = socket.socket()
+                s.bind(('', 0))
+                cdp_port = s.getsockname()[1]
+                s.close()
+
+                cmd = [
+                    chromium_path or "chromium",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    f"--remote-debugging-port={cdp_port}",
+                    f"--user-data-dir={profile_dir.resolve()}",
+                    "--profile-directory=shopee_profile"
+                ]
+                if headless:
+                    cmd.append("--headless=new")
+                subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                time.sleep(2.5)
+                options.add_experimental_option("debuggerAddress", f"127.0.0.1:{cdp_port}")
+                if chromedriver_path:
+                    driver = webdriver.Chrome(service=Service(chromedriver_path), options=options)
+                else:
+                    driver = webdriver.Chrome(options=options)
+
     driver.set_page_load_timeout(60)
     return driver
 

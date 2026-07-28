@@ -1339,16 +1339,30 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
 
                     # V2 PATCH via context.request (bypass CORS) — Opsi Utama tanpa variant_category_common_ids
                     v2_url = f'https://api.gojekapi.com/gofood/merchant/v2/menu_groups/{patch_group_id}/menu_items/{item_id}'
-                    try:
-                        cr = context.request.fetch(
-                            v2_url,
-                            method='PATCH',
-                            headers=headers_direct,
-                            data=json.dumps(v2_payload)
-                        )
-                        res = {'ok': cr.ok, 'status': cr.status, 'body': cr.text()}
-                    except Exception as e:
-                        res = {'ok': False, 'error': str(e)}
+                    
+                    # Function helper dengan auto-retry jika terkena Rate Limit (HTTP 429/403/503)
+                    def send_patch_request(payload_data, max_retries=2):
+                        for attempt_idx in range(max_retries + 1):
+                            try:
+                                cr_res = context.request.fetch(
+                                    v2_url,
+                                    method='PATCH',
+                                    headers=headers_direct,
+                                    data=json.dumps(payload_data)
+                                )
+                                status_code = cr_res.status
+                                if status_code in (429, 403, 503, 504) and attempt_idx < max_retries:
+                                    logger.warning(f"⚠️ Terdeteksi Rate Limit (HTTP {status_code}) pada item {item_id}. Menunggu 2.5 detik (attempt {attempt_idx+1}/{max_retries})...")
+                                    time.sleep(2.5)
+                                    continue
+                                return {'ok': cr_res.ok, 'status': status_code, 'body': cr_res.text()}
+                            except Exception as ex:
+                                if attempt_idx < max_retries:
+                                    time.sleep(2.0)
+                                    continue
+                                return {'ok': False, 'error': str(ex)}
+
+                    res = send_patch_request(v2_payload)
 
                     # Fallback 1: Jika gagal dan ada variant_category_common_ids, coba sertakan
                     if not res or not res.get('ok'):
@@ -1356,17 +1370,9 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         if vars_ids and isinstance(vars_ids, list) and len(vars_ids) > 0:
                             v2_payload_with_vars = dict(v2_payload)
                             v2_payload_with_vars["variant_category_common_ids"] = vars_ids
-                            try:
-                                cr_retry = context.request.fetch(
-                                    v2_url,
-                                    method='PATCH',
-                                    headers=headers_direct,
-                                    data=json.dumps(v2_payload_with_vars)
-                                )
-                                if cr_retry.ok:
-                                    res = {'ok': True, 'status': cr_retry.status, 'body': cr_retry.text()}
-                            except Exception:
-                                pass
+                            res_var = send_patch_request(v2_payload_with_vars, max_retries=1)
+                            if res_var and res_var.get('ok'):
+                                res = res_var
 
                     if not res or not res.get('ok'):
                         status_code = res.get('status', '?') if res else '?'
@@ -1406,6 +1412,21 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         fail_count += 1
                         status_str = "FAILED"
                         err_msg = res.get('body') or "GoFood API error."
+
+                    # Pacing delay bervariatif (random jitter 180ms - 420ms) untuk menghindari deteksi pola bot
+                    import random
+                    time.sleep(random.uniform(0.18, 0.42))
+
+                    # Jeda istirahat (batch breather) setiap 25 item agar token bucket rate-limit GoFood pulih
+                    if (idx + 1) % 25 == 0 and (idx + 1) < total_updates:
+                        logger.info(f"☕ Batch pause (item {idx+1}/{total_updates}): istirahat 1.8 detik untuk mendinginkan rate-limit GoFood...")
+                        time.sleep(random.uniform(1.5, 2.2))
+
+                    # Update progress setiap 5 item
+                    if (idx + 1) % 5 == 0 or (idx + 1) == total_updates:
+                        job.progress_pct = int(40 + ((idx + 1) / total_updates) * 55)
+                        job.current_step = f"Memproses update harga GoFood ({idx + 1}/{total_updates})..."
+                        db.commit()
 
                     trail = AuditTrail(
                         job_id=job.id,

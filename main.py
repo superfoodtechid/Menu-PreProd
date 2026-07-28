@@ -1084,6 +1084,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
 
 
 
+                headless_env = os.getenv("HEADLESS") or os.getenv("HEADLESS_GOFOOD")
                 is_headless = headless_env.lower() in ("true", "1", "yes") if headless_env else True
                 from src.core.browser_factory import launch_universal_playwright_browser
                 browser, proc = launch_universal_playwright_browser(p, headless=is_headless)

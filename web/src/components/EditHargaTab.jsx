@@ -141,7 +141,7 @@ function AdjustBar({ onApply, buttonText = "OK", extraActions = null }) {
 
 // ─── Branch Card ──────────────────────────────────────────────────────────────
 function BranchCard({ branch, items = [], edits, verification = {}, itemEditMode = "single", selectedItemIds = [], onToggleSelectItem, onChange, onBulkAdj, onReset, onSave, onApplyToAll, totalBranches, saving, saved }) {
-  const label = branch.brand || branch.nama_resto_final || branch.merchant_name;
+  const label = branch.brand || branch.nama_outlet || branch.merchant_name;
   const groups = group(items);
   const changed = items.filter((i) => !i.is_in_promo && (edits[i.id] ?? i.price) !== i.price).length;
   const selectedCount = items.filter((i) => !i.is_in_promo && selectedItemIds.includes(i.id)).length;
@@ -507,13 +507,14 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
       status: "PENDING",
       progress_pct: 0,
       current_step: "Mengantrekan tugas penarikan real-time...",
-      error_message: null
+      name: b.brand || b.nama_outlet || b.merchant_name,
+      platform: b.platform || "shopee",
     }));
     setSyncJobs(initialJobs);
 
     const createdJobs = [];
     for (const b of targetBranches) {
-      const label = b.brand || b.nama_resto_final || b.merchant_name;
+      const label = b.brand || b.nama_outlet || b.merchant_name;
       try {
         const res = await fetch(`${API_BASE_URL}/api/jobs/pull?outlet_id=${b.id}`, {
           method: "POST",
@@ -761,7 +762,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
     for (const bid of targets) {
       const branch = branches.find(x => x.id === bid);
       if (!branch) continue;
-      const label = branch.brand || branch.nama_resto_final || branch.merchant_name;
+      const label = branch.brand || branch.nama_outlet || branch.merchant_name;
 
       const branchEdits = edits[bid] || {};
       const branchItems = branchMenus[bid] || [];
@@ -839,7 +840,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
     targets.forEach(bid => {
       const branch = branches.find(x => x.id === bid);
       if (!branch) return;
-      const bLabel = branch.brand || branch.nama_resto_final || branch.merchant_name;
+      const bLabel = branch.brand || branch.nama_outlet || branch.merchant_name;
       const branchItems = branchMenus[bid] || [];
       const itemUpdates = [];
 
@@ -1084,7 +1085,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                 {!selectedParent
                   ? "Pilih Outlet dulu"
                   : selectedBrandObj
-                  ? (selectedBrandObj.brand || selectedBrandObj.nama_resto_final || selectedBrandObj.merchant_name)
+                  ? (selectedBrandObj.brand || selectedBrandObj.nama_outlet || selectedBrandObj.merchant_name)
                   : "Pilih Brand..."}
               </span>
               <svg className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${openBranchDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1099,7 +1100,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                   <div className="max-h-48 overflow-y-auto space-y-0.5 pr-1">
                     {branches.map(b => {
                       const isSelected = selectedBrandId === b.id;
-                      const l = b.brand || b.nama_resto_final || b.merchant_name;
+                      const l = b.brand || b.nama_outlet || b.merchant_name;
                       return (
                         <button key={b.id} type="button"
                           onClick={() => handleSelectBrand(b.id)}
@@ -1202,7 +1203,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
               <div>
                 <h3 className="text-base font-bold text-slate-900">Menarik data menu real-time...</h3>
                 <p className="text-[13px] text-slate-500">
-                  Brand: <strong>{selectedBrandObj ? (selectedBrandObj.brand || selectedBrandObj.nama_resto_final || selectedBrandObj.merchant_name) : selectedParent}</strong> ({completedSyncCount}/{syncJobs.length} selesai)
+                  Brand: <strong>{selectedBrandObj ? (selectedBrandObj.brand || selectedBrandObj.nama_outlet || selectedBrandObj.merchant_name) : selectedParent}</strong> ({completedSyncCount}/{syncJobs.length} selesai)
                 </p>
               </div>
             </div>

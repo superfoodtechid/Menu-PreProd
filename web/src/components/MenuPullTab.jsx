@@ -253,7 +253,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     const newJobsList = [];
 
     for (const target of targets) {
-      const branchLabel = target.brand || target.nama_resto_final || target.merchant_name;
+      const branchLabel = target.brand || target.nama_outlet || target.merchant_name;
       try {
         const res = await fetch(`${API_BASE_URL}/api/jobs/pull?outlet_id=${target.id}`, {
           method: "POST",
@@ -492,7 +492,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
                   <div className="max-h-60 space-y-0.5 overflow-y-auto pr-1">
                     {availableBranches.map((branch) => {
                       const checked = checkedBranchIds.includes(branch.id);
-                      const branchLabel = branch.brand || branch.nama_resto_final || branch.merchant_name;
+                      const branchLabel = branch.brand || branch.nama_outlet || branch.merchant_name;
                       return (
                         <label key={branch.id} className="flex cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 transition hover:bg-red-50/50">
                           <input type="checkbox" checked={checked} onChange={() => handleBranchCheck(branch.id)} className="mt-1 h-4 w-4 accent-red-700" />

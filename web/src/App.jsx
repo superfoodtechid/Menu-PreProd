@@ -4,8 +4,11 @@ import MenuPullTab from "./components/MenuPullTab";
 import MenuPushTab from "./components/MenuPushTab";
 import EditHargaTab from "./components/EditHargaTab";
 import SessionTab from "./components/SessionTab";
+import StarField from "./components/StarField";
+import { useTheme } from "./hooks/useTheme";
 
 export default function Home() {
+  const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState(() => {
     const isSessionPath = window.location.pathname === "/session";
     const requestedTab = new URLSearchParams(window.location.search).get("tab");
@@ -41,8 +44,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fff9f8] text-slate-900">
-      <NavHeader activeTab={activeTab} onTabChange={handleTabChange} />
+    <div className="min-h-screen bg-[#fff9f8] text-slate-900 dark:bg-black dark:text-white transition-colors duration-200">
+      <StarField active={theme === "dark"} />
+      <NavHeader activeTab={activeTab} onTabChange={handleTabChange} theme={theme} onToggleTheme={toggleTheme} />
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className={activeTab === "pull" ? "" : "hidden"}><MenuPullTab API_BASE_URL={API_BASE_URL} API_SECRET_KEY={API_SECRET_KEY} /></div>

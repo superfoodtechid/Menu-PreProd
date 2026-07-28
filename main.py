@@ -1273,8 +1273,8 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         "signature": orig_item.get('signature', False)
                     }
 
-                    patch_group_id = group_id if group_id else cat_common_id
-                    passkey = api_headers.get('x-passkey')
+                    patch_group_id = orig_item.get('menu_common_id') or cat_common_id or group_id
+                    passkey = api_headers.get('x-passkey') or "1729b182-c60e-4568-849d-5eb7d794fd09"
                     
                     headers_direct = {
                         'Accept': 'application/json, text/plain, */*',
@@ -1283,7 +1283,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         'Authorization': token,
                         'Content-Type': 'application/json',
                         'Gojek-Country-Code': 'ID',
-                        'x-passkey': passkey or '',
+                        'x-passkey': passkey,
                         'Origin': 'https://portal.gofoodmerchant.co.id',
                         'Referer': 'https://portal.gofoodmerchant.co.id/'
                     }
@@ -1313,7 +1313,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                             "description": orig_item.get('description', ''),
                             "image": orig_item.get('image_url', orig_item.get('image', ''))
                         }
-                        v1_item_id = orig_item.get('id')
+                        v1_item_id = orig_item.get('id') or orig_item.get('common_id') or item_id
                         
                         # V1 PUT via context.request (bypass CORS)
                         if v1_item_id:

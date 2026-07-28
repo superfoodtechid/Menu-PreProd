@@ -1154,7 +1154,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                   type="button"
                   disabled={syncPhase === "syncing"}
                   onClick={handleSkipSync}
-                  className={`px-4 py-2.5 rounded-xl font-bold text-[14px] bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm flex items-center gap-2 transition-all ${
+                  className={`px-4 py-2.5 rounded-xl font-bold text-[14px] bg-[#403D88] hover:bg-[#34316e] text-white shadow-sm flex items-center gap-2 transition-all ${
                     syncPhase === "syncing" ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"
                   }`}
                   title="Tampilkan data menu lokal terakhir tanpa membuka browser"
@@ -1168,10 +1168,10 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                 type="button"
                 disabled={syncPhase === "syncing"}
                 onClick={handleStartPullAndEdit}
-                className={`primary-action gap-2 px-5 py-2.5 text-[14px] ${
+                className={`inline-flex items-center justify-center rounded-xl font-bold text-white shadow-md transition gap-2 px-5 py-2.5 text-[14px] ${
                   syncPhase === "syncing" ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
                 } ${
-                  cacheInfo?.has_cache ? "bg-red-800 hover:bg-red-900" : ""
+                  cacheInfo?.has_cache ? "bg-black hover:bg-zinc-800" : "bg-red-700 hover:bg-red-800"
                 }`}
                 title="Meluncurkan browser untuk tarik menu live terbaru dari portal merchant"
               >

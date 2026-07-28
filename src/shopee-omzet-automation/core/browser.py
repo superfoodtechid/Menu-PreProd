@@ -1497,7 +1497,7 @@ def get_session(username=None, password=None, phone=None, headless=True, close_b
             # previous successful warm cycle is still valid. Injecting those cookies
             # into a fresh Chrome instance avoids triggering Shopee OTP.
             if not is_logged_in and attempt > 0:
-                log.info(f"🔄 [SESSION] Attempt {attempt+1}: trying saved tokens before fresh login...")
+                log.info(f"🔄 [SESSION] Attempt {attempt+1}: trying saved tokens...")
                 saved = load_session()
                 if saved and saved.get("shopee_tob_token"):
                     try:
@@ -1511,7 +1511,7 @@ def get_session(username=None, password=None, phone=None, headless=True, close_b
                         time.sleep(4)
                         current_url = driver.current_url.lower()
                         if "dashboard" in current_url or "merchant-selector" in current_url:
-                            log.info(f"✅ [SESSION] Restored from saved tokens on retry {attempt+1} — no fresh login needed.")
+                            log.info(f"✅ [SESSION] Restored from saved tokens on retry {attempt+1}.")
                             is_logged_in = True
                     except Exception as _cookie_err:
                         log.warning(f"  ⚠️ Cookie injection on retry failed: {_cookie_err}")

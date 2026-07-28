@@ -13,8 +13,18 @@ AUTOMATION_DIR = Path(__file__).resolve().parents[1] / "src" / "shopee-omzet-aut
 if str(AUTOMATION_DIR) not in sys.path:
     sys.path.insert(0, str(AUTOMATION_DIR))
 
-# shopee-omzet-automation core browser import
 from core import browser
+
+# FORCE the profile directory to be menu-prod/shopee/data/chrome_profile without modifying browser.py
+BASE_DIR = Path(__file__).resolve().parent.parent
+orig_add_argument = Options.add_argument
+def custom_add_argument(self, argument):
+    if "--user-data-dir=" in argument:
+        chrome_profile_dir = BASE_DIR / "shopee" / "data" / "chrome_profile"
+        argument = f"--user-data-dir={chrome_profile_dir}"
+        print(f"🔧 [PATCH] Mengalihkan user data dir ke: {argument}")
+    orig_add_argument(self, argument)
+Options.add_argument = custom_add_argument
 
 
 # Expose push/write endpoints and clients using absolute package names

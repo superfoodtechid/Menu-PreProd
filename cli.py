@@ -352,7 +352,7 @@ def interactive_menu():
             print(f"    {GREEN}[new]{RESET} Jalankan HANYA cabang yang belum ditarik")
             
             for idx, b in enumerate(branches):
-                branch_name = b['brand'] or b['nama_resto_final'] or b['merchant_name']
+                branch_name = f"{b['nama_outlet']} - {b['brand']}" if b.get('brand') else b['nama_outlet']
                 print(f"    {GREEN}[{idx + 1:3d}]{RESET} {branch_name} (ID: {b['store_id']})")
                 
             print(f"    {YELLOW}[b  ]{RESET} Kembali ke pemilihan outlet")
@@ -395,7 +395,7 @@ def interactive_menu():
             banner()
             print(f"  {CYAN}{'─'*60}{RESET}")
             print(f"  Aplikator : {BOLD}{applicator.upper()}{RESET}")
-            name_to_show = selected_outlet['brand'] or selected_outlet['nama_resto_final'] or selected_outlet['nama_outlet']
+            name_to_show = f"{selected_outlet['nama_outlet']} - {selected_outlet['brand']}" if selected_outlet.get('brand') else selected_outlet['nama_outlet']
             print(f"  Outlet    : {BOLD}{name_to_show}{RESET}")
             
             if applicator == "all":
@@ -518,7 +518,7 @@ def main():
         clean_outlet = "".join(c for c in raw_outlet if c.isalnum() or c in (' ', '_', '-')).strip()
         clean_outlet = re.sub(r'\s+', ' ', clean_outlet).lower()
         
-        name_to_show = o['brand'] or o['nama_resto_final'] or o['nama_outlet']
+        name_to_show = f"{o['nama_outlet']} - {o['brand']}" if o.get('brand') else o['nama_outlet']
         print(f"\n{BOLD}[{idx + 1}/{total_outlets}] Memproses: {name_to_show}{RESET}")
         
         if applicator == "all":

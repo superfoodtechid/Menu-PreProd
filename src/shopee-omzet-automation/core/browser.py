@@ -37,9 +37,7 @@ from core.logger import get_logger
 log = get_logger("browser")
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-FILE_DIR = Path(__file__).resolve().parent
-PROJECT_DIR = FILE_DIR.parent.parent.parent
-SESSION_FILE    = PROJECT_DIR / "shopee" / "data" / "session.json"
+SESSION_FILE    = Path(__file__).resolve().parent.parent / "data" / "session.json"
 import sys
 import threading
 from pathlib import Path
@@ -49,7 +47,9 @@ from discord_notifier import send_discord_error
 _thread_local = threading.local()
 
 def get_session_file() -> Path:
-    return Path(__file__).resolve().parent.parent.parent.parent / "shopee" / "data" / "session.json"
+    if not hasattr(_thread_local, "session_file"):
+        _thread_local.session_file = Path(__file__).resolve().parent.parent / "data" / "session.json"
+    return _thread_local.session_file
 
 def get_otp_code(username: str, phone: str) -> str:
     discord_mode = os.getenv("OFD_DISCORD_MODE") == "1"
@@ -66,7 +66,7 @@ def get_otp_code(username: str, phone: str) -> str:
             return ""
 
     
-    script_dir = Path(__file__).resolve().parent.parent.parent.parent / "shopee"
+    script_dir = Path(__file__).resolve().parent.parent
     data_dir = script_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
     otp_file = data_dir / f"otp_request_{username}.json"
@@ -107,7 +107,7 @@ def get_otp_code(username: str, phone: str) -> str:
     return ""
 
 def set_session_file(val):
-    pass
+    _thread_local.session_file = Path(val)
 
 class ThreadLocalSessionFileProxy:
     def __getattr__(self, name):
@@ -723,10 +723,16 @@ def _init_driver(headless: bool):
     else:
         options.add_argument("--start-maximized")
     
-    script_dir = Path(__file__).resolve().parent.parent.parent.parent / "shopee"
-    profile_dir = script_dir / "data" / "chrome_profile"
-    options.add_argument(f"--user-data-dir={profile_dir.resolve()}")
-    options.add_argument("--profile-directory=shopee_profile")
+    script_dir = Path(__file__).parent.parent
+    if SESSION_FILE.stem == "session":
+        profile_dir = script_dir / "data" / "chrome_profile"
+        options.add_argument(f"--user-data-dir={profile_dir.resolve()}")
+        options.add_argument("--profile-directory=shopee_profile")
+    else:
+        account_name = SESSION_FILE.stem.replace("session_", "")
+        profile_dir = script_dir / "data" / f"chrome_profile_{account_name}"
+        options.add_argument(f"--user-data-dir={profile_dir.resolve()}")
+        options.add_argument(f"--profile-directory=profile_{account_name}")
 
     # Delete SingletonLock if it exists to avoid SessionNotCreatedException on Linux
     singleton_lock = profile_dir / "SingletonLock"
@@ -738,31 +744,18 @@ def _init_driver(headless: bool):
             log.warning(f"⚠️ Failed to remove SingletonLock: {e}")
 
     try:
-        # Force system Chromium and system chromedriver on Raspberry Pi/ARM64
-        if os.path.exists("/usr/lib/chromium/chromium"):
-            options.binary_location = "/usr/lib/chromium/chromium"
-        elif os.path.exists("/usr/bin/chromium"):
-            options.binary_location = "/usr/bin/chromium"
-
-        if os.path.exists("/usr/bin/chromedriver"):
-            service = Service("/usr/bin/chromedriver")
-            driver = webdriver.Chrome(service=service, options=options)
-        else:
-            driver = webdriver.Chrome(options=options)
+        # Use native Selenium Manager (faster, more stable, avoids ChromeDriverManager network hangs)
+        driver = webdriver.Chrome(options=options)
     except Exception as e:
-        log.warning(f"⚠️ Custom chromedriver init failed: {e}. Trying native fallback...")
-        try:
-            driver = webdriver.Chrome(options=options)
-        except Exception as e2:
-            log.warning(f"⚠️ Native Chrome init failed: {e2}. Trying ChromeDriverManager fallback...")
-            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        log.warning(f"⚠️ Native Chrome init failed: {e}. Trying ChromeDriverManager fallback...")
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     driver.set_page_load_timeout(60)
     return driver
 
 
 # ── Login Logic ────────────────────────────────────────────────────────────────
 
-def _perform_login(driver, wait, username: str = None, password: str = None, phone: str = None, is_retry: bool = False, allow_otp: bool = False) -> bool:
+def _perform_login(driver, wait, username: str = None, password: str = None, phone: str = None, is_retry: bool = False) -> bool:
     log.info("➡️  [AUTH] Starting login sequence...")
     if not phone and (not username or not password):
         raise Exception("Shopee credentials are not configured! Please configure them in 'credentials.json' at the project root directory.")
@@ -836,12 +829,7 @@ def _perform_login(driver, wait, username: str = None, password: str = None, pho
                 if btn.is_displayed(): login_btn = btn; break
             except: continue
 
-        if login_btn:
-            try:
-                login_btn.click()
-            except Exception as click_err:
-                log.warning(f"⚠️ Native login button click intercepted: {click_err}. Trying JS click...")
-                driver.execute_script("arguments[0].click();", login_btn)
+        if login_btn: login_btn.click()
         else: raise Exception("Could not find Login button")
 
     # Check for immediate credential errors
@@ -892,20 +880,8 @@ def _perform_login(driver, wait, username: str = None, password: str = None, pho
             """)
 
             if otp_input or is_verification_page:
-                if not allow_otp:
-                    log.error(f"❌ [AUTH] OTP or verification is required for '{username or phone}'. Aborting to prevent triggering OTP.")
-                    return False
-                else:
-                    log.info(f"⏳ [AUTH] OTP or verification is required. Tolong selesaikan verifikasi OTP secara MANUAL di browser Chrome yang terbuka...")
-                    # Wait until user solves OTP and gets redirected (max 5 minutes)
-                    for _ in range(300):
-                        time.sleep(1)
-                        curr = driver.current_url.lower()
-                        if "onboarding" in curr or "merchant-selector" in curr or "dashboard" in curr:
-                            log.info("✅ [AUTH] Manual OTP verification successful. Proceeding...")
-                            return True
-                    log.error("❌ [AUTH] Timeout menunggu verifikasi OTP manual.")
-                    return False
+                log.error(f"❌ [AUTH] OTP or verification is required for '{username or phone}'. Aborting to prevent triggering OTP.")
+                return False
         except Exception:
             pass
 
@@ -1432,7 +1408,7 @@ def return_to_selector(driver) -> bool:
             pass
         return True
 
-def get_session(username=None, password=None, phone=None, headless=True, close_browser=True, target_name=None, interactive=True, allow_otp=False) -> dict | None:
+def get_session(username=None, password=None, phone=None, headless=True, close_browser=True, target_name=None, interactive=True) -> dict | None:
     for attempt in range(3):
         log.info(f"🌐 [BROWSER] Launching (headless={headless}, attempt={attempt+1}/3)...")
         driver = _init_driver(headless=headless)
@@ -1497,12 +1473,7 @@ def get_session(username=None, password=None, phone=None, headless=True, close_b
                     except Exception as _cookie_err:
                         log.warning(f"  ⚠️ Cookie injection on retry failed: {_cookie_err}")
 
-                # Only wipe cookies and force fresh login if the token injection also failed
-                if not is_logged_in:
-                    log.info(f"⚠️ [SESSION] Saved tokens also invalid. Forcing fresh login (Attempt {attempt+1})...")
-                    driver.delete_all_cookies()
-                    driver.get("https://partner.shopee.co.id/login")
-                    time.sleep(4)
+
 
             # ── Step 3: Login if all above failed ──
             if not is_logged_in:
@@ -1513,7 +1484,7 @@ def get_session(username=None, password=None, phone=None, headless=True, close_b
                 
                 current_url = driver.current_url.lower()
                 if "login" in current_url or "authenticate" in current_url or "about:blank" in current_url:
-                    success = _perform_login(driver, wait, username, password, phone, is_retry=(attempt == 2), allow_otp=allow_otp)
+                    success = _perform_login(driver, wait, username, password, phone, is_retry=(attempt == 2))
                     if not success:
                         log.error("❌ [AUTH] _perform_login failed.")
                         driver.quit()

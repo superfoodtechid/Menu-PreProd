@@ -716,11 +716,11 @@ def _init_driver(headless: bool, profile_name: str = None):
     else:
         options.add_argument("--start-maximized")
     
-    script_dir = Path(__file__).resolve().parent.parent.parent.parent / "shopee"
-    if profile_name:
-        profile_dir = script_dir / "data" / f"chrome_profile_{profile_name}"
-    else:
-        profile_dir = script_dir / "data" / "chrome_profile"
+    # if profile_name:
+    #     profile_dir = script_dir / "data" / f"chrome_profile_{profile_name}"
+    # else:
+    #     profile_dir = script_dir / "data" / "chrome_profile"
+    profile_dir = PROJECT_DIR / "src" / "shopee-omzet-automation" / "data" / "chrome_profile"
     options.add_argument(f"--user-data-dir={profile_dir.resolve()}")
     options.add_argument("--profile-directory=shopee_profile")
 

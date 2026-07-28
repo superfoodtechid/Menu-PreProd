@@ -1264,16 +1264,17 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                     cat_common_id = item_info["category_common_id"] or item_info["category_id"]
 
                     v2_payload = {
-                        "menu_common_id": cat_common_id,
+                        "menu_common_id": orig_item.get('menu_common_id') or cat_common_id,
                         "image_url": orig_item.get('image_url', orig_item.get('image', '')),
                         "name": orig_item.get('name'),
                         "description": orig_item.get('description', ''),
                         "price": int(new_price),
                         "active": orig_item.get('is_active', orig_item.get('active', True)),
-                        "signature": orig_item.get('signature', False)
+                        "signature": orig_item.get('signature', False),
+                        "variant_category_common_ids": orig_item.get('variant_category_common_ids') or orig_item.get('variant_category_ids') or []
                     }
 
-                    patch_group_id = orig_item.get('menu_common_id') or cat_common_id or group_id
+                    patch_group_id = group_id or api_headers.get('menu_group_id') or orig_item.get('menu_common_id') or cat_common_id
                     passkey = api_headers.get('x-passkey') or "1729b182-c60e-4568-849d-5eb7d794fd09"
                     
                     headers_direct = {

@@ -1352,20 +1352,26 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                                 )
                                 status_code = cr_res.status
                                 if status_code in (429, 403, 503, 504) and attempt_idx < max_retries:
-                                    logger.warning(f"⚠️ Terdeteksi Rate Limit (HTTP {status_code}) pada item {item_id}. Menunggu 2.5 detik (attempt {attempt_idx+1}/{max_retries})...")
-                                    time.sleep(2.5)
+                                    logger.warning(f"⚠️ Terdeteksi Rate Limit (HTTP {status_code}) pada item {item_id}. Menunggu 5 detik (attempt {attempt_idx+1}/{max_retries})...")
+                                    time.sleep(5.0)
                                     continue
                                 return {'ok': cr_res.ok, 'status': status_code, 'body': cr_res.text()}
                             except Exception as ex:
                                 if attempt_idx < max_retries:
-                                    time.sleep(2.0)
+                                    time.sleep(3.0)
                                     continue
                                 return {'ok': False, 'error': str(ex)}
 
                     res = send_patch_request(v2_payload)
 
-                    # Fallback 1: Jika gagal dan ada variant_category_common_ids, coba sertakan
-                    if not res or not res.get('ok'):
+                    # Jika terkena HTTP 429, berikan cooldown dan JANGAN langsung pemboman request fallback
+                    if res and res.get('status') == 429:
+                        logger.warning(f"⚠️ GoFood API Rate Limited (HTTP 429). Mengistirahatkan proses 10 detik agar server pulih...")
+                        time.sleep(10.0)
+
+                    # Fallback 1: Jika gagal (bukan 429) dan ada variant_category_common_ids, coba sertakan
+                    if (not res or not res.get('ok')) and res.get('status') != 429:
+                        time.sleep(0.6)  # Jeda jeda sebelum fallback
                         vars_ids = orig_item.get('variant_category_common_ids') or orig_item.get('variant_category_ids')
                         if vars_ids and isinstance(vars_ids, list) and len(vars_ids) > 0:
                             v2_payload_with_vars = dict(v2_payload)
@@ -1374,10 +1380,12 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                             if res_var and res_var.get('ok'):
                                 res = res_var
 
-                    if not res or not res.get('ok'):
+                    # Fallback 2: Jika masih gagal (dan bukan 429)
+                    if (not res or not res.get('ok')) and res.get('status') != 429:
                         status_code = res.get('status', '?') if res else '?'
                         body_err = (res.get('body') or '')[:500] if res else ''
                         logger.warning(f"GoFood V2 PATCH gagal (HTTP {status_code}), Body: {body_err}, Error: {res.get('error')}. Fallback ke V1 PUT...")
+                        time.sleep(0.6)  # Jeda jeda sebelum fallback V1
 
                         v1_payload = {
                             "name": orig_item.get('name'),
@@ -1413,14 +1421,14 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         status_str = "FAILED"
                         err_msg = res.get('body') or "GoFood API error."
 
-                    # Pacing delay bervariatif (random jitter 180ms - 420ms) untuk menghindari deteksi pola bot
+                    # Pacing delay bervariatif (random jitter 1.2s - 2.5s) untuk memberikan jeda aman antar item
                     import random
-                    time.sleep(random.uniform(0.18, 0.42))
+                    time.sleep(random.uniform(1.2, 2.5))
 
-                    # Jeda istirahat (batch breather) setiap 25 item agar token bucket rate-limit GoFood pulih
-                    if (idx + 1) % 25 == 0 and (idx + 1) < total_updates:
-                        logger.info(f"☕ Batch pause (item {idx+1}/{total_updates}): istirahat 1.8 detik untuk mendinginkan rate-limit GoFood...")
-                        time.sleep(random.uniform(1.5, 2.2))
+                    # Jeda istirahat (batch breather) setiap 10 item agar token bucket rate-limit GoFood pulih
+                    if (idx + 1) % 10 == 0 and (idx + 1) < total_updates:
+                        logger.info(f"☕ Batch pause (item {idx+1}/{total_updates}): istirahat 5 detik untuk mendinginkan rate-limit GoFood...")
+                        time.sleep(random.uniform(4.0, 6.0))
 
                     # Update progress setiap 5 item
                     if (idx + 1) % 5 == 0 or (idx + 1) == total_updates:

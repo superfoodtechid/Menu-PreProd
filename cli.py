@@ -21,6 +21,7 @@ from menu_core.sheets import get_outlets_for_applicator
 from shopee.core.pull import extract_shopee_menu
 from menu_core.grab import extract_grab_menu
 from menu_core.gofood import extract_gofood_menu
+from menu_core.c5_combiner import combine_c5
 
 import openpyxl
 import pandas as pd
@@ -29,101 +30,7 @@ from upload_drive import upload_combined_to_drive
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 EXPORTS_DIR = os.path.join(FILE_DIR, "data", "exports")
 
-def combine_c5(excel_paths, output_path):
-    all_items = []
-    all_mods = []
-    for f in excel_paths:
-        if os.path.exists(f):
-            try:
-                df_item = pd.read_excel(f, sheet_name='Item')
-                df_mod = pd.read_excel(f, sheet_name='Modifier')
-                all_items.append(df_item)
-                all_mods.append(df_mod)
-            except Exception as e:
-                print(f"  \033[91mError reading {f} for combine: {e}\033[0m")
-                
-    if not all_items:
-        return False
-        
-    df_combined_items = pd.concat(all_items, ignore_index=True)
-    df_combined_mods = pd.concat(all_mods, ignore_index=True)
-    
-    template_path = os.path.join(FILE_DIR, "O. C5 Template.xlsx")
-    try:
-        wb = openpyxl.load_workbook(template_path)
-        sheet_item = wb['Item']
-        if sheet_item.max_row > 1:
-            sheet_item.delete_rows(2, sheet_item.max_row - 1)
-            
-        headers_item = {}
-        for cell in sheet_item[1]:
-            if isinstance(cell.value, str):
-                headers_item[cell.value] = cell.column
-                
-        for r_idx, row in df_combined_items.iterrows():
-            for col_name, val in row.items():
-                if col_name in headers_item:
-                    if pd.isna(val):
-                        val = ""
-                    elif col_name in ['SID', 'Category ID', 'Item ID']:
-                        if isinstance(val, float):
-                            val = str(int(val)) if val.is_integer() else str(val)
-                        else:
-                            val = str(val)
-                    cell = sheet_item.cell(row=r_idx + 2, column=headers_item[col_name], value=val)
-                    
-        # Apply percentage formatting to all columns with '(%)' in the header
-        for cell in sheet_item[1]:
-            val_str = ""
-            if hasattr(cell.value, 'text'):
-                val_str = cell.value.text
-            elif isinstance(cell.value, str):
-                val_str = cell.value
-                
-            if '(%)' in val_str:
-                for r in range(2, sheet_item.max_row + 1):
-                    sheet_item.cell(row=r, column=cell.column).number_format = '0%'
-                    
-        sheet_mod = wb['Modifier']
-        if sheet_mod.max_row > 1:
-            sheet_mod.delete_rows(2, sheet_mod.max_row - 1)
-            
-        headers_mod = {}
-        for cell in sheet_mod[1]:
-            if isinstance(cell.value, str):
-                headers_mod[cell.value] = cell.column
-                
-        for r_idx, row in df_combined_mods.iterrows():
-            for col_name, val in row.items():
-                if col_name in headers_mod:
-                    if pd.isna(val):
-                        val = ""
-                    elif col_name in ['SID', 'Modifier Group ID', 'Modifier ID', 'Item']:
-                        if isinstance(val, float):
-                            val = str(int(val)) if val.is_integer() else str(val)
-                        else:
-                            val = str(val)
-                    sheet_mod.cell(row=r_idx + 2, column=headers_mod[col_name], value=val)
-                    
-        for cell in sheet_mod[1]:
-            val_str = ""
-            if hasattr(cell.value, 'text'):
-                val_str = cell.value.text
-            elif isinstance(cell.value, str):
-                val_str = cell.value
-                
-            if '(%)' in val_str:
-                for r in range(2, sheet_mod.max_row + 1):
-                    sheet_mod.cell(row=r, column=cell.column).number_format = '0%'
-                    
-        wb.save(output_path)
-        return True
-    except Exception as e:
-        print(f"  \033[91mFailed to write combined C5 to template: {e}\033[0m")
-        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
-            df_combined_items.to_excel(writer, sheet_name='Item', index=False)
-            df_combined_mods.to_excel(writer, sheet_name='Modifier', index=False)
-        return True
+
 
 def check_outlet_processed(applicator, o, exports_dir=EXPORTS_DIR):
     raw_outlet = o.get('nama_outlet') or o.get('nama_resto_final') or o.get('merchant_name') or 'unknown'

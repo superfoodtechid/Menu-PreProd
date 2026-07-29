@@ -99,14 +99,22 @@ def fetch_menus(page, token, rest_uuid, passkey=None):
 
 def fetch_menu_groups(page, token, rest_uuid, passkey=None):
     """
-    Ambil daftar menu groups (dengan UUID) dari restoran.
-    Mencoba beberapa endpoint untuk mendapat UUID yang valid bagi bulk upload.
-    Endpoint: GET /v2/restaurants/{rest_uuid}/menu_groups
+    Ambil menu_group_id dari restoran via V2 API.
+    Endpoint: GET /v2/restaurants/{rest_uuid}
     """
+    res = _fetch(page, token, f"{BASE_V2}/restaurants/{rest_uuid}", passkey=passkey)
+    if res and isinstance(res, dict):
+        mg_id = res.get('menu_group_id') or res.get('v2_menus_group_id') or res.get('group_id')
+        if mg_id:
+            return mg_id
+        mgs = res.get('menu_groups') or res.get('data') or []
+        if mgs and len(mgs) > 0:
+            return mgs[0].get('id') or mgs[0].get('common_id')
+
+    # Fallback ke endpoint v2 / v1 legacy menu_groups
     result = _fetch(page, token, f"{BASE_V2}/restaurants/{rest_uuid}/menu_groups", passkey=passkey)
     if result:
         return result
-    # Fallback ke v1
     return _fetch(page, token, f"{BASE_V1}/restaurants/{rest_uuid}/menu_groups", passkey=passkey)
 
 

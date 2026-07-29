@@ -7,11 +7,11 @@ function StepLabel({ number, label, active, done }) {
   return (
     <div className="mb-2.5 flex items-center gap-2">
       <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[13px] font-bold transition-colors ${
-        done ? "bg-red-700 text-white"
-          : active ? "bg-red-100 text-red-700 ring-4 ring-red-50"
-            : "bg-slate-100 text-slate-400"
+        done ? "bg-red-700 text-white dark:bg-white dark:text-black"
+          : active ? "bg-red-100 text-red-700 ring-4 ring-red-50 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700"
+            : "bg-slate-100 text-slate-400 dark:bg-zinc-900 dark:text-zinc-500"
       }`}>{done ? "✓" : number}</span>
-      <span className={`text-[15px] font-bold uppercase tracking-wider ${active || done ? "text-slate-700" : "text-slate-400"}`}>
+      <span className={`text-[15px] font-bold uppercase tracking-wider ${active || done ? "text-slate-700 dark:text-white" : "text-slate-400 dark:text-zinc-500"}`}>
         {label}
       </span>
     </div>
@@ -253,7 +253,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     const newJobsList = [];
 
     for (const target of targets) {
-      const branchLabel = target.brand || target.nama_resto_final || target.merchant_name;
+      const branchLabel = target.brand || target.nama_outlet || target.merchant_name;
       try {
         const res = await fetch(`${API_BASE_URL}/api/jobs/pull?outlet_id=${target.id}`, {
           method: "POST",
@@ -346,10 +346,10 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     <main className="grid grid-cols-1 gap-6 xl:grid-cols-5">
       {/* Left Form: Selectors */}
       <section className="surface-card min-w-0 h-fit space-y-6 p-5 sm:p-6 xl:col-span-2">
-        <div className="border-b border-red-100 pb-4">
-          <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600">Langkah 1</p>
-          <h2 className="mt-1 text-xl font-bold text-slate-900">Pilih menu sumber</h2>
-          <p className="mt-1 text-[15px] leading-6 text-slate-500">Ambil data menu terbaru sebelum melakukan perubahan harga.</p>
+        <div className="border-b border-red-100 dark:border-zinc-800 pb-4">
+          <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600 dark:text-zinc-400">Langkah 1</p>
+          <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Pilih menu sumber</h2>
+          <p className="mt-1 text-[15px] leading-6 text-slate-500 dark:text-zinc-400">Ambil data menu terbaru sebelum melakukan perubahan harga.</p>
         </div>
         
         <form onSubmit={handleTriggerPull} className="space-y-5">
@@ -381,17 +381,17 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
             {openPlatformDropdown && (
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setOpenPlatformDropdown(false)} />
-                <div className="absolute left-0 right-0 top-full z-30 mt-1 space-y-1 rounded-xl border border-red-100 bg-white p-2.5 shadow-xl">
-                  <div className="flex items-center justify-between border-b border-slate-100 px-1 pb-2">
-                    <span className="text-[13px] font-semibold uppercase tracking-wider text-slate-400">Terpilih ({selectedPlatforms.length}/{PLATFORM_OPTIONS.length})</span>
-                    <button type="button" onClick={handleSelectAllPlatforms} className="text-[13px] font-bold text-red-700 hover:underline">
+                <div className="absolute left-0 right-0 top-full z-30 mt-1 space-y-1 rounded-xl border border-red-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 shadow-xl">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-1 pb-2">
+                    <span className="text-[13px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Terpilih ({selectedPlatforms.length}/{PLATFORM_OPTIONS.length})</span>
+                    <button type="button" onClick={handleSelectAllPlatforms} className="text-[13px] font-bold text-red-700 dark:text-red-400 hover:underline">
                       {selectedPlatforms.length === PLATFORM_OPTIONS.length ? "Batal Semua" : "Pilih Semua"}
                     </button>
                   </div>
                   {PLATFORM_OPTIONS.map((value) => {
                     const checked = selectedPlatforms.includes(value);
                     return (
-                      <label key={value} className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2 transition hover:bg-slate-50">
+                      <label key={value} className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2 transition hover:bg-slate-50 dark:hover:bg-slate-800">
                         <input type="checkbox" checked={checked} onChange={() => handlePlatformCheck(value)} className="h-4 w-4 accent-red-700" />
                         <PlatformBadge platform={value} selected={checked} />
                       </label>
@@ -415,7 +415,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
               className="field-control flex items-center justify-between text-left font-medium"
               aria-expanded={openOutletDropdown}
             >
-              <span className={`truncate ${checkedParentNames.length ? "font-semibold text-slate-800" : "text-slate-400"}`}>
+              <span className={`truncate ${checkedParentNames.length ? "font-semibold text-slate-800 dark:text-slate-100" : "text-slate-400 dark:text-slate-500"}`}>
                 {loadingOutlets ? "Memuat..."
                   : selectedPlatforms.length === 0 ? "Pilih Aplikator dulu"
                     : checkedParentNames.length === 0 ? "Pilih Outlet..."
@@ -430,23 +430,23 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
             {openOutletDropdown && (
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setOpenOutletDropdown(false)} />
-                <div className="absolute left-0 right-0 top-full z-30 mt-1 min-w-[260px] space-y-2 rounded-xl border border-red-100 bg-white p-2.5 shadow-xl">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <span className="text-[13px] font-semibold uppercase tracking-wider text-slate-400">Terpilih ({checkedParentNames.length}/{uniqueParentNames.length})</span>
-                    <button type="button" onClick={handleSelectAllParents} disabled={!filteredParents.length} className="text-[13px] font-bold text-red-700 hover:underline disabled:text-slate-300">
+                <div className="absolute left-0 right-0 top-full z-30 mt-1 min-w-[260px] space-y-2 rounded-xl border border-red-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 shadow-xl">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <span className="text-[13px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Terpilih ({checkedParentNames.length}/{uniqueParentNames.length})</span>
+                    <button type="button" onClick={handleSelectAllParents} disabled={!filteredParents.length} className="text-[13px] font-bold text-red-700 dark:text-red-400 hover:underline disabled:text-slate-300 dark:disabled:text-slate-600">
                       {allFilteredParentsChecked ? "Batal Semua" : "Pilih Semua"}
                     </button>
                   </div>
                   <input type="text" placeholder="Cari outlet..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && e.preventDefault()} className="field-control py-2" autoFocus />
                   <div className="max-h-52 space-y-0.5 overflow-y-auto pr-1">
                     {filteredParents.length === 0 ? (
-                      <p className="py-3 text-center text-[15px] text-slate-400">Tidak ada outlet cocok</p>
+                      <p className="py-3 text-center text-[15px] text-slate-400 dark:text-slate-500">Tidak ada outlet cocok</p>
                     ) : filteredParents.map((name) => {
                       const checked = checkedParentNames.includes(name);
                       return (
-                        <label key={name} className="flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-[15px] transition hover:bg-red-50/50">
+                        <label key={name} className="flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-[15px] transition hover:bg-red-50/50 dark:hover:bg-slate-800">
                           <input type="checkbox" checked={checked} onChange={() => handleParentCheck(name)} className="h-4 w-4 accent-red-700" />
-                          <span className={checked ? "font-medium text-slate-800" : "text-slate-500"}>{name}</span>
+                          <span className={checked ? "font-medium text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}>{name}</span>
                         </label>
                       );
                     })}
@@ -469,7 +469,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
               className="field-control flex items-center justify-between text-left font-medium"
               aria-expanded={openBranchDropdown}
             >
-              <span className={`truncate ${checkedBranchIds.length ? "font-semibold text-slate-800" : "text-slate-400"}`}>
+              <span className={`truncate ${checkedBranchIds.length ? "font-semibold text-slate-800 dark:text-slate-100" : "text-slate-400 dark:text-slate-500"}`}>
                 {checkedParentNames.length === 0 ? "Pilih Outlet dulu"
                   : checkedBranchIds.length === availableBranches.length ? `Semua Cabang (${availableBranches.length})`
                     : `${checkedBranchIds.length} dari ${availableBranches.length} Cabang`}
@@ -482,22 +482,22 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
             {openBranchDropdown && (
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setOpenBranchDropdown(false)} />
-                <div className="absolute left-0 right-0 top-full z-30 mt-1 min-w-[280px] space-y-2 rounded-xl border border-red-100 bg-white p-2.5 shadow-xl">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <span className="text-[13px] font-semibold uppercase tracking-wider text-slate-400">Terpilih ({checkedBranchIds.length}/{availableBranches.length})</span>
-                    <button type="button" onClick={handleSelectAllBranches} className="text-[13px] font-bold text-red-700 hover:underline">
+                <div className="absolute left-0 right-0 top-full z-30 mt-1 min-w-[280px] space-y-2 rounded-xl border border-red-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 shadow-xl">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <span className="text-[13px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Terpilih ({checkedBranchIds.length}/{availableBranches.length})</span>
+                    <button type="button" onClick={handleSelectAllBranches} className="text-[13px] font-bold text-red-700 dark:text-red-400 hover:underline">
                       {checkedBranchIds.length === availableBranches.length ? "Batal Semua" : "Pilih Semua"}
                     </button>
                   </div>
                   <div className="max-h-60 space-y-0.5 overflow-y-auto pr-1">
                     {availableBranches.map((branch) => {
                       const checked = checkedBranchIds.includes(branch.id);
-                      const branchLabel = branch.brand || branch.nama_resto_final || branch.merchant_name;
+                      const branchLabel = branch.brand || branch.nama_outlet || branch.merchant_name;
                       return (
-                        <label key={branch.id} className="flex cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 transition hover:bg-red-50/50">
+                        <label key={branch.id} className="flex cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 transition hover:bg-red-50/50 dark:hover:bg-slate-800">
                           <input type="checkbox" checked={checked} onChange={() => handleBranchCheck(branch.id)} className="mt-1 h-4 w-4 accent-red-700" />
                           <span className="min-w-0 flex-1">
-                            <span className={`block truncate text-[15px] ${checked ? "font-medium text-slate-800" : "text-slate-500"}`}>{branchLabel}</span>
+                            <span className={`block truncate text-[15px] ${checked ? "font-medium text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>{branchLabel}</span>
                             <PlatformBadge platform={branch.platform} storeId={branch.store_id || "No Store ID"} className="mt-1" />
                           </span>
                         </label>
@@ -522,24 +522,24 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       {/* Right Status Panel: Active/Completed Jobs List */}
       <section className="min-w-0 space-y-6 xl:col-span-3">
         <div className="surface-card flex min-h-[420px] flex-col p-5 sm:p-6">
-          <div className="mb-4 border-b border-red-100 pb-4">
-            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600">Aktivitas</p>
-            <h2 className="mt-1 text-xl font-bold text-slate-900">Status penarikan menu</h2>
+          <div className="mb-4 border-b border-red-100 dark:border-zinc-800 pb-4">
+            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600 dark:text-zinc-400">Aktivitas</p>
+            <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Status penarikan menu</h2>
           </div>
 
           {activeJobs.length === 0 ? (
-            <div className="my-auto rounded-2xl border border-dashed border-red-200 bg-red-50/40 px-6 py-14 text-center">
-              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">↓</div>
-              <p className="font-semibold text-slate-700">Belum ada aktivitas</p>
-              <p className="mt-1 text-[15px] text-slate-500">Pilih platform dan outlet, lalu tarik menu untuk melihat progres.</p>
+            <div className="my-auto rounded-2xl border border-dashed border-red-200 bg-red-50/40 dark:border-zinc-800 dark:bg-zinc-950/60 px-6 py-14 text-center">
+              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-white dark:bg-zinc-800 text-red-600 dark:text-white shadow-sm font-bold">↓</div>
+              <p className="font-semibold text-slate-700 dark:text-white">Belum ada aktivitas</p>
+              <p className="mt-1 text-[15px] text-slate-500 dark:text-zinc-400">Pilih platform dan outlet, lalu tarik menu untuk melihat progres.</p>
             </div>
           ) : (
             <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
               {activeJobs.map((job) => (
-                <div key={job.id} className="space-y-3 rounded-xl border border-red-100 bg-red-50/25 p-4">
+                <div key={job.id} className="space-y-3 rounded-xl border border-red-100 dark:border-zinc-800 bg-red-50/25 dark:bg-zinc-900 p-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="text-[15px] font-semibold text-zinc-800">{job.name}</div>
+                      <div className="text-[15px] font-semibold text-zinc-800 dark:text-white">{job.name}</div>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         <PlatformBadge platform={job.platform} />
                         <span className="text-[13px] text-slate-400">ID: {job.id}</span>

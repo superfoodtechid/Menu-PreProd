@@ -174,6 +174,11 @@ class PriceUpdateRequest(BaseModel):
     outlet_id: uuid.UUID
     updates: List[PriceUpdateItem]
 
+class CombineC5Request(BaseModel):
+    job_ids: Optional[List[str]] = None
+    outlet_name: Optional[str] = None
+
+
 
 # ─── GSHEETS SYNC ENDPOINT ───────────────────────────────────────────────────
 
@@ -1731,6 +1736,83 @@ def download_job_file(job_id: uuid.UUID, db: Session = Depends(get_db)):
         filename=filename,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+@app.post("/api/jobs/combine-c5")
+def combine_c5_endpoint(request: CombineC5Request, db: Session = Depends(get_db)):
+    from menu_core.c5_combiner import combine_c5
+    from upload_drive import upload_combined_to_drive
+
+    excel_paths = []
+    outlet_name = (request.outlet_name or "").strip()
+
+    if request.job_ids:
+        for jid in request.job_ids:
+            try:
+                j_uuid = uuid.UUID(str(jid))
+                job = db.query(Job).filter(Job.id == j_uuid).first()
+                if job and job.result_metadata and job.result_metadata.get("excel_path"):
+                    epath = job.result_metadata["excel_path"]
+                    if os.path.exists(epath) and epath not in excel_paths:
+                        excel_paths.append(epath)
+                if not outlet_name and job and job.outlet:
+                    outlet_name = job.outlet.nama_outlet or job.outlet.nama_resto_final or job.outlet.merchant_name
+            except Exception as ex:
+                logger.warning(f"Error resolving job ID {jid}: {ex}")
+
+    if not outlet_name:
+        outlet_name = "Combined Outlet"
+
+    import re
+    clean_outlet_filename = "".join(c for c in outlet_name if c.isalnum() or c in (' ', '_', '-')).strip()
+    clean_folder_name = re.sub(r'\s+', ' ', clean_outlet_filename).lower()
+
+    if not excel_paths and outlet_name:
+        exports_root = BASE_DIR / "data" / "exports"
+        for p in exports_root.glob(f"**/{clean_folder_name}/**/*.xlsx"):
+            if "combined" not in str(p) and str(p) not in excel_paths:
+                excel_paths.append(str(p))
+
+    if not excel_paths:
+        raise HTTPException(status_code=400, detail="Tidak ada file Excel C5 yang ditemukan untuk digabungkan.")
+
+    combined_dir = BASE_DIR / "data" / "exports" / "combined" / clean_folder_name
+    combined_dir.mkdir(parents=True, exist_ok=True)
+
+    excel_filename = f"O.C5 {clean_outlet_filename}.xlsx"
+    combined_path = str(combined_dir / excel_filename)
+
+    ok = combine_c5(excel_paths, combined_path)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Gagal menggabungkan file C5.")
+
+    gspread_url = upload_combined_to_drive(combined_path, clean_outlet_filename)
+
+    from urllib.parse import quote
+    return {
+        "ok": True,
+        "excel_filename": excel_filename,
+        "excel_path": combined_path,
+        "gspread_url": gspread_url,
+        "download_url": f"/api/jobs/download-file?path={quote(combined_path)}",
+        "combined_count": len(excel_paths),
+        "outlet_name": outlet_name
+    }
+
+@app.get("/api/jobs/download-file")
+def download_file_by_path(path: str):
+    abs_path = os.path.abspath(path)
+    base_exports = os.path.abspath(str(BASE_DIR / "data" / "exports"))
+    if not abs_path.startswith(base_exports):
+        raise HTTPException(status_code=403, detail="Akses ditolak")
+    if not os.path.exists(abs_path):
+        raise HTTPException(status_code=404, detail="File tidak ditemukan di server")
+    filename = os.path.basename(abs_path)
+    return FileResponse(
+        path=abs_path,
+        filename=filename,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
 
 
 # ─── AUDIT TRAILS ENDPOINTS ───────────────────────────────────────────────────

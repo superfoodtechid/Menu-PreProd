@@ -669,6 +669,9 @@ def login_outlet_gofood_flow(outlet_info):
         except Exception:
             pass
 
+    if not os.getenv("DISPLAY"):
+        headless_mode = True
+
     chrome_process = None
     chrome_log = None
     try:

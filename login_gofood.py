@@ -383,6 +383,9 @@ def login_outlet(outlet_info, proxy_config=None):
     except Exception:
         pass
 
+    if not os.getenv("DISPLAY"):
+        headless_mode = True
+
     result = None
 
     chrome_process = None

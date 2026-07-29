@@ -89,6 +89,8 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       setAvailableBranches([]);
       setCheckedBranchIds([]);
       setSearchQuery("");
+      setActiveJobs([]);
+      setCombinedResult(null);
       return;
     }
 
@@ -100,6 +102,8 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     setAvailableBranches([]);
     setCheckedBranchIds([]);
     setSearchQuery("");
+    setActiveJobs([]);
+    setCombinedResult(null);
 
     const params = new URLSearchParams();
     selectedPlatforms.forEach((platform) => params.append("platform", platform));
@@ -176,6 +180,8 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
   const handleSelectParent = (parentName) => {
     setSelectedParent(parentName);
     setOpenOutletDropdown(false);
+    setActiveJobs([]);
+    setCombinedResult(null);
   };
 
   // Toggle single branch checkbox
@@ -308,7 +314,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       }
     }
 
-    setActiveJobs((prev) => [...newJobsList, ...prev]);
+    setActiveJobs(newJobsList);
     if (Object.keys(pollingIntervalsRef.current).length === 0) {
       setTriggering(false);
     }

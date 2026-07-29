@@ -1123,7 +1123,7 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
 
                 page.on("request", capture_headers)
 
-                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/", wait_until="domcontentloaded")
+                page.goto("https://portal.gofoodmerchant.co.id/dashboard", wait_until="domcontentloaded")
                 time.sleep(3)
 
                 if "/auth" in page.url or "login" in page.url:
@@ -1185,12 +1185,75 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                 if not token:
                     cookies = context.cookies()
                     for c in cookies:
-                        if c['name'] == 'access_token':
+                        if c['name'] in ('access_token', 'token', 'gobiz_token'):
                             token = f"Bearer {c['value']}"
                             break
 
+                if not token:
+                    try:
+                        token_eval = page.evaluate("""() => {
+                            const keys = ['token', 'access_token', 'accessToken', 'auth_token', 'authorization', 'gobiz-token', 'go-id-token'];
+                            for (const k of keys) {
+                                let val = localStorage.getItem(k) || sessionStorage.getItem(k);
+                                if (val) {
+                                    if (val.startsWith('{')) {
+                                        try {
+                                            const parsed = JSON.parse(val);
+                                            val = parsed.token || parsed.access_token || parsed.accessToken || val;
+                                        } catch(e){}
+                                    }
+                                    if (val && val.length > 20) return val;
+                                }
+                            }
+                            const tokenRegex = /[A-Za-z0-9-_=]+\\.[A-Za-z0-9-_=]+\\.?[A-Za-z0-9-_.+/=]*/;
+                            for (let i = 0; i < localStorage.length; i++) {
+                                const val = localStorage.getItem(localStorage.key(i));
+                                if (val && val.length > 20) {
+                                    if (val.includes('eyJ')) return val;
+                                    const match = val.match(tokenRegex);
+                                    if (match) return match[0];
+                                }
+                            }
+                            for (let i = 0; i < sessionStorage.length; i++) {
+                                const val = sessionStorage.getItem(sessionStorage.key(i));
+                                if (val && val.length > 20) {
+                                    if (val.includes('eyJ')) return val;
+                                    const match = val.match(tokenRegex);
+                                    if (match) return match[0];
+                                }
+                            }
+                            return null;
+                        }""")
+                        if token_eval:
+                            token = token_eval if token_eval.startswith("Bearer ") else f"Bearer {token_eval}"
+                    except Exception as e:
+                        logger.warning(f"Gagal mengekstrak token dari web storage: {e}")
+
                 rest_uuid = api_headers.get('restaurant_uuid')
-                if not rest_uuid:
+                if not rest_uuid or len(rest_uuid) != 36:
+                    try:
+                        uuid_eval = page.evaluate("""() => {
+                            const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+                            for (let i = 0; i < localStorage.length; i++) {
+                                const val = localStorage.getItem(localStorage.key(i));
+                                const match = uuidRegex.exec(val);
+                                if (match) return match[0];
+                            }
+                            for (let i = 0; i < sessionStorage.length; i++) {
+                                const val = sessionStorage.getItem(sessionStorage.key(i));
+                                const match = uuidRegex.exec(val);
+                                if (match) return match[0];
+                            }
+                            const urlMatch = uuidRegex.exec(window.location.href);
+                            if (urlMatch) return urlMatch[0];
+                            return null;
+                        }""")
+                        if uuid_eval:
+                            rest_uuid = uuid_eval
+                    except Exception as e:
+                        logger.warning(f"Gagal mengekstrak rest_uuid dari web storage: {e}")
+
+                if not rest_uuid or len(rest_uuid) != 36:
                     # Coba baca dari cached menu response hasil Pull sebelumnya
                     cache_path = os.path.join(BASE_DIR, "Gofood", "API", f"menu-response-{merchant_id}.json")
                     if os.path.exists(cache_path):
@@ -1199,14 +1262,17 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                                 cdata = json.load(f)
                                 menus = cdata.get("menus") or cdata.get("categories") or []
                                 if menus and len(menus) > 0:
-                                    rest_uuid = menus[0].get("restaurant_id") or menus[0].get("restaurant_uuid")
+                                    cand = menus[0].get("restaurant_id") or menus[0].get("restaurant_uuid")
+                                    if cand and len(cand) == 36:
+                                        rest_uuid = cand
                         except Exception as e:
                             logger.error(f"Gagal membaca cached restaurant_id: {e}")
+
                 if not rest_uuid:
                     rest_uuid = merchant_id
 
                 group_id = api_headers.get('menu_group_id')
-                if not group_id and rest_uuid:
+                if not group_id and rest_uuid and token and len(rest_uuid) == 36:
                     try:
                         mg_data = go_api.fetch_menu_groups(page, token, rest_uuid)
                         if isinstance(mg_data, list) and len(mg_data) > 0:

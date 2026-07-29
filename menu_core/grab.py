@@ -7,12 +7,17 @@ from pathlib import Path
 import openpyxl
 
 def run_async(coro):
-    """Safely run async coroutines inside a synchronous context."""
+    """Safely run async coroutines inside a synchronous worker thread context."""
+    new_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(new_loop)
     try:
-        return asyncio.run(coro)
-    except RuntimeError:
-        loop = asyncio.get_event_loop_policy().get_event_loop()
-        return loop.run_until_complete(coro)
+        return new_loop.run_until_complete(coro)
+    finally:
+        try:
+            new_loop.close()
+        except Exception:
+            pass
+        asyncio.set_event_loop(None)
 
 def clean_name_str(s):
     """Helper to clean string for comparison (remove spaces, symbols, lowercase)."""

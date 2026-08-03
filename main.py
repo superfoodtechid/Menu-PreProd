@@ -104,6 +104,7 @@ class OutletCreate(BaseModel):
     account_id: uuid.UUID
     store_id: Optional[str] = None
     merchant_name: str = Field(..., description="Nama merchant / portal selector di web")
+    owner: Optional[str] = None
     nama_outlet: Optional[str] = None
     cabang: Optional[str] = None
     nama_resto_final: Optional[str] = None
@@ -115,6 +116,7 @@ class OutletResponse(BaseModel):
     account_id: uuid.UUID
     store_id: Optional[str]
     merchant_name: str
+    owner: Optional[str] = None
     nama_outlet: Optional[str]
     cabang: Optional[str]
     nama_resto_final: Optional[str]
@@ -202,15 +204,15 @@ def sync_sheets(db: Session = Depends(get_db)):
     added_outlets = 0
     updated_outlets = 0
 
-    # Forward-fill merged/header columns in Google Sheet dataframe (e.g. Status, Nama Outlet, Merchant Name)
+    # Forward-fill merged/header columns in Google Sheet dataframe (e.g. Owner, Status, Nama Outlet, Merchant Name)
     # Use block_id (derived from non-null No column) to prevent global ffill leak across empty rows/different outlets
     if "No" in df.columns:
         df["block_id"] = df["No"].notna().cumsum()
-        for col in ["Status", "Nama Outlet", "Merchant Name", "Cabang", "Nama Resto Final", "Brand"]:
+        for col in ["Owner", "Status", "Nama Outlet", "Merchant Name", "Cabang", "Nama Resto Final", "Brand"]:
             if col in df.columns:
                 df[col] = df.groupby("block_id")[col].ffill()
     else:
-        for col in ["Status", "Nama Outlet", "Merchant Name", "Cabang", "Nama Resto Final", "Brand"]:
+        for col in ["Owner", "Status", "Nama Outlet", "Merchant Name", "Cabang", "Nama Resto Final", "Brand"]:
             if col in df.columns:
                 df[col] = df[col].ffill()
 
@@ -299,6 +301,9 @@ def sync_sheets(db: Session = Depends(get_db)):
         m_name_raw = row.get("Merchant Name")
         merchant_name = str(m_name_raw).strip() if pd.notna(m_name_raw) and str(m_name_raw).strip() != "-" else str(row.get("Nama Outlet", "")).strip()
 
+        owner_raw = row.get("Owner")
+        owner = str(owner_raw).strip() if pd.notna(owner_raw) and str(owner_raw).strip() not in ("-", "") else None
+
         nama_outlet = str(row.get("Nama Outlet", "")).strip() if pd.notna(row.get("Nama Outlet")) else None
         cabang = str(row.get("Cabang", "")).strip() if pd.notna(row.get("Cabang")) else str(row.get("Brand", "")).strip()
         nama_resto_final = str(row.get("Nama Resto Final", "")).strip() if pd.notna(row.get("Nama Resto Final")) else None
@@ -323,6 +328,7 @@ def sync_sheets(db: Session = Depends(get_db)):
                 account_id=db_account.id,
                 store_id=store_id,
                 merchant_name=merchant_name,
+                owner=owner,
                 nama_outlet=nama_outlet,
                 cabang=cabang,
                 nama_resto_final=nama_resto_final,
@@ -334,6 +340,7 @@ def sync_sheets(db: Session = Depends(get_db)):
             added_outlets += 1
         else:
             db_outlet.store_id = store_id
+            db_outlet.owner = owner
             db_outlet.nama_resto_final = nama_resto_final
             db_outlet.brand = brand
             db_outlet.is_active = True
@@ -532,18 +539,7 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
                     outlet.store_id = resolved_store_id
                     logger.info(f"💾 Dynamically updated store_id to {resolved_store_id} for outlet {outlet.merchant_name}")
             
-            # Upload to Google Drive/Sheets
-            excel_path = result.get("excel")
             drive_url = None
-            if excel_path and os.path.exists(excel_path):
-                try:
-                    job.current_step = "Mengunggah hasil ke Google Sheets..."
-                    db.commit()
-                    from upload_drive import upload_combined_to_drive
-                    clean_outlet_filename = "".join(c for c in (outlet.nama_outlet or outlet.nama_resto_final or outlet.merchant_name or 'unknown') if c.isalnum() or c in (' ', '_', '-')).strip()
-                    drive_url = upload_combined_to_drive(excel_path, clean_outlet_filename)
-                except Exception as ue:
-                    logger.error(f"Failed to upload to Google Drive: {ue}")
 
             job.status = "SUCCESS"
             job.progress_pct = 100
@@ -587,18 +583,7 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
             if not success:
                 raise Exception(f"GoFood extraction failed: {result}")
                 
-            # Upload to Google Drive/Sheets
-            excel_path = result.get("excel")
             drive_url = None
-            if excel_path and os.path.exists(excel_path):
-                try:
-                    job.current_step = "Mengunggah hasil ke Google Sheets..."
-                    db.commit()
-                    from upload_drive import upload_combined_to_drive
-                    clean_outlet_filename = "".join(c for c in (outlet.nama_outlet or outlet.nama_resto_final or outlet.merchant_name or 'unknown') if c.isalnum() or c in (' ', '_', '-')).strip()
-                    drive_url = upload_combined_to_drive(excel_path, clean_outlet_filename)
-                except Exception as ue:
-                    logger.error(f"Failed to upload to Google Drive: {ue}")
 
             job.status = "SUCCESS"
             job.progress_pct = 100
@@ -640,18 +625,7 @@ def run_pull_job(job_id: uuid.UUID, outlet_id: uuid.UUID):
             if not success:
                 raise Exception(f"Grab extraction failed: {result}")
                 
-            # Upload to Google Drive/Sheets
-            excel_path = result.get("excel")
             drive_url = None
-            if excel_path and os.path.exists(excel_path):
-                try:
-                    job.current_step = "Mengunggah hasil ke Google Sheets..."
-                    db.commit()
-                    from upload_drive import upload_combined_to_drive
-                    clean_outlet_filename = "".join(c for c in (outlet.nama_outlet or outlet.nama_resto_final or outlet.merchant_name or 'unknown') if c.isalnum() or c in (' ', '_', '-')).strip()
-                    drive_url = upload_combined_to_drive(excel_path, clean_outlet_filename)
-                except Exception as ue:
-                    logger.error(f"Failed to upload to Google Drive: {ue}")
 
             job.status = "SUCCESS"
             job.progress_pct = 100
@@ -1741,9 +1715,11 @@ def download_job_file(job_id: uuid.UUID, db: Session = Depends(get_db)):
 def combine_c5_endpoint(request: CombineC5Request, db: Session = Depends(get_db)):
     from menu_core.c5_combiner import combine_c5
     from upload_drive import upload_combined_to_drive
+    from datetime import datetime
 
     excel_paths = []
     outlet_name = (request.outlet_name or "").strip()
+    owner_name = None
 
     if request.job_ids:
         for jid in request.job_ids:
@@ -1754,16 +1730,17 @@ def combine_c5_endpoint(request: CombineC5Request, db: Session = Depends(get_db)
                     epath = job.result_metadata["excel_path"]
                     if os.path.exists(epath) and epath not in excel_paths:
                         excel_paths.append(epath)
-                if not outlet_name and job and job.outlet:
-                    outlet_name = job.outlet.nama_outlet or job.outlet.nama_resto_final or job.outlet.merchant_name
+                if not owner_name and job and job.outlet:
+                    owner_name = job.outlet.owner or job.outlet.merchant_name or job.outlet.nama_outlet
             except Exception as ex:
                 logger.warning(f"Error resolving job ID {jid}: {ex}")
 
-    if not outlet_name:
-        outlet_name = "Combined Outlet"
+    if not owner_name:
+        owner_name = outlet_name if outlet_name else "Combined Outlet"
 
     import re
-    clean_outlet_filename = "".join(c for c in outlet_name if c.isalnum() or c in (' ', '_', '-')).strip()
+    clean_owner_name = "".join(c for c in owner_name if c.isalnum() or c in (' ', '_', '-')).strip()
+    clean_outlet_filename = "".join(c for c in (outlet_name or owner_name) if c.isalnum() or c in (' ', '_', '-')).strip()
     clean_folder_name = re.sub(r'\s+', ' ', clean_outlet_filename).lower()
 
     if not excel_paths and outlet_name:
@@ -1785,7 +1762,12 @@ def combine_c5_endpoint(request: CombineC5Request, db: Session = Depends(get_db)
     if not ok:
         raise HTTPException(status_code=500, detail="Gagal menggabungkan file C5.")
 
-    gspread_url = upload_combined_to_drive(combined_path, clean_outlet_filename)
+    # Versioning format for Google Drive filename: YYYY:MM:DD HH:MM <Nama Owner>.xlsx
+    timestamp_version = datetime.now().strftime("%Y:%m:%d %H:%M")
+    drive_filename = f"{timestamp_version} {clean_owner_name}.xlsx"
+
+    # Upload to Google Drive using folderName: Owner Name, fileName: YYYY:MM:DD HH:MM <Nama Owner>.xlsx
+    gspread_url = upload_combined_to_drive(combined_path, clean_owner_name, custom_filename=drive_filename)
 
     from urllib.parse import quote
     return {
@@ -1795,7 +1777,7 @@ def combine_c5_endpoint(request: CombineC5Request, db: Session = Depends(get_db)
         "gspread_url": gspread_url,
         "download_url": f"/api/jobs/download-file?path={quote(combined_path)}",
         "combined_count": len(excel_paths),
-        "outlet_name": outlet_name
+        "outlet_name": owner_name
     }
 
 @app.get("/api/jobs/download-file")

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import PlatformBadge from "./PlatformBadge";
 
 const fmt = (v) => (!v && v !== 0) ? "" : Number(v).toLocaleString("id-ID");
@@ -322,6 +322,9 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
   const [platform, setPlatform] = useState("");
   const [allOutlets, setAllOutlets] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedOwner, setSelectedOwner] = useState("");
+  const [openOwnerDropdown, setOpenOwnerDropdown] = useState(false);
+  const [ownerSearch, setOwnerSearch] = useState("");
   const [search, setSearch] = useState("");
   const [uniqueParents, setUniqueParents] = useState([]);
   const [selectedParent, setSelectedParent] = useState("");
@@ -409,15 +412,15 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
   useEffect(() => {
     clearSyncPolling();
     if (!platform) {
-      setAllOutlets([]); setUniqueParents([]); setSelectedParent("");
-      setBranches([]); setSelectedBrandId(""); setCheckedIds([]); setSearch(""); setEdits({}); setBranchMenus({});
+      setAllOutlets([]); setSelectedOwner(""); setUniqueParents([]); setSelectedParent("");
+      setBranches([]); setSelectedBrandId(""); setCheckedIds([]); setSearch(""); setOwnerSearch(""); setEdits({}); setBranchMenus({});
       setSyncPhase("idle"); setSyncJobs([]); setVerificationMap({});
-      setOpenOutletDropdown(false); setOpenBranchDropdown(false);
+      setOpenPlatformDropdown(false); setOpenOwnerDropdown(false); setOpenOutletDropdown(false); setOpenBranchDropdown(false);
       return;
     }
     setLoading(true);
-    setAllOutlets([]); setUniqueParents([]); setSelectedParent("");
-    setBranches([]); setSelectedBrandId(""); setCheckedIds([]); setSearch(""); setEdits({}); setBranchMenus({});
+    setAllOutlets([]); setSelectedOwner(""); setUniqueParents([]); setSelectedParent("");
+    setBranches([]); setSelectedBrandId(""); setCheckedIds([]); setSearch(""); setOwnerSearch(""); setEdits({}); setBranchMenus({});
     setSyncPhase("idle"); setSyncJobs([]); setVerificationMap({});
 
     // Sync GSheet first when platform is selected
@@ -426,11 +429,34 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
       return fetch(url, { headers: { "X-API-Key": API_SECRET_KEY || "" } }).then(r => r.json())
         .then(data => {
           setAllOutlets(data);
-          setUniqueParents(Array.from(new Set(data.map(o => o.nama_outlet).filter(Boolean))).sort());
+          setSelectedOwner("");
+          setSelectedParent("");
         });
     }).catch((err) => console.error("Error fetching outlets:", err))
       .finally(() => setLoading(false));
   }, [platform, API_BASE_URL, API_SECRET_KEY, clearSyncPolling, triggerGSheetSync]);
+
+  // Extract unique owners from allOutlets
+  const uniqueOwners = useMemo(() => Array.from(
+    new Set(allOutlets.map((o) => o.owner).filter((owner) => owner && owner.trim() !== ""))
+  ).sort(), [allOutlets]);
+
+  // Update unique parent names (nama_outlet) based on selectedOwner filter
+  useEffect(() => {
+    const filteredByOwner = selectedOwner
+      ? allOutlets.filter((o) => o.owner === selectedOwner)
+      : allOutlets;
+    const parents = Array.from(new Set(filteredByOwner.map((o) => o.nama_outlet).filter(Boolean))).sort();
+    setUniqueParents(parents);
+    if (selectedParent && !parents.includes(selectedParent)) {
+      setSelectedParent("");
+    }
+  }, [allOutlets, selectedOwner]);
+
+  // Filtered owners list for dropdown search
+  const filteredOwners = useMemo(() => uniqueOwners.filter((owner) =>
+    owner.toLowerCase().includes(ownerSearch.toLowerCase())
+  ), [uniqueOwners, ownerSearch]);
 
   // Fetch menu items and run verification check against intended push prices
   const fetchMenusAndVerify = useCallback(async (targetBranches, targetIntendedPrices = intendedPushPrices) => {
@@ -957,7 +983,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-4">
 
           {/* 1: Aplikator */}
           <div className="relative">
@@ -966,6 +992,7 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
               disabled={syncPhase === "syncing"}
               onClick={() => {
                 setOpenPlatformDropdown(!openPlatformDropdown);
+                setOpenOwnerDropdown(false);
                 setOpenOutletDropdown(false);
                 setOpenBranchDropdown(false);
               }}
@@ -1010,14 +1037,88 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
             )}
           </div>
 
-          {/* 2: Outlet (Single Select) */}
+          {/* 2: Owner Filter */}
           <div className="relative">
-            <StepLabel number={2} label={selectedParent ? `Outlet (1)` : "Outlet"} active={!!platform && !selectedParent} done={!!selectedParent} />
+            <StepLabel number={2} label={selectedOwner ? "Owner (1)" : "Owner"} active={!!platform && !selectedOwner} done={!!selectedOwner} />
+            <button type="button"
+              disabled={!platform || loading || syncPhase === "syncing"}
+              onClick={() => {
+                setOpenOwnerDropdown(!openOwnerDropdown);
+                setOpenPlatformDropdown(false);
+                setOpenOutletDropdown(false);
+                setOpenBranchDropdown(false);
+              }}
+              className="field-control flex items-center justify-between text-left font-medium"
+            >
+              <span className={`truncate ${selectedOwner ? "text-zinc-800 dark:text-white font-semibold" : "text-zinc-400 dark:text-zinc-500"}`}>
+                {loading
+                  ? "Memuat..."
+                  : !platform
+                  ? "Pilih Aplikator dulu"
+                  : selectedOwner || "Semua Owner"}
+              </span>
+              <svg className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${openOwnerDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {openOwnerDropdown && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setOpenOwnerDropdown(false)} />
+                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white dark:bg-black rounded-xl shadow-xl border border-red-100 dark:border-zinc-800 p-2.5 space-y-2 animate-scale-up min-w-[240px]">
+                  <input type="text" placeholder="Cari owner..." value={ownerSearch} onChange={e => setOwnerSearch(e.target.value)}
+                    className="field-control py-2" autoFocus
+                  />
+
+                  <div className="max-h-48 overflow-y-auto space-y-0.5 pr-1">
+                    <button type="button"
+                      onClick={() => {
+                        setSelectedOwner("");
+                        setOpenOwnerDropdown(false);
+                      }}
+                      className={`w-full text-left px-2.5 py-2 rounded-md text-[15px] flex items-center justify-between transition-colors ${
+                        !selectedOwner ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      <span className="truncate">Semua Owner</span>
+                      {!selectedOwner && <span className="text-red-700 dark:text-white font-bold">✓</span>}
+                    </button>
+                    {filteredOwners.length === 0 ? (
+                      <p className="text-center text-[15px] text-zinc-400 dark:text-zinc-500 py-3">Tidak ada owner cocok</p>
+                    ) : (
+                      filteredOwners.map(name => {
+                        const isSelected = selectedOwner === name;
+                        return (
+                          <button key={name} type="button"
+                            onClick={() => {
+                              setSelectedOwner(name);
+                              setOpenOwnerDropdown(false);
+                            }}
+                            className={`w-full text-left px-2.5 py-2 rounded-md text-[15px] flex items-center justify-between transition-colors ${
+                              isSelected ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
+                            }`}
+                          >
+                            <span className="truncate">{name}</span>
+                            {isSelected && <span className="text-red-700 dark:text-white font-bold">✓</span>}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* 3: Outlet (Single Select) */}
+          <div className="relative">
+            <StepLabel number={3} label={selectedParent ? `Outlet (1)` : "Outlet"} active={!!platform && !selectedParent} done={!!selectedParent} />
             <button type="button"
               disabled={!platform || loading || syncPhase === "syncing"}
               onClick={() => {
                 setOpenOutletDropdown(!openOutletDropdown);
                 setOpenPlatformDropdown(false);
+                setOpenOwnerDropdown(false);
                 setOpenBranchDropdown(false);
               }}
               className="field-control flex items-center justify-between text-left font-medium"
@@ -1067,14 +1168,15 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
             )}
           </div>
 
-          {/* 3: Brand (Single Select) */}
+          {/* 4: Brand (Single Select) */}
           <div className="relative">
-            <StepLabel number={3} label={selectedBrandId ? "Brand (1)" : "Brand"} active={!!selectedParent && !selectedBrandId} done={!!selectedBrandId} />
+            <StepLabel number={4} label={selectedBrandId ? "Brand (1)" : "Brand"} active={!!selectedParent && !selectedBrandId} done={!!selectedBrandId} />
             <button type="button"
               disabled={!selectedParent || syncPhase === "syncing"}
               onClick={() => {
                 setOpenBranchDropdown(!openBranchDropdown);
                 setOpenPlatformDropdown(false);
+                setOpenOwnerDropdown(false);
                 setOpenOutletDropdown(false);
               }}
               className="field-control flex items-center justify-between text-left font-medium"

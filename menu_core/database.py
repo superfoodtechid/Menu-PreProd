@@ -95,6 +95,7 @@ class Outlet(Base):
     account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
     store_id = Column(String(100), unique=True, nullable=True) # Shopee/Grab/GoFood Store ID
     merchant_name = Column(String(255), nullable=False) # Portal/Merchant Selector name
+    owner = Column(String(255), nullable=True) # Real Owner name from Master Google Sheet
     nama_outlet = Column(String(255), nullable=True)
     cabang = Column(String(255), nullable=True)
     nama_resto_final = Column(String(255), nullable=True)

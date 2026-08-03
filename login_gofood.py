@@ -486,17 +486,22 @@ def login_outlet(outlet_info, proxy_config=None):
                 safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/dashboard", wait_until="domcontentloaded")
                 time.sleep(2.0)
                 
-                # Check if we are logged in (i.e. URL does not contain /auth/login)
+                # Check if we are logged in (i.e. URL does not contain /auth or /login)
                 current_url = page.url
-                if "/auth/login" not in current_url:
+                if "/auth" not in current_url and "login" not in current_url:
                     print(f"   ✅ Sesi berhasil dimuat! Melewati login OTP untuk {cached_identifier}.")
                     access_token = cached_data.get('access_token')
                     session_loaded_successfully = True
                     logged_in_email = cached_identifier if "@" in str(cached_identifier) else None
                 else:
-                    print(f"   ⚠️ Sesi kedaluwarsa untuk {cached_identifier}. Melakukan login ulang...")
+                    print(f"   ⚠️ Sesi kedaluwarsa untuk {cached_identifier} (URL: {current_url}). Melakukan login ulang...")
                     context.clear_cookies()
                     page.close()
+                    sanitized_id = re.sub(r'[^a-zA-Z0-9_.-]', '_', str(cached_identifier).strip().lower())
+                    old_session = MENU_DIR / "Gofood" / f"session_gofood_{sanitized_id}.json"
+                    if old_session.exists():
+                        try: os.remove(old_session)
+                        except Exception: pass
             except Exception as e:
                 print(f"   ⚠️ Gagal memuat sesi: {e}. Melakukan login ulang...")
                 try:
@@ -799,8 +804,20 @@ def login_outlet(outlet_info, proxy_config=None):
             current_url = page.url
             print(f"   🤖 URL saat ini setelah login: {current_url}")
             
+            if "/auth" in current_url or "login" in current_url:
+                print(f"   ⚠️ URL saat ini masih di {current_url}. Sesi kedaluwarsa/invalid, memicu fresh login ulang...")
+                access_token = None
+                session_loaded_successfully = False
+                context.clear_cookies()
+                if cached_identifier:
+                    sanitized_id = re.sub(r'[^a-zA-Z0-9_.-]', '_', str(cached_identifier).strip().lower())
+                    old_session = MENU_DIR / "Gofood" / f"session_gofood_{sanitized_id}.json"
+                    if old_session.exists():
+                        try: os.remove(old_session)
+                        except Exception: pass
+
             # Jika URL mengandung 'choose' atau 'choose-outlet', kita perlu memilih merchant
-            if "choose" in current_url or "outlet" in current_url:
+            elif "choose" in current_url or "outlet" in current_url:
                 tutup_semua_popup(page)
                 search_name = outlet_info.get('nama_resto_final') or outlet_info.get('nama_outlet') or ''
                 brand_name = outlet_info.get('brand') or ''

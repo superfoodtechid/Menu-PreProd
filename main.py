@@ -1057,26 +1057,33 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
 
             with sync_playwright() as p:
                 import re
+                from login_gofood import load_gofood_session
                 sanitized_email = re.sub(r'[^a-zA-Z0-9_.-]', '_', email.strip().lower())
                 session_path = os.path.join(BASE_DIR, "Gofood", f"session_gofood_{sanitized_email}.json")
-                storage_state = session_path if os.path.exists(session_path) else None
-
-
+                cached_data = load_gofood_session(email)
+                if not cached_data and account.portal:
+                    cached_data = load_gofood_session(account.portal)
 
                 headless_env = os.getenv("HEADLESS") or os.getenv("HEADLESS_GOFOOD")
                 is_headless = headless_env.lower() in ("true", "1", "yes") if headless_env else True
                 from src.core.browser_factory import launch_universal_playwright_browser
                 browser, proc = launch_universal_playwright_browser(p, headless=is_headless)
                 context = browser.new_context(
-                    storage_state=storage_state,
                     user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                 )
+                if cached_data and cached_data.get("cookies"):
+                    try:
+                        context.add_cookies(cached_data["cookies"])
+                    except Exception as e:
+                        logger.warning(f"Error adding cookies: {e}")
+
                 page = context.new_page()
-
-                page.goto("https://portal.gofoodmerchant.co.id/dashboard", wait_until="domcontentloaded")
-                time.sleep(3)
-
                 api_headers = {}
+
+                if cached_data and cached_data.get("access_token"):
+                    tok = cached_data["access_token"]
+                    api_headers['authorization'] = tok if tok.startswith("Bearer ") else f"Bearer {tok}"
+
                 def capture_headers(request):
                     url_lower = request.url.lower()
                     if "api.gojekapi.com" in url_lower or "api.gobiz.co.id" in url_lower or "portal.gofoodmerchant.co.id" in url_lower:
@@ -1101,9 +1108,8 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                                     api_headers['menu_group_id'] = candidate
 
                 page.on("request", capture_headers)
-
                 page.goto("https://portal.gofoodmerchant.co.id/dashboard", wait_until="domcontentloaded")
-                time.sleep(3)
+                time.sleep(2)
 
                 def perform_fresh_login():
                     logger.info(f"🔄 Token GoFood expired/tidak ditemukan. Melakukan fresh login untuk {email}...")
@@ -1133,9 +1139,10 @@ def run_push_price_job(job_id: uuid.UUID, outlet_id: uuid.UUID, updates_list: li
                         logger.warning(f"Tunggu redirect login timeout: {e}")
 
                 if "/auth" in page.url or "login" in page.url:
-                    perform_fresh_login()
+                    if not api_headers.get('authorization'):
+                        perform_fresh_login()
                     page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
-                    time.sleep(3)
+                    time.sleep(2)
 
                 page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
                 time.sleep(2)

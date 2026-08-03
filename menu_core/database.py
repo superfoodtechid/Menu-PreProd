@@ -2,7 +2,7 @@ import os
 import uuid
 from datetime import datetime
 from sqlalchemy import (
-    create_engine, Column, String, Boolean, DateTime, Integer, Text, ForeignKey, UniqueConstraint, JSON, inspect, text
+    create_engine, Column, String, Boolean, DateTime, Integer, Text, ForeignKey, UniqueConstraint, JSON, inspect, text, event, Engine
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB as PG_JSONB
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
@@ -41,28 +41,45 @@ class GUID(TypeDecorator):
 def UUID(*args, **kwargs):
     return GUID()
 
+sqlite_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+os.makedirs(sqlite_dir, exist_ok=True)
+default_sqlite_url = f"sqlite:///{os.path.join(sqlite_dir, 'foodmaster_menu.db')}"
+
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/foodmaster_menu")
 
-try:
-    if "sqlite" in DATABASE_URL:
-        engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+def _create_engine_for_url(url: str):
+    if "sqlite" in url:
+        return create_engine(url, connect_args={"check_same_thread": False})
     else:
-        engine = create_engine(
-            DATABASE_URL,
+        return create_engine(
+            url,
             pool_pre_ping=True,
             pool_size=10,
             max_overflow=20
         )
+
+try:
+    engine = _create_engine_for_url(DATABASE_URL)
     with engine.connect() as conn:
         pass
 except Exception as e:
-    sqlite_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
-    os.makedirs(sqlite_dir, exist_ok=True)
-    sqlite_path = os.path.join(sqlite_dir, "foodmaster_menu.db")
-    DATABASE_URL = f"sqlite:///{sqlite_path}"
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    DATABASE_URL = default_sqlite_url
+    engine = _create_engine_for_url(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """Enables Write-Ahead Logging (WAL) and busy timeout for SQLite to prevent database lock errors."""
+    if type(dbapi_connection).__module__.startswith("sqlite3"):
+        try:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.execute("PRAGMA busy_timeout=30000;")
+            cursor.close()
+        except Exception:
+            pass
 
 Base = declarative_base()
 
@@ -174,11 +191,8 @@ def init_db():
     try:
         Base.metadata.create_all(bind=engine)
     except Exception as e:
-        sqlite_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
-        os.makedirs(sqlite_dir, exist_ok=True)
-        sqlite_path = os.path.join(sqlite_dir, "foodmaster_menu.db")
-        DATABASE_URL = f"sqlite:///{sqlite_path}"
-        engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+        DATABASE_URL = default_sqlite_url
+        engine = _create_engine_for_url(DATABASE_URL)
         SessionLocal.configure(bind=engine)
         try:
             Base.metadata.create_all(bind=engine)

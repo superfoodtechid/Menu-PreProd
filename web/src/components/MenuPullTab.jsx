@@ -275,12 +275,13 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
             clearInterval(pollingIntervalsRef.current[jobId]);
             delete pollingIntervalsRef.current[jobId];
             
-            // Check if all active jobs are done to reset triggering state & trigger combine C5
-            const stillRunning = Object.keys(pollingIntervalsRef.current).length > 0;
-            if (!stillRunning && !hasTriggeredCombineRef.current) {
+            // Check if all active jobs in activeJobsRef have finished
+            const currentList = activeJobsRef.current;
+            const allDone = currentList.length > 0 && currentList.every((j) => j.status === "SUCCESS" || j.status === "FAILED");
+            if (allDone && !hasTriggeredCombineRef.current) {
               hasTriggeredCombineRef.current = true;
               setTriggering(false);
-              triggerCombineC5(activeJobsRef.current, selectedParent);
+              triggerCombineC5(currentList, selectedParent);
             }
           }
         })
@@ -288,10 +289,12 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
           console.error(err);
           clearInterval(pollingIntervalsRef.current[jobId]);
           delete pollingIntervalsRef.current[jobId];
-          if (Object.keys(pollingIntervalsRef.current).length === 0 && !hasTriggeredCombineRef.current) {
+          const currentList = activeJobsRef.current;
+          const allDone = currentList.length > 0 && currentList.every((j) => j.status === "SUCCESS" || j.status === "FAILED");
+          if (allDone && !hasTriggeredCombineRef.current) {
             hasTriggeredCombineRef.current = true;
             setTriggering(false);
-            triggerCombineC5(activeJobsRef.current, selectedParent);
+            triggerCombineC5(currentList, selectedParent);
           }
         });
     }, 2000);
@@ -311,6 +314,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     
     // Prepare jobs container
     const newJobsList = [];
+    const validJobIdsToPoll = [];
 
     for (const target of targets) {
       const branchLabel = target.brand || target.nama_outlet || target.merchant_name;
@@ -332,8 +336,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
           current_step: job.current_step,
           error_message: null,
         });
-
-        startPollingJob(job.id);
+        validJobIdsToPoll.push(job.id);
       } catch (err) {
         console.error(err);
         newJobsList.push({
@@ -350,7 +353,9 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     }
 
     setActiveJobs(newJobsList);
-    if (Object.keys(pollingIntervalsRef.current).length === 0) {
+    validJobIdsToPoll.forEach(jid => startPollingJob(jid));
+
+    if (validJobIdsToPoll.length === 0) {
       setTriggering(false);
     }
   };
@@ -365,6 +370,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
 
     setRetryingJobIds((prev) => ({ ...prev, [failedJob.id]: true }));
     setTriggering(true);
+    hasTriggeredCombineRef.current = false;
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/jobs/pull?outlet_id=${outletId}`, {
@@ -660,9 +666,24 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       {/* Right Status Panel: Active/Completed Jobs List */}
       <section className="min-w-0 space-y-6 xl:col-span-3">
         <div className="surface-card flex min-h-[420px] flex-col p-5 sm:p-6">
-          <div className="mb-4 border-b border-red-100 dark:border-zinc-800 pb-4">
-            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600 dark:text-zinc-400">Aktivitas</p>
-            <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Status penarikan menu</h2>
+          <div className="mb-4 border-b border-red-100 dark:border-zinc-800 pb-4 flex justify-between items-end">
+            <div>
+              <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600 dark:text-zinc-400">Aktivitas</p>
+              <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Status penarikan menu</h2>
+            </div>
+            {activeJobs.some(j => j.status === "SUCCESS") && (
+              <button
+                type="button"
+                disabled={combining || triggering}
+                onClick={() => triggerCombineC5(activeJobs, selectedParent)}
+                className="secondary-action text-[13px] px-3 py-1.5 gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {combining ? "Menggabungkan..." : "Gabung Ulang C5"}
+              </button>
+            )}
           </div>
 
           {combining && (
@@ -684,7 +705,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
                       Combined C5 — {combinedResult.outlet_name}
                     </h3>
                     <span className="rounded-full bg-red-100 dark:bg-red-950 px-2.5 py-0.5 text-[12px] font-bold text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 shrink-0">
-                      {combinedResult.combined_count} Platform Tergabung
+                      {combinedResult.combined_count} Cabang Tergabung
                     </span>
                   </div>
                   <p className="text-[13px] leading-relaxed text-slate-600 dark:text-zinc-400">

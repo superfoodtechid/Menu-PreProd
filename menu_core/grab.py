@@ -118,10 +118,14 @@ def extract_grab_menu(store_metadata: dict, output_dir: str):
     def clean_filename_part(s):
         return "".join(c for c in s if c.isalnum() or c in (' ', '_', '-')).strip()
 
+    raw_resto_final = store_metadata.get('nama_resto_final') or '' if isinstance(store_metadata, dict) else ''
     clean_outlet = clean_filename_part(nama_resto)
     clean_brand = clean_filename_part(brand)
+    clean_resto = clean_filename_part(raw_resto_final)
 
-    if clean_brand and clean_brand.lower() != clean_outlet.lower():
+    if clean_resto and clean_resto.lower() not in (clean_outlet.lower(), clean_brand.lower()):
+        excel_filename = f"O.C5 {clean_resto} - {clean_brand}.xlsx"
+    elif clean_brand and clean_brand.lower() != clean_outlet.lower():
         excel_filename = f"O.C5 {clean_outlet} - {clean_brand}.xlsx"
     else:
         excel_filename = f"O.C5 {clean_outlet}.xlsx"

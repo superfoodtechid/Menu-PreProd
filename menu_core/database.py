@@ -49,13 +49,20 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localho
 
 def _create_engine_for_url(url: str):
     if "sqlite" in url:
-        return create_engine(url, connect_args={"check_same_thread": False})
+        return create_engine(
+            url,
+            connect_args={"check_same_thread": False},
+            pool_size=30,
+            max_overflow=50,
+            pool_timeout=60
+        )
     else:
         return create_engine(
             url,
             pool_pre_ping=True,
-            pool_size=10,
-            max_overflow=20
+            pool_size=30,
+            max_overflow=50,
+            pool_timeout=60
         )
 
 try:

@@ -511,7 +511,10 @@ def main():
                     print(f"  {GREEN}✔ Berhasil menggabungkan semua platform!{RESET}")
                     
                     # Upload ke Google Drive
-                    upload_combined_to_drive(combined_path, clean_outlet_filename)
+                    from datetime import datetime
+                    timestamp_version = datetime.now().strftime("%Y-%m-%d %H:%M")
+                    drive_filename = f"C5. {timestamp_version} {clean_outlet_filename}.xlsx"
+                    upload_combined_to_drive(combined_path, clean_outlet_filename, custom_filename=drive_filename)
                 else:
                     fail_count += 1
                     print(f"  {RED}✘ Gagal menggabungkan C5.{RESET}")

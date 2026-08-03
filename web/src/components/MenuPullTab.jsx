@@ -50,6 +50,12 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
   const [combining, setCombining] = useState(false);
   
   const pollingIntervalsRef = useRef({});
+  const activeJobsRef = useRef([]);
+  const hasTriggeredCombineRef = useRef(false);
+
+  useEffect(() => {
+    activeJobsRef.current = activeJobs;
+  }, [activeJobs]);
 
   // Trigger C5 combination for current outlet
   const triggerCombineC5 = async (jobList = activeJobs, outletName = selectedParent) => {
@@ -271,12 +277,10 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
             
             // Check if all active jobs are done to reset triggering state & trigger combine C5
             const stillRunning = Object.keys(pollingIntervalsRef.current).length > 0;
-            if (!stillRunning) {
+            if (!stillRunning && !hasTriggeredCombineRef.current) {
+              hasTriggeredCombineRef.current = true;
               setTriggering(false);
-              setActiveJobs((currentJobs) => {
-                triggerCombineC5(currentJobs, selectedParent);
-                return currentJobs;
-              });
+              triggerCombineC5(activeJobsRef.current, selectedParent);
             }
           }
         })
@@ -284,12 +288,10 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
           console.error(err);
           clearInterval(pollingIntervalsRef.current[jobId]);
           delete pollingIntervalsRef.current[jobId];
-          if (Object.keys(pollingIntervalsRef.current).length === 0) {
+          if (Object.keys(pollingIntervalsRef.current).length === 0 && !hasTriggeredCombineRef.current) {
+            hasTriggeredCombineRef.current = true;
             setTriggering(false);
-            setActiveJobs((currentJobs) => {
-              triggerCombineC5(currentJobs, selectedParent);
-              return currentJobs;
-            });
+            triggerCombineC5(activeJobsRef.current, selectedParent);
           }
         });
     }, 2000);
@@ -302,6 +304,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
 
     setTriggering(true);
     setCombinedResult(null);
+    hasTriggeredCombineRef.current = false;
 
     // Filter branches details that are checked
     const targets = availableBranches.filter((b) => checkedBranchIds.includes(b.id));

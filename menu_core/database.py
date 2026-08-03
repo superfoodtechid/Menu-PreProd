@@ -2,7 +2,7 @@ import os
 import uuid
 from datetime import datetime
 from sqlalchemy import (
-    create_engine, Column, String, Boolean, DateTime, Integer, Text, ForeignKey, UniqueConstraint, JSON
+    create_engine, Column, String, Boolean, DateTime, Integer, Text, ForeignKey, UniqueConstraint, JSON, inspect, text
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB as PG_JSONB
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
@@ -169,7 +169,7 @@ class AuditTrail(Base):
 
 
 def init_db():
-    """Initializes the database, creating all tables if they do not exist."""
+    """Initializes the database, creating all tables if they do not exist, and auto-migrating missing columns."""
     global engine, SessionLocal, DATABASE_URL
     try:
         Base.metadata.create_all(bind=engine)
@@ -180,11 +180,29 @@ def init_db():
         DATABASE_URL = f"sqlite:///{sqlite_path}"
         engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
         SessionLocal.configure(bind=engine)
-        # Note: In SQLite, PostgreSQL UUID fields fallback safely
         try:
             Base.metadata.create_all(bind=engine)
         except Exception:
             pass
+
+    # Auto-migrate missing columns for existing SQLite / Postgres tables
+    try:
+        inspector = inspect(engine)
+        if "outlets" in inspector.get_table_names():
+            columns = [c["name"] for c in inspector.get_columns("outlets")]
+            with engine.begin() as conn:
+                if "owner" not in columns:
+                    conn.execute(text("ALTER TABLE outlets ADD COLUMN owner VARCHAR(255)"))
+                if "nama_outlet" not in columns:
+                    conn.execute(text("ALTER TABLE outlets ADD COLUMN nama_outlet VARCHAR(255)"))
+                if "cabang" not in columns:
+                    conn.execute(text("ALTER TABLE outlets ADD COLUMN cabang VARCHAR(255)"))
+                if "nama_resto_final" not in columns:
+                    conn.execute(text("ALTER TABLE outlets ADD COLUMN nama_resto_final VARCHAR(255)"))
+                if "brand" not in columns:
+                    conn.execute(text("ALTER TABLE outlets ADD COLUMN brand VARCHAR(255)"))
+    except Exception as migrate_err:
+        pass
 
 
 def get_db():
@@ -194,3 +212,10 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# Ensure missing columns are auto-migrated on module load
+try:
+    init_db()
+except Exception:
+    pass

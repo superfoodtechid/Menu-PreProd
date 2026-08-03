@@ -55,13 +55,13 @@ app.add_middleware(
 # API Key Middleware enforcing authentication on all /api/ routes
 @app.middleware("http")
 async def api_key_middleware(request: Request, call_next):
-    # Allow OPTIONS (CORS preflight requests) and non-/api/ paths (docs, health)
-    if request.method == "OPTIONS" or not request.url.path.startswith("/api/"):
+    # Allow OPTIONS (CORS preflight requests), non-/api/ paths, and public download endpoint
+    if request.method == "OPTIONS" or not request.url.path.startswith("/api/") or request.url.path == "/api/jobs/download-file":
         return await call_next(request)
 
     expected_key = os.getenv("API_SECRET_KEY", "foodmaster-secret-api-key-2026")
     if expected_key:
-        api_key = request.headers.get("X-API-Key")
+        api_key = request.headers.get("X-API-Key") or request.query_params.get("api_key")
         if not api_key or api_key != expected_key:
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,

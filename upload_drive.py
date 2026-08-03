@@ -1,12 +1,14 @@
 import os
 import base64
 import requests
-
-# URL Web App Google Apps Script & Target Folder ID
-URL_WEB_APP = "https://script.google.com/macros/s/AKfycbww-dv6C_vQAfsulCfrduMKNz6RuodcOOtQnprWcZ3mMZ0k2sfZagywVYNkRrhqPoM9pg/exec"
-TARGET_FOLDER_ID = "14EFVOjND6brFT6BKdXu5dWJBErbSMqie"
-
 from typing import Optional
+
+# URL Web App Google Apps Script & Target Folder ID dari environment variable
+URL_WEB_APP = os.getenv(
+    "GDRIVE_APPSCRIPT_URL",
+    "https://script.google.com/macros/s/AKfycbyXPeeXIvFljxyiaYROIXa5enmUxX_fP6wxMcdb6Gz33ImPd2mqS0_9B1G9VEqA4s1f1Q/exec"
+)
+TARGET_FOLDER_ID = os.getenv("GDRIVE_PARENT_FOLDER_ID", "14EFVOjND6brFT6BKdXu5dWJBErbSMqie")
 
 def upload_combined_to_drive(file_path: str, outlet_name: str, custom_filename: Optional[str] = None) -> Optional[str]:
     """
@@ -29,23 +31,32 @@ def upload_combined_to_drive(file_path: str, outlet_name: str, custom_filename: 
         # Bersihkan nama folder dari spasi dan karakter aneh jika perlu
         clean_folder_name = "".join(c for c in outlet_name if c.isalnum() or c in (' ', '_', '-')).strip()
         
+        target_url = os.getenv("GDRIVE_APPSCRIPT_URL", URL_WEB_APP)
+        target_folder = os.getenv("GDRIVE_PARENT_FOLDER_ID", TARGET_FOLDER_ID)
+
         payload = {
             "folderName": clean_folder_name,
-            "folderId": TARGET_FOLDER_ID,
-            "parentFolderId": TARGET_FOLDER_ID,
-            "targetFolderId": TARGET_FOLDER_ID,
+            "folderId": target_folder,
+            "parentFolderId": target_folder,
+            "targetFolderId": target_folder,
             "fileName": file_name,
             "fileContent": encoded_content,
+            "fileBase64": encoded_content,
             "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         }
         
-        print(f"Mengirim {file_name} ke folder '{clean_folder_name}' (Target ID: {TARGET_FOLDER_ID}) di Google Drive...")
-        response = requests.post(URL_WEB_APP, json=payload, timeout=60)
+        print(f"Mengirim {file_name} ke folder '{clean_folder_name}' (Target ID: {target_folder}) di Google Drive...")
+        response = requests.post(target_url, json=payload, timeout=60)
         
         if response.status_code == 200:
-            result = response.json()
+            try:
+                result = response.json()
+            except Exception as json_err:
+                print(f"❌ Response bukan JSON valid: {response.text[:200]}")
+                return None
+
             if result.get("status") == "success":
-                url = result.get("spreadsheetUrl") or result.get("fileUrl")
+                url = result.get("url") or result.get("spreadsheetUrl") or result.get("fileUrl")
                 print(f"✅ Berhasil diupload! URL: {url}")
                 return url
             else:

@@ -47,19 +47,20 @@ default_sqlite_url = f"sqlite:///{os.path.join(sqlite_dir, 'foodmaster_menu.db')
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/foodmaster_menu")
 
+from sqlalchemy.pool import NullPool, QueuePool
+
 def _create_engine_for_url(url: str):
     if "sqlite" in url:
         return create_engine(
             url,
             connect_args={"check_same_thread": False},
-            pool_size=30,
-            max_overflow=50,
-            pool_timeout=60
+            poolclass=NullPool
         )
     else:
         return create_engine(
             url,
             pool_pre_ping=True,
+            poolclass=QueuePool,
             pool_size=30,
             max_overflow=50,
             pool_timeout=60

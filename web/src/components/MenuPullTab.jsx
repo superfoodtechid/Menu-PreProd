@@ -255,8 +255,8 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
           return res.json();
         })
         .then((job) => {
-          setActiveJobs((prevJobs) =>
-            prevJobs.map((j) =>
+          setActiveJobs((prevJobs) => {
+            const nextJobs = prevJobs.map((j) =>
               j.id === jobId
                 ? {
                     ...j,
@@ -268,34 +268,28 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
                     outlet_id: job.outlet_id || j.outlet_id,
                   }
                 : j
-            )
-          );
+            );
+            activeJobsRef.current = nextJobs;
+
+            const allDone = nextJobs.length > 0 && nextJobs.every((j) => j.status === "SUCCESS" || j.status === "FAILED");
+            if (allDone && !hasTriggeredCombineRef.current) {
+              hasTriggeredCombineRef.current = true;
+              setTriggering(false);
+              triggerCombineC5(nextJobs, selectedParent);
+            }
+
+            return nextJobs;
+          });
 
           if (job.status === "SUCCESS" || job.status === "FAILED") {
             clearInterval(pollingIntervalsRef.current[jobId]);
             delete pollingIntervalsRef.current[jobId];
-            
-            // Check if all active jobs in activeJobsRef have finished
-            const currentList = activeJobsRef.current;
-            const allDone = currentList.length > 0 && currentList.every((j) => j.status === "SUCCESS" || j.status === "FAILED");
-            if (allDone && !hasTriggeredCombineRef.current) {
-              hasTriggeredCombineRef.current = true;
-              setTriggering(false);
-              triggerCombineC5(currentList, selectedParent);
-            }
           }
         })
         .catch((err) => {
           console.error(err);
           clearInterval(pollingIntervalsRef.current[jobId]);
           delete pollingIntervalsRef.current[jobId];
-          const currentList = activeJobsRef.current;
-          const allDone = currentList.length > 0 && currentList.every((j) => j.status === "SUCCESS" || j.status === "FAILED");
-          if (allDone && !hasTriggeredCombineRef.current) {
-            hasTriggeredCombineRef.current = true;
-            setTriggering(false);
-            triggerCombineC5(currentList, selectedParent);
-          }
         });
     }, 2000);
   };

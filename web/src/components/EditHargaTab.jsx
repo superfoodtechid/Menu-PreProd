@@ -1558,24 +1558,24 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-zinc-100 pb-3">
+            <div className="flex items-start justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">Ringkasan Update Harga Sebelum Push</h3>
-                <p className="text-[13px] text-zinc-500 mt-0.5">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Ringkasan Update Harga Sebelum Push</h3>
+                <p className="text-[13px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                   Tinjau daftar rincian <strong>{totalSummaryItems} item</strong> yang akan dikirim ke Merchant Portal.
                 </p>
               </div>
               <button type="button" onClick={() => setShowPushConfirmModal(false)}
-                className="text-zinc-400 hover:text-zinc-600 text-lg font-bold"
+                className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 text-lg font-bold"
               >×</button>
             </div>
 
             {/* Content List */}
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
               {pushSummaryList.map(summary => (
-                <div key={summary.branchId} className="rounded-xl border border-red-100 bg-red-50/20 p-4 space-y-3">
-                  <div className="flex items-center justify-between border-b border-red-100 pb-2">
-                    <span className="font-bold text-slate-800 text-[15px]">{summary.branchName}</span>
+                <div key={summary.branchId} className="rounded-xl border border-red-100 dark:border-zinc-800 bg-red-50/20 dark:bg-zinc-900/40 p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-red-100 dark:border-zinc-800 pb-2">
+                    <span className="font-bold text-slate-800 dark:text-white text-[15px]">{summary.branchName}</span>
                     <PlatformBadge platform={summary.platform} storeId={summary.storeId} />
                   </div>
 
@@ -1583,14 +1583,18 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
                     {summary.updates.map(u => (
                       <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg bg-zinc-50 dark:bg-zinc-900 p-2.5 border border-zinc-100 dark:border-zinc-800 gap-1 text-[13px]">
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-slate-800 leading-snug text-wrap break-words">{u.name}</p>
-                          <span className="text-[12px] text-slate-400 uppercase tracking-wider">{u.category}</span>
+                          <p className="font-medium text-slate-800 dark:text-zinc-100 leading-snug text-wrap break-words">{u.name}</p>
+                          <span className="text-[12px] text-slate-400 dark:text-zinc-400 uppercase tracking-wider">{u.category}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="line-through text-slate-400">Rp {fmt(u.oldPrice)}</span>
-                          <span className="text-slate-400">→</span>
-                          <span className="font-bold text-slate-900">Rp {fmt(u.newPrice)}</span>
-                          <span className={`rounded px-1.5 py-0.5 text-[12px] font-bold ${u.diff > 0 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                          <span className="line-through text-slate-400 dark:text-zinc-500">Rp {fmt(u.oldPrice)}</span>
+                          <span className="text-slate-400 dark:text-zinc-500">→</span>
+                          <span className="font-bold text-slate-900 dark:text-white">Rp {fmt(u.newPrice)}</span>
+                          <span className={`rounded px-1.5 py-0.5 text-[12px] font-bold ${
+                            u.diff > 0
+                              ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400"
+                              : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
+                          }`}>
                             ({u.diff > 0 ? "+" : ""}{u.pct.toFixed(1)}%)
                           </span>
                           {u.isViolation && (
@@ -1605,9 +1609,9 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
             </div>
 
             {/* Footer Actions */}
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
               <button type="button" onClick={() => setShowPushConfirmModal(false)}
-                className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-semibold text-[14px] rounded-xl transition-colors"
+                className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 font-semibold text-[14px] rounded-xl transition-colors"
               >
                 Batal
               </button>
@@ -1632,14 +1636,14 @@ export default function EditHargaTab({ API_BASE_URL, API_SECRET_KEY }) {
           <div className="bg-white dark:bg-zinc-950 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-red-100 dark:border-zinc-800 text-center space-y-4 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-8 ring-emerald-50/60">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 ring-8 ring-emerald-50/60 dark:ring-emerald-950/30">
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900">Update mulai diproses</h3>
-              <p className="text-[15px] text-zinc-500 mt-1">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Update mulai diproses</h3>
+              <p className="text-[15px] text-zinc-500 dark:text-zinc-400 mt-1">
                 Job untuk <strong>{preview.length} brand</strong> sudah dikirim. Pantau status job di bagian bawah. Setelah job selesai, sistem akan otomatis melakukan tarik ulang menu untuk membandingkan kesesuaian harga.
               </p>
             </div>

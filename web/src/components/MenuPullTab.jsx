@@ -27,9 +27,14 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
   // Search query
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Parent name selection (Single-Select)
+  // Owner filter state
+  const [selectedOwner, setSelectedOwner] = useState("");
+  const [openOwnerDropdown, setOpenOwnerDropdown] = useState(false);
+  const [ownerSearchQuery, setOwnerSearchQuery] = useState("");
+
+  // Parent name selection (Multi-Select)
   const [uniqueParentNames, setUniqueParentNames] = useState([]);
-  const [selectedParent, setSelectedParent] = useState("");
+  const [selectedParents, setSelectedParents] = useState([]);
 
   // Branch list and check state (Multi-Select)
   const [availableBranches, setAvailableBranches] = useState([]);
@@ -45,9 +50,10 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
   const [combining, setCombining] = useState(false);
   
   const pollingIntervalsRef = useRef({});
+  const combineTriggeredRef = useRef(false);
 
   // Trigger C5 combination for current outlet
-  const triggerCombineC5 = async (jobList = activeJobs, outletName = selectedParent) => {
+  const triggerCombineC5 = async (jobList = activeJobs, outletName = selectedParents.join(", ")) => {
     const successJobs = jobList.filter((j) => j.status === "SUCCESS" && j.id && !String(j.id).startsWith("err-"));
     const successJobIds = successJobs.map((j) => j.id);
     if (successJobIds.length === 0) return;
@@ -85,10 +91,12 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     if (selectedPlatforms.length === 0) {
       setAllOutlets([]);
       setUniqueParentNames([]);
-      setSelectedParent("");
+      setSelectedOwner("");
+      setSelectedParents([]);
       setAvailableBranches([]);
       setCheckedBranchIds([]);
       setSearchQuery("");
+      setOwnerSearchQuery("");
       setActiveJobs([]);
       setCombinedResult(null);
       return;
@@ -98,10 +106,12 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     setLoadingOutlets(true);
     setAllOutlets([]);
     setUniqueParentNames([]);
-    setSelectedParent("");
+    setSelectedOwner("");
+    setSelectedParents([]);
     setAvailableBranches([]);
     setCheckedBranchIds([]);
     setSearchQuery("");
+    setOwnerSearchQuery("");
     setActiveJobs([]);
     setCombinedResult(null);
 
@@ -119,11 +129,6 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       })
       .then((data) => {
         setAllOutlets(data);
-        
-        // Extract unique parent names (nama_outlet)
-        const parents = Array.from(new Set(data.map((o) => o.nama_outlet).filter(Boolean))).sort();
-        setUniqueParentNames(parents);
-        setSelectedParent("");
       })
       .catch((err) => {
         if (err.name === "AbortError") return;
@@ -137,21 +142,41 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     return () => controller.abort();
   }, [selectedPlatforms, API_BASE_URL]);
 
-  // Update available branches when selectedParent or allOutlets changes
+  // Unique owners from allOutlets (strictly valid o.owner strings)
+  const uniqueOwners = Array.from(
+    new Set(allOutlets.map((o) => (o.owner ? o.owner.trim() : "")).filter(Boolean))
+  ).sort();
+
+  const filteredOwners = uniqueOwners.filter((owner) =>
+    owner.toLowerCase().includes(ownerSearchQuery.toLowerCase())
+  );
+
+  // Update parent outlet list when allOutlets or selectedOwner changes
   useEffect(() => {
-    if (selectedPlatforms.length === 0 || !selectedParent) {
+    const sourceOutlets = selectedOwner
+      ? allOutlets.filter((o) => o.owner && o.owner.trim() === selectedOwner.trim())
+      : allOutlets;
+    const parents = Array.from(new Set(sourceOutlets.map((o) => o.nama_outlet).filter(Boolean))).sort();
+    setUniqueParentNames(parents);
+    setSelectedParents([]);
+  }, [allOutlets, selectedOwner]);
+
+  // Update available branches when selectedParents or allOutlets changes
+  useEffect(() => {
+    if (selectedPlatforms.length === 0 || selectedParents.length === 0) {
       setAvailableBranches([]);
       setCheckedBranchIds([]);
       return;
     }
 
-    // Filter branches whose parent name is selectedParent
-    const filtered = allOutlets.filter((o) => o.nama_outlet === selectedParent);
+    const sourceOutlets = selectedOwner
+      ? allOutlets.filter((o) => o.owner && o.owner.trim() === selectedOwner.trim())
+      : allOutlets;
+
+    const filtered = sourceOutlets.filter((o) => selectedParents.includes(o.nama_outlet));
     setAvailableBranches(filtered);
-    
-    // Automatically check all branches of the selected parent outlet
     setCheckedBranchIds(filtered.map((b) => b.id));
-  }, [selectedParent, allOutlets, selectedPlatforms]);
+  }, [selectedParents, allOutlets, selectedPlatforms, selectedOwner]);
 
   // Clean up all polling intervals on unmount
   useEffect(() => {
@@ -176,10 +201,24 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     setSelectedPlatforms((current) => current.length === PLATFORM_OPTIONS.length ? [] : [...PLATFORM_OPTIONS]);
   };
 
-  // Select single parent name
-  const handleSelectParent = (parentName) => {
-    setSelectedParent(parentName);
-    setOpenOutletDropdown(false);
+  // Toggle single parent outlet selection
+  const handleParentCheck = (parentName) => {
+    setSelectedParents((prev) =>
+      prev.includes(parentName)
+        ? prev.filter((name) => name !== parentName)
+        : [...prev, parentName]
+    );
+    setActiveJobs([]);
+    setCombinedResult(null);
+  };
+
+  // Toggle select all parent outlets
+  const handleSelectAllParents = () => {
+    if (selectedParents.length === uniqueParentNames.length) {
+      setSelectedParents([]);
+    } else {
+      setSelectedParents([...uniqueParentNames]);
+    }
     setActiveJobs([]);
     setCombinedResult(null);
   };
@@ -239,10 +278,11 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
             
             // Check if all active jobs are done to reset triggering state & trigger combine C5
             const stillRunning = Object.keys(pollingIntervalsRef.current).length > 0;
-            if (!stillRunning) {
+            if (!stillRunning && !combineTriggeredRef.current) {
+              combineTriggeredRef.current = true;
               setTriggering(false);
               setActiveJobs((currentJobs) => {
-                triggerCombineC5(currentJobs, selectedParent);
+                triggerCombineC5(currentJobs, selectedParents.join(", "));
                 return currentJobs;
               });
             }
@@ -252,10 +292,11 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
           console.error(err);
           clearInterval(pollingIntervalsRef.current[jobId]);
           delete pollingIntervalsRef.current[jobId];
-          if (Object.keys(pollingIntervalsRef.current).length === 0) {
+          if (Object.keys(pollingIntervalsRef.current).length === 0 && !combineTriggeredRef.current) {
+            combineTriggeredRef.current = true;
             setTriggering(false);
             setActiveJobs((currentJobs) => {
-              triggerCombineC5(currentJobs, selectedParent);
+              triggerCombineC5(currentJobs, selectedParents.join(", "));
               return currentJobs;
             });
           }
@@ -270,6 +311,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
 
     setTriggering(true);
     setCombinedResult(null);
+    combineTriggeredRef.current = false;
 
     // Filter branches details that are checked
     const targets = availableBranches.filter((b) => checkedBranchIds.includes(b.id));
@@ -385,6 +427,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
               disabled={triggering}
               onClick={() => {
                 setOpenPlatformDropdown(!openPlatformDropdown);
+                setOpenOwnerDropdown(false);
                 setOpenOutletDropdown(false);
                 setOpenBranchDropdown(false);
               }}
@@ -429,49 +472,91 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
             )}
           </div>
 
+          {/* Owner Filter Dropdown */}
           <div className="relative">
-            <StepLabel number={2} label={selectedParent ? "Outlet (1)" : "Outlet"} active={selectedPlatforms.length > 0 && !selectedParent} done={!!selectedParent} />
+            <div className="flex items-center justify-between">
+              <StepLabel
+                number={2}
+                label={`Filter Owner ${uniqueOwners.length ? `(${uniqueOwners.length})` : ""}`}
+                active={selectedPlatforms.length > 0 && !selectedOwner}
+                done={!!selectedOwner}
+              />
+              {selectedOwner && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedOwner("")}
+                  className="text-[12px] font-bold text-red-600 dark:text-red-400 hover:underline"
+                >
+                  Reset Owner
+                </button>
+              )}
+            </div>
             <button
               type="button"
               disabled={selectedPlatforms.length === 0 || loadingOutlets || triggering}
               onClick={() => {
-                setOpenOutletDropdown(!openOutletDropdown);
+                setOpenOwnerDropdown(!openOwnerDropdown);
                 setOpenPlatformDropdown(false);
+                setOpenOutletDropdown(false);
                 setOpenBranchDropdown(false);
               }}
               className="field-control flex items-center justify-between text-left font-medium"
-              aria-expanded={openOutletDropdown}
+              aria-expanded={openOwnerDropdown}
             >
-              <span className={`truncate ${selectedParent ? "font-semibold text-zinc-800 dark:text-white" : "text-zinc-400 dark:text-zinc-500"}`}>
+              <span className={`truncate ${selectedOwner ? "font-semibold text-zinc-800 dark:text-white" : "text-zinc-400 dark:text-zinc-500"}`}>
                 {loadingOutlets ? "Memuat..."
                   : selectedPlatforms.length === 0 ? "Pilih Aplikator dulu"
-                    : selectedParent || "Pilih Outlet..."}
+                    : selectedOwner || "Semua Owner"}
               </span>
-              <svg className={`h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform ${openOutletDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform ${openOwnerDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
-            {openOutletDropdown && (
+            {openOwnerDropdown && (
               <>
-                <div className="fixed inset-0 z-20" onClick={() => setOpenOutletDropdown(false)} />
+                <div className="fixed inset-0 z-20" onClick={() => setOpenOwnerDropdown(false)} />
                 <div className="absolute left-0 right-0 top-full z-30 mt-1 min-w-[260px] space-y-2 rounded-xl border border-red-100 dark:border-zinc-800 bg-white dark:bg-black p-2.5 shadow-xl animate-scale-up">
-                  <input type="text" placeholder="Cari outlet..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && e.preventDefault()} className="field-control py-2" autoFocus />
+                  <input
+                    type="text"
+                    placeholder="Cari owner..."
+                    value={ownerSearchQuery}
+                    onChange={(e) => setOwnerSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+                    className="field-control py-2"
+                    autoFocus
+                  />
                   <div className="max-h-52 space-y-0.5 overflow-y-auto pr-1">
-                    {filteredParents.length === 0 ? (
-                      <p className="py-3 text-center text-[15px] text-zinc-400 dark:text-zinc-500">Tidak ada outlet cocok</p>
-                    ) : filteredParents.map((name) => {
-                      const isSelected = selectedParent === name;
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedOwner("");
+                        setOpenOwnerDropdown(false);
+                      }}
+                      className={`w-full text-left cursor-pointer flex items-center justify-between rounded-lg px-2.5 py-2 text-[15px] transition-colors ${
+                        !selectedOwner ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      <span>Semua Owner</span>
+                      {!selectedOwner && <span className="text-red-700 dark:text-white font-bold">✓</span>}
+                    </button>
+                    {filteredOwners.length === 0 ? (
+                      <p className="py-3 text-center text-[15px] text-zinc-400 dark:text-zinc-500">Tidak ada owner cocok</p>
+                    ) : filteredOwners.map((owner) => {
+                      const isSelected = selectedOwner === owner;
                       return (
                         <button
-                          key={name}
+                          key={owner}
                           type="button"
-                          onClick={() => handleSelectParent(name)}
+                          onClick={() => {
+                            setSelectedOwner(owner);
+                            setOpenOwnerDropdown(false);
+                          }}
                           className={`w-full text-left cursor-pointer flex items-center justify-between rounded-lg px-2.5 py-2 text-[15px] transition-colors ${
                             isSelected ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
                           }`}
                         >
-                          <span className="truncate">{name}</span>
+                          <span className="truncate">{owner}</span>
                           {isSelected && <span className="text-red-700 dark:text-white font-bold">✓</span>}
                         </button>
                       );
@@ -483,20 +568,86 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
           </div>
 
           <div className="relative">
-            <StepLabel number={3} label={`Cabang ${availableBranches.length ? `(${checkedBranchIds.length})` : ""}`} active={!!selectedParent && checkedBranchIds.length === 0} done={checkedBranchIds.length > 0} />
+            <StepLabel number={3} label={`Outlet ${selectedParents.length ? `(${selectedParents.length})` : ""}`} active={selectedPlatforms.length > 0 && selectedParents.length === 0} done={selectedParents.length > 0} />
+            <button
+              type="button"
+              disabled={selectedPlatforms.length === 0 || loadingOutlets || triggering}
+              onClick={() => {
+                setOpenOutletDropdown(!openOutletDropdown);
+                setOpenPlatformDropdown(false);
+                setOpenOwnerDropdown(false);
+                setOpenBranchDropdown(false);
+              }}
+              className="field-control flex items-center justify-between text-left font-medium"
+              aria-expanded={openOutletDropdown}
+            >
+              <span className={`truncate ${selectedParents.length > 0 ? "font-semibold text-zinc-800 dark:text-white" : "text-zinc-400 dark:text-zinc-500"}`}>
+                {loadingOutlets ? "Memuat..."
+                  : selectedPlatforms.length === 0 ? "Pilih Aplikator dulu"
+                    : selectedParents.length === 0 ? "Pilih Outlet..."
+                      : selectedParents.length === 1 ? selectedParents[0]
+                        : `${selectedParents.length} Outlet Terpilih`}
+              </span>
+              <svg className={`h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform ${openOutletDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {openOutletDropdown && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setOpenOutletDropdown(false)} />
+                <div className="absolute left-0 right-0 top-full z-30 mt-1 min-w-[280px] space-y-2 rounded-xl border border-red-100 dark:border-zinc-800 bg-white dark:bg-black p-2.5 shadow-xl animate-scale-up">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
+                    <span className="text-[13px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Terpilih ({selectedParents.length}/{uniqueParentNames.length})</span>
+                    <button type="button" onClick={handleSelectAllParents} className="text-[13px] font-bold text-red-700 dark:text-red-400 hover:underline">
+                      {selectedParents.length === uniqueParentNames.length ? "Batal Semua" : "Pilih Semua"}
+                    </button>
+                  </div>
+                  <input type="text" placeholder="Cari outlet..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && e.preventDefault()} className="field-control py-2" autoFocus />
+                  <div className="max-h-52 space-y-0.5 overflow-y-auto pr-1">
+                    {filteredParents.length === 0 ? (
+                      <p className="py-3 text-center text-[15px] text-zinc-400 dark:text-zinc-500">Tidak ada outlet cocok</p>
+                    ) : filteredParents.map((name) => {
+                      const checked = selectedParents.includes(name);
+                      return (
+                        <label
+                          key={name}
+                          className={`flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-[15px] transition-colors ${
+                            checked ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => handleParentCheck(name)}
+                            className="h-4 w-4 accent-red-700 cursor-pointer"
+                          />
+                          <span className="truncate">{name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="relative">
+            <StepLabel number={4} label={`Cabang ${availableBranches.length ? `(${checkedBranchIds.length})` : ""}`} active={selectedParents.length > 0 && checkedBranchIds.length === 0} done={checkedBranchIds.length > 0} />
             <button
               type="button"
               disabled={availableBranches.length === 0 || triggering}
               onClick={() => {
                 setOpenBranchDropdown(!openBranchDropdown);
                 setOpenPlatformDropdown(false);
+                setOpenOwnerDropdown(false);
                 setOpenOutletDropdown(false);
               }}
               className="field-control flex items-center justify-between text-left font-medium"
               aria-expanded={openBranchDropdown}
             >
               <span className={`truncate ${checkedBranchIds.length ? "font-semibold text-zinc-800 dark:text-white" : "text-zinc-400 dark:text-zinc-500"}`}>
-                {!selectedParent ? "Pilih Outlet dulu"
+                {selectedParents.length === 0 ? "Pilih Outlet dulu"
                   : checkedBranchIds.length === availableBranches.length ? `Semua Cabang (${availableBranches.length})`
                     : `${checkedBranchIds.length} dari ${availableBranches.length} Cabang`}
               </span>

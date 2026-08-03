@@ -1762,11 +1762,11 @@ def combine_c5_endpoint(request: CombineC5Request, db: Session = Depends(get_db)
     if not ok:
         raise HTTPException(status_code=500, detail="Gagal menggabungkan file C5.")
 
-    # Versioning format for Google Drive filename: YYYY:MM:DD HH:MM <Nama Owner>.xlsx
-    timestamp_version = datetime.now().strftime("%Y:%m:%d %H:%M")
-    drive_filename = f"{timestamp_version} {clean_owner_name}.xlsx"
+    # Versioning format for Google Drive filename: C5. YYYY-MM-DD HH:MM <Nama Owner>.xlsx
+    timestamp_version = datetime.now().strftime("%Y-%m-%d %H:%M")
+    drive_filename = f"C5. {timestamp_version} {clean_owner_name}.xlsx"
 
-    # Upload to Google Drive using folderName: Owner Name, fileName: YYYY:MM:DD HH:MM <Nama Owner>.xlsx
+    # Upload to Google Drive using folderName: Owner Name, fileName: C5. YYYY-MM-DD HH:MM <Nama Owner>.xlsx
     gspread_url = upload_combined_to_drive(combined_path, clean_owner_name, custom_filename=drive_filename)
 
     from urllib.parse import quote

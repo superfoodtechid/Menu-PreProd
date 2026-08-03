@@ -27,6 +27,11 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
   // Search query
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Owner selection state (Filter)
+  const [selectedOwner, setSelectedOwner] = useState("");
+  const [openOwnerDropdown, setOpenOwnerDropdown] = useState(false);
+  const [ownerSearchQuery, setOwnerSearchQuery] = useState("");
+
   // Parent name selection (Single-Select)
   const [uniqueParentNames, setUniqueParentNames] = useState([]);
   const [selectedParent, setSelectedParent] = useState("");
@@ -84,11 +89,13 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
   useEffect(() => {
     if (selectedPlatforms.length === 0) {
       setAllOutlets([]);
+      setSelectedOwner("");
       setUniqueParentNames([]);
       setSelectedParent("");
       setAvailableBranches([]);
       setCheckedBranchIds([]);
       setSearchQuery("");
+      setOwnerSearchQuery("");
       setActiveJobs([]);
       setCombinedResult(null);
       return;
@@ -97,11 +104,13 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     const controller = new AbortController();
     setLoadingOutlets(true);
     setAllOutlets([]);
+    setSelectedOwner("");
     setUniqueParentNames([]);
     setSelectedParent("");
     setAvailableBranches([]);
     setCheckedBranchIds([]);
     setSearchQuery("");
+    setOwnerSearchQuery("");
     setActiveJobs([]);
     setCombinedResult(null);
 
@@ -119,10 +128,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       })
       .then((data) => {
         setAllOutlets(data);
-        
-        // Extract unique parent names (nama_outlet)
-        const parents = Array.from(new Set(data.map((o) => o.nama_outlet).filter(Boolean))).sort();
-        setUniqueParentNames(parents);
+        setSelectedOwner("");
         setSelectedParent("");
       })
       .catch((err) => {
@@ -135,9 +141,26 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       });
 
     return () => controller.abort();
-  }, [selectedPlatforms, API_BASE_URL]);
+  }, [selectedPlatforms, API_BASE_URL, API_SECRET_KEY]);
 
-  // Update available branches when selectedParent or allOutlets changes
+  // Extract unique owners from allOutlets
+  const uniqueOwners = Array.from(
+    new Set(allOutlets.map((o) => o.owner).filter((owner) => owner && owner.trim() !== ""))
+  ).sort();
+
+  // Update unique parent names (nama_outlet) based on selectedOwner filter
+  useEffect(() => {
+    const filteredByOwner = selectedOwner
+      ? allOutlets.filter((o) => o.owner === selectedOwner)
+      : allOutlets;
+    const parents = Array.from(new Set(filteredByOwner.map((o) => o.nama_outlet).filter(Boolean))).sort();
+    setUniqueParentNames(parents);
+    if (selectedParent && !parents.includes(selectedParent)) {
+      setSelectedParent("");
+    }
+  }, [allOutlets, selectedOwner]);
+
+  // Update available branches when selectedParent, selectedOwner, or allOutlets changes
   useEffect(() => {
     if (selectedPlatforms.length === 0 || !selectedParent) {
       setAvailableBranches([]);
@@ -145,13 +168,17 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       return;
     }
 
-    // Filter branches whose parent name is selectedParent
-    const filtered = allOutlets.filter((o) => o.nama_outlet === selectedParent);
+    // Filter branches whose parent name is selectedParent and owner matches if selectedOwner exists
+    const filtered = allOutlets.filter((o) => {
+      const matchParent = o.nama_outlet === selectedParent;
+      const matchOwner = selectedOwner ? o.owner === selectedOwner : true;
+      return matchParent && matchOwner;
+    });
     setAvailableBranches(filtered);
     
     // Automatically check all branches of the selected parent outlet
     setCheckedBranchIds(filtered.map((b) => b.id));
-  }, [selectedParent, allOutlets, selectedPlatforms]);
+  }, [selectedParent, selectedOwner, allOutlets, selectedPlatforms]);
 
   // Clean up all polling intervals on unmount
   useEffect(() => {
@@ -160,6 +187,11 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       Object.values(pollingIntervals).forEach(clearInterval);
     };
   }, []);
+
+  // Filtered owners based on owner search query
+  const filteredOwners = uniqueOwners.filter((owner) =>
+    owner.toLowerCase().includes(ownerSearchQuery.toLowerCase())
+  );
 
   // Filtered parent names based on search query
   const filteredParents = uniqueParentNames.filter((name) =>
@@ -429,14 +461,87 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
             )}
           </div>
 
+          {/* 2: OWNER Filter Dropdown */}
           <div className="relative">
-            <StepLabel number={2} label={selectedParent ? "Outlet (1)" : "Outlet"} active={selectedPlatforms.length > 0 && !selectedParent} done={!!selectedParent} />
+            <StepLabel number={2} label={selectedOwner ? "Owner (1)" : "Owner"} active={selectedPlatforms.length > 0 && !selectedOwner} done={!!selectedOwner} />
+            <button
+              type="button"
+              disabled={selectedPlatforms.length === 0 || loadingOutlets || triggering}
+              onClick={() => {
+                setOpenOwnerDropdown(!openOwnerDropdown);
+                setOpenPlatformDropdown(false);
+                setOpenOutletDropdown(false);
+                setOpenBranchDropdown(false);
+              }}
+              className="field-control flex items-center justify-between text-left font-medium"
+              aria-expanded={openOwnerDropdown}
+            >
+              <span className={`truncate ${selectedOwner ? "font-semibold text-zinc-800 dark:text-white" : "text-zinc-400 dark:text-zinc-500"}`}>
+                {loadingOutlets ? "Memuat..."
+                  : selectedPlatforms.length === 0 ? "Pilih Aplikator dulu"
+                    : selectedOwner || "Semua Owner"}
+              </span>
+              <svg className={`h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform ${openOwnerDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {openOwnerDropdown && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setOpenOwnerDropdown(false)} />
+                <div className="absolute left-0 right-0 top-full z-30 mt-1 min-w-[260px] space-y-2 rounded-xl border border-red-100 dark:border-zinc-800 bg-white dark:bg-black p-2.5 shadow-xl animate-scale-up">
+                  <input type="text" placeholder="Cari owner..." value={ownerSearchQuery} onChange={(e) => setOwnerSearchQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && e.preventDefault()} className="field-control py-2" autoFocus />
+                  <div className="max-h-52 space-y-0.5 overflow-y-auto pr-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedOwner("");
+                        setOpenOwnerDropdown(false);
+                      }}
+                      className={`w-full text-left cursor-pointer flex items-center justify-between rounded-lg px-2.5 py-2 text-[15px] transition-colors ${
+                        !selectedOwner ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      <span className="truncate">Semua Owner</span>
+                      {!selectedOwner && <span className="text-red-700 dark:text-white font-bold">✓</span>}
+                    </button>
+                    {filteredOwners.length === 0 ? (
+                      <p className="py-3 text-center text-[15px] text-zinc-400 dark:text-zinc-500">Tidak ada owner cocok</p>
+                    ) : filteredOwners.map((name) => {
+                      const isSelected = selectedOwner === name;
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => {
+                            setSelectedOwner(name);
+                            setOpenOwnerDropdown(false);
+                          }}
+                          className={`w-full text-left cursor-pointer flex items-center justify-between rounded-lg px-2.5 py-2 text-[15px] transition-colors ${
+                            isSelected ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
+                          }`}
+                        >
+                          <span className="truncate">{name}</span>
+                          {isSelected && <span className="text-red-700 dark:text-white font-bold">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* 3: OUTLET */}
+          <div className="relative">
+            <StepLabel number={3} label={selectedParent ? "Outlet (1)" : "Outlet"} active={selectedPlatforms.length > 0 && !selectedParent} done={!!selectedParent} />
             <button
               type="button"
               disabled={selectedPlatforms.length === 0 || loadingOutlets || triggering}
               onClick={() => {
                 setOpenOutletDropdown(!openOutletDropdown);
                 setOpenPlatformDropdown(false);
+                setOpenOwnerDropdown(false);
                 setOpenBranchDropdown(false);
               }}
               className="field-control flex items-center justify-between text-left font-medium"
@@ -482,14 +587,16 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
             )}
           </div>
 
+          {/* 4: CABANG */}
           <div className="relative">
-            <StepLabel number={3} label={`Cabang ${availableBranches.length ? `(${checkedBranchIds.length})` : ""}`} active={!!selectedParent && checkedBranchIds.length === 0} done={checkedBranchIds.length > 0} />
+            <StepLabel number={4} label={`Cabang ${availableBranches.length ? `(${checkedBranchIds.length})` : ""}`} active={!!selectedParent && checkedBranchIds.length === 0} done={checkedBranchIds.length > 0} />
             <button
               type="button"
               disabled={availableBranches.length === 0 || triggering}
               onClick={() => {
                 setOpenBranchDropdown(!openBranchDropdown);
                 setOpenPlatformDropdown(false);
+                setOpenOwnerDropdown(false);
                 setOpenOutletDropdown(false);
               }}
               className="field-control flex items-center justify-between text-left font-medium"

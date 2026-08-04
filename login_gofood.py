@@ -483,6 +483,14 @@ def login_outlet(outlet_info, proxy_config=None):
         )
 
         import random
+
+        def normalize_token(raw_token):
+            token = str(raw_token or "").strip()
+            if not token:
+                return ""
+            if token.lower().startswith("bearer "):
+                return token.split(" ", 1)[1].strip()
+            return token
         
         access_token = None
         session_loaded_successfully = False
@@ -509,14 +517,69 @@ def login_outlet(outlet_info, proxy_config=None):
                 page = context.new_page()
                 safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/dashboard", wait_until="domcontentloaded")
                 time.sleep(2.0)
+                if store_id:
+                    store_id_cached = str(store_id).strip()
+                    safe_goto_with_retry(
+                        page,
+                        f"https://portal.gofoodmerchant.co.id/gofood/{store_id_cached}/menu-items",
+                        wait_until="domcontentloaded",
+                        timeout=45000,
+                    )
+                    time.sleep(2.0)
                 
                 # Check if we are logged in (i.e. URL does not contain /auth or /login)
                 current_url = page.url
                 if "/auth" not in current_url and "login" not in current_url:
-                    print(f"   ✅ Sesi berhasil dimuat! Melewati login OTP untuk {cached_identifier}.")
-                    access_token = cached_data.get('access_token')
-                    session_loaded_successfully = True
-                    logged_in_email = cached_identifier if "@" in str(cached_identifier) else None
+                    token_candidate = normalize_token(cached_data.get('access_token'))
+                    if not token_candidate:
+                        try:
+                            for c in context.cookies():
+                                if c.get('name') in ('access_token', 'token', 'gobiz_token'):
+                                    token_candidate = normalize_token(c.get('value'))
+                                    if token_candidate:
+                                        break
+                        except Exception:
+                            pass
+                    if not token_candidate:
+                        try:
+                            token_eval = page.evaluate("""() => {
+                                const keys = ['token', 'access_token', 'accessToken', 'auth_token', 'authorization', 'gobiz-token', 'go-id-token'];
+                                const fromStorage = (storage) => {
+                                    for (const k of keys) {
+                                        try {
+                                            const v = storage.getItem(k);
+                                            if (v) return v;
+                                        } catch (_) {}
+                                    }
+                                    for (let i = 0; i < storage.length; i++) {
+                                        try {
+                                            const key = storage.key(i);
+                                            const val = storage.getItem(key);
+                                            if (val && /bearer|eyj[a-z0-9_-]{10,}/i.test(val)) return val;
+                                        } catch (_) {}
+                                    }
+                                    return '';
+                                };
+                                return fromStorage(localStorage) || fromStorage(sessionStorage) || '';
+                            }""")
+                            token_candidate = normalize_token(token_eval)
+                        except Exception:
+                            pass
+
+                    if token_candidate:
+                        print(f"   ✅ Sesi berhasil dimuat! Melewati login OTP untuk {cached_identifier}.")
+                        access_token = token_candidate
+                        session_loaded_successfully = True
+                        logged_in_email = cached_identifier if "@" in str(cached_identifier) else None
+                    else:
+                        print(f"   ⚠️ Sesi terlihat login tetapi token tidak ditemukan untuk {cached_identifier}. Memaksa login ulang...")
+                        context.clear_cookies()
+                        page.close()
+                        sanitized_id = re.sub(r'[^a-zA-Z0-9_.-]', '_', str(cached_identifier).strip().lower())
+                        old_session = MENU_DIR / "Gofood" / f"session_gofood_{sanitized_id}.json"
+                        if old_session.exists():
+                            try: os.remove(old_session)
+                            except Exception: pass
                 else:
                     print(f"   ⚠️ Sesi kedaluwarsa untuk {cached_identifier} (URL: {current_url}). Melakukan login ulang...")
                     context.clear_cookies()
@@ -740,7 +803,11 @@ def login_outlet(outlet_info, proxy_config=None):
                             print("⚠️ Browser ditutup sebelum login selesai.")
                             break
 
-                        cookies = context.cookies()
+                        try:
+                            cookies = context.cookies()
+                        except Exception as cookie_err:
+                            print(f"   ⚠️ Context browser tertutup saat membaca cookies: {cookie_err}")
+                            break
                         for cookie in cookies:
                             if cookie['name'] == 'access_token':
                                 attempt_token = cookie['value']
@@ -950,7 +1017,9 @@ def login_outlet(outlet_info, proxy_config=None):
                             except Exception:
                                 pass
 
-                        if "gofood/merchant" in url_lower and ("/menus" in url_lower or "menu_groups" in url_lower):
+                        if ("/menus" in url_lower or "menu_groups" in url_lower) and (
+                            "gofood/merchant" in url_lower or "/restaurants/" in url_lower or "/menu_groups/" in url_lower
+                        ):
                             try:
                                 if response.status == 200:
                                     data = response.json()
@@ -1041,7 +1110,29 @@ def login_outlet(outlet_info, proxy_config=None):
                     # Direct Fetch Fallback jika listener belum menangkap data menu setelah reload
                     if captured_menu is None and access_token:
                         print("   🤖 [Direct Fetch Fallback] Listener belum menangkap menu, mencoba fetch langsung via API Gojek...")
-                        target_ids = [i for i in [captured_restaurant_id, store_id_clean] if i]
+                        token_for_fetch = access_token if str(access_token).lower().startswith("bearer ") else f"Bearer {access_token}"
+                        target_ids = [i for i in [captured_restaurant_id] if i and len(str(i)) == 36 and "-" in str(i)]
+                        try:
+                            storage_uuid = page.evaluate("""() => {
+                                const re = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+                                const fromUrl = re.exec(window.location.href || '');
+                                if (fromUrl) return fromUrl[0];
+                                for (let i = 0; i < localStorage.length; i++) {
+                                    const v = localStorage.getItem(localStorage.key(i)) || '';
+                                    const m = re.exec(v);
+                                    if (m) return m[0];
+                                }
+                                for (let i = 0; i < sessionStorage.length; i++) {
+                                    const v = sessionStorage.getItem(sessionStorage.key(i)) || '';
+                                    const m = re.exec(v);
+                                    if (m) return m[0];
+                                }
+                                return null;
+                            }""")
+                            if storage_uuid and storage_uuid not in target_ids:
+                                target_ids.append(storage_uuid)
+                        except Exception:
+                            pass
                         try:
                             direct_menu = page.evaluate("""async ({token, targetIds}) => {
                                 for (const restId of targetIds) {
@@ -1075,6 +1166,16 @@ def login_outlet(outlet_info, proxy_config=None):
                                 print(f"   ✅ [Direct Fetch Fallback] Berhasil mengambil menu GoFood langsung dari API! Total kategori: {len(direct_menu.get('menus', []))}")
                         except Exception as err:
                             print(f"   ⚠️ [Direct Fetch Fallback] Error: {err}")
+
+                        if captured_menu is None and captured_v2_group_id:
+                            try:
+                                from Gofood.GO.actions import _menu_api as go_api
+                                v2_menu = go_api.fetch_menus_v2(page, token_for_fetch, captured_v2_group_id, passkey=captured_x_passkey)
+                                if v2_menu:
+                                    captured_menu = {"menus": v2_menu} if isinstance(v2_menu, list) else v2_menu
+                                    print("   ✅ [Direct Fetch Fallback] Berhasil mengambil menu via endpoint V2 menu_groups.")
+                            except Exception as v2_err:
+                                print(f"   ⚠️ [Direct Fetch Fallback] V2 menu_groups gagal: {v2_err}")
                         
                     # Beri waktu tambahan 5 detik untuk menangkap pemanggilan API variant_categories
                     if captured_menu is not None:
@@ -1145,7 +1246,11 @@ def login_outlet(outlet_info, proxy_config=None):
             except Exception:
                 pass
 
-            all_cookies = context.cookies()
+            try:
+                all_cookies = context.cookies()
+            except Exception as cookie_err:
+                print(f"   ⚠️ Gagal membaca cookies dari context: {cookie_err}")
+                all_cookies = []
             local_storage = {}
             session_storage = {}
             try:

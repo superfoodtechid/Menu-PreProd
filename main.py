@@ -1689,6 +1689,21 @@ def trigger_pull_job(outlet_id: uuid.UUID, background_tasks: BackgroundTasks, db
     background_tasks.add_task(run_pull_job, new_job.id, outlet.id)
     return new_job
 
+@app.get("/api/jobs/download-file")
+def download_file_by_path(path: str):
+    abs_path = os.path.abspath(path)
+    base_exports = os.path.abspath(str(BASE_DIR / "data" / "exports"))
+    if not abs_path.startswith(base_exports):
+        raise HTTPException(status_code=403, detail="Akses ditolak")
+    if not os.path.exists(abs_path):
+        raise HTTPException(status_code=404, detail="File tidak ditemukan di server")
+    filename = os.path.basename(abs_path)
+    return FileResponse(
+        path=abs_path,
+        filename=filename,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
 @app.get("/api/jobs/{job_id}", response_model=JobResponse)
 def get_job_status(job_id: uuid.UUID, db: Session = Depends(get_db)):
     job = db.query(Job).filter(Job.id == job_id).first()
@@ -1786,21 +1801,6 @@ def combine_c5_endpoint(request: CombineC5Request, db: Session = Depends(get_db)
         "combined_count": len(excel_paths),
         "outlet_name": owner_name
     }
-
-@app.get("/api/jobs/download-file")
-def download_file_by_path(path: str):
-    abs_path = os.path.abspath(path)
-    base_exports = os.path.abspath(str(BASE_DIR / "data" / "exports"))
-    if not abs_path.startswith(base_exports):
-        raise HTTPException(status_code=403, detail="Akses ditolak")
-    if not os.path.exists(abs_path):
-        raise HTTPException(status_code=404, detail="File tidak ditemukan di server")
-    filename = os.path.basename(abs_path)
-    return FileResponse(
-        path=abs_path,
-        filename=filename,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
 
 
 

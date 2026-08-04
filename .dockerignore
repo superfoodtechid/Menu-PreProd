@@ -14,3 +14,18 @@ web/dist
 .vscode
 Dockerfile*
 docker-compose*.yml
+
+# Exclude large runtime and data directories to speed up build context transfer
+**/data/
+**/chrome_profile*/
+**/chrome-profile*/
+**/browser_data/
+**/browser-data/
+**/portal_f_user_test/
+**/logs/
+**/screenshots/
+**/downloads/
+**/laporan*/
+**/reports/
+**/exports/
+**/outlets/

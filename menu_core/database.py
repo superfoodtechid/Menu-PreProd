@@ -223,6 +223,13 @@ def init_db():
                     conn.execute(text("ALTER TABLE outlets ADD COLUMN nama_resto_final VARCHAR(255)"))
                 if "brand" not in columns:
                     conn.execute(text("ALTER TABLE outlets ADD COLUMN brand VARCHAR(255)"))
+                # Create indexes if they do not exist to optimize joins and filtering
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_outlets_account_id ON outlets(account_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_outlets_store_id ON outlets(store_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_jobs_outlet_id ON jobs(outlet_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_jobs_status_type ON jobs(job_type, status)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_audit_trails_outlet_id ON audit_trails(outlet_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_audit_trails_item_id ON audit_trails(item_id)"))
     except Exception as migrate_err:
         pass
 

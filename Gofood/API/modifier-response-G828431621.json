@@ -1,0 +1,27 @@
+{
+    "variant_categories": [
+        {
+            "common_id": "e5c85ca7-5dac-40e5-b654-ab0d61fc101c",
+            "name": "Pilihan Topping Pecel",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_MANY",
+                    "required": false,
+                    "min_quantity": 0,
+                    "max_quantity": null
+                }
+            },
+            "variants": [
+                {
+                    "common_id": "141f5299-1083-483c-aa48-e4d785de2414",
+                    "name": "Telor Dadar/Ceplok",
+                    "price": 6500,
+                    "active": true,
+                    "weight": 1
+                }
+            ],
+            "total_menu_items": 0
+        }
+    ]
+}

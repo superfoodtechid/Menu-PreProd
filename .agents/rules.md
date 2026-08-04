@@ -41,7 +41,7 @@ Allowed spacing:
 32
 48
 64
-96
+96 d
 
 Never use arbitrary spacing like:
 

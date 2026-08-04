@@ -1,33 +1,596 @@
-export default function MenuPushTab() {
+import { useState, useEffect, useRef } from "react";
+import PlatformBadge from "./PlatformBadge";
+
+export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
+  const [parsing, setParsing] = useState(false);
+  const [parseResult, setParseResult] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // Multi-Select Store IDs (SID)
+  const [selectedSids, setSelectedSids] = useState([]);
+
+  // Table Filters
+  const [filterMode, setFilterMode] = useState("changed"); // 'changed' | 'all' | 'price' | 'name' | 'category' | 'photo'
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Push Execution State
+  const [triggering, setTriggering] = useState(false);
+  const [activeJob, setActiveJob] = useState(null);
+  const pollingRef = useRef(null);
+
+  // Handle File Select & Upload to /api/jobs/parse-c5
+  const handleFileUpload = async (uploadedFile) => {
+    if (!uploadedFile) return;
+    setParsing(true);
+    setErrorMsg("");
+    setParseResult(null);
+    setSelectedSids([]);
+
+    const formData = new FormData();
+    formData.append("file", uploadedFile);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/jobs/parse-c5`, {
+        method: "POST",
+        headers: {
+          "X-API-Key": API_SECRET_KEY || ""
+        },
+        body: formData
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setParseResult(data);
+        // Automatically select all detected SIDs by default
+        if (data.stores && data.stores.length > 0) {
+          setSelectedSids(data.stores.map((s) => s.sid));
+        }
+      } else {
+        const errData = await res.json();
+        setErrorMsg(errData.detail || "Gagal mengurai file Excel C5.");
+      }
+    } catch (err) {
+      console.error("Error parsing C5 file:", err);
+      setErrorMsg("Terjadi kesalahan jaringan saat mengunggah file C5.");
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  // Toggle Single Store ID (SID) selection
+  const toggleSid = (sid) => {
+    setSelectedSids((prev) =>
+      prev.includes(sid) ? prev.filter((id) => id !== sid) : [...prev, sid]
+    );
+  };
+
+  // Select All / Deselect All SIDs
+  const toggleAllSids = () => {
+    if (!parseResult || !parseResult.stores) return;
+    if (selectedSids.length === parseResult.stores.length) {
+      setSelectedSids([]);
+    } else {
+      setSelectedSids(parseResult.stores.map((s) => s.sid));
+    }
+  };
+
+  // Poll active Job status
+  useEffect(() => {
+    if (!activeJob || ["SUCCESS", "FAILED"].includes(activeJob.status)) {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      return;
+    }
+
+    pollingRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/jobs/${activeJob.id}`, {
+          headers: { "X-API-Key": API_SECRET_KEY || "" }
+        });
+        if (res.ok) {
+          const updatedJob = await res.json();
+          setActiveJob(updatedJob);
+          if (["SUCCESS", "FAILED"].includes(updatedJob.status)) {
+            clearInterval(pollingRef.current);
+          }
+        }
+      } catch (err) {
+        console.error("Error polling job status:", err);
+      }
+    }, 1500);
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [activeJob, API_BASE_URL, API_SECRET_KEY]);
+
+  // Handle Trigger Push C5 GoFood
+  const handleTriggerPush = async () => {
+    if (!parseResult || selectedSids.length === 0) return;
+
+    // Filter items belonging to selected SIDs that have changes
+    const targetItems = parseResult.items.filter(
+      (item) => selectedSids.includes(item.sid) && item.is_changed
+    );
+
+    if (targetItems.length === 0) {
+      alert("Tidak ada perubahan item yang terdeteksi pada Store ID yang dipilih.");
+      return;
+    }
+
+    setTriggering(true);
+    setErrorMsg("");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/jobs/push-c5`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_SECRET_KEY || ""
+        },
+        body: JSON.stringify({
+          platform: "gofood",
+          selected_sids: selectedSids,
+          updates: targetItems.map((item) => ({
+            sid: item.sid,
+            outlet_name: item.outlet_name,
+            item_id: item.item_id,
+            category_id: item.category_id,
+            category: item.category,
+            item_name: item.item_name,
+            item_name_new: item.item_name_new,
+            photo_link: item.photo_link,
+            current_fake_price: item.baseline_price,
+            new_fake_price: item.new_fake_price,
+            changes: item.change_types
+          }))
+        })
+      });
+
+      if (res.ok) {
+        const job = await res.json();
+        setActiveJob(job);
+      } else {
+        const errData = await res.json();
+        setErrorMsg(errData.detail || "Gagal memicu push C5 GoFood.");
+      }
+    } catch (err) {
+      console.error("Error triggering push C5:", err);
+      setErrorMsg("Gagal terhubung ke server saat memicu Push GoFood.");
+    } finally {
+      setTriggering(false);
+    }
+  };
+
+  // Filter items for table preview based on selected SIDs, filterMode, and search query
+  const filteredItems = (parseResult?.items || []).filter((item) => {
+    if (selectedSids.length > 0 && !selectedSids.includes(item.sid)) return false;
+
+    if (filterMode === "changed" && !item.is_changed) return false;
+    if (filterMode === "price" && !item.changes?.price_changed) return false;
+    if (filterMode === "name" && !item.changes?.name_changed) return false;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = item.item_name?.toLowerCase().includes(q);
+      const matchId = item.item_id?.toLowerCase().includes(q);
+      const matchCat = item.category?.toLowerCase().includes(q);
+      const matchStore = item.outlet_name?.toLowerCase().includes(q) || item.sid?.toLowerCase().includes(q);
+      return matchName || matchId || matchCat || matchStore;
+    }
+
+    return true;
+  });
+
+  const fmtCurrency = (val) => {
+    if (val === null || val === undefined || val === "") return "-";
+    return `Rp ${Number(val).toLocaleString("id-ID")}`;
+  };
+
   return (
-    <main className="grid grid-cols-1 gap-6 xl:grid-cols-5">
-      <section className="surface-card min-w-0 h-fit p-6 xl:col-span-2">
-        <div className="border-b border-red-100 pb-4">
-          <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600">Dalam pengembangan</p>
-          <h2 className="mt-1 text-xl font-bold text-slate-900">Menu Push</h2>
-        </div>
-        <div className="py-12 text-center text-[15px] text-slate-500">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
-            <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+    <main className="space-y-6">
+      {/* Header Banner */}
+      <div className="surface-card flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-red-600 to-red-800 text-white shadow-lg shadow-red-900/20 dark:from-zinc-800 dark:to-zinc-950 dark:border dark:border-zinc-700">
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
           </div>
-          <p className="font-bold text-slate-800">Fitur segera tersedia</p>
-          <p className="mx-auto mt-2 max-w-xs leading-6">Nantinya kamu dapat menyinkronkan struktur menu ke semua platform dari satu tempat.</p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Menu Push C5</h2>
+              <PlatformBadge platform="gofood" size="sm" />
+            </div>
+            <p className="mt-0.5 text-[14px] text-slate-500 dark:text-zinc-400">
+              Unggah file C5 (`.xlsx`), pilih cabang Store ID (`SID`), dan apply perubahan item menu ke GoFood.
+            </p>
+          </div>
         </div>
-      </section>
 
-      <section className="min-w-0 space-y-6 xl:col-span-3">
-        <div className="surface-card flex min-h-[420px] flex-col p-6">
-          <div className="border-b border-red-100 pb-4">
-            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-red-600">Aktivitas</p>
-            <h2 className="mt-1 text-xl font-bold text-slate-900">Status push menu</h2>
+        {parseResult && (
+          <button
+            type="button"
+            onClick={() => {
+              setParseResult(null);
+              setSelectedSids([]);
+              setActiveJob(null);
+            }}
+            className="self-start rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 sm:self-auto"
+          >
+            ↺ Unggah File Baru
+          </button>
+        )}
+      </div>
+
+      {/* Upload Dropzone Section */}
+      {!parseResult && (
+        <section className="surface-card p-8 text-center">
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFileUpload(e.dataTransfer.files[0]);
+              }
+            }}
+            className="mx-auto flex max-w-2xl flex-col items-center justify-center rounded-3xl border-2 border-dashed border-red-200 bg-red-50/30 px-6 py-12 transition hover:border-red-400 dark:border-zinc-800 dark:bg-zinc-950/40"
+          >
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600 dark:bg-zinc-900 dark:text-red-400">
+              <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Pilih atau Seret File Excel C5 (`.xlsx`)</h3>
+            <p className="mt-1 max-w-sm text-[14px] text-slate-500 dark:text-zinc-400">
+              Sistem akan otomatis mengurai sheet `Item`, mendeteksi Store ID (`SID`), lalu membandingkan dengan data PULL terakhir untuk mendeteksi perubahan nama & harga item GoFood.
+            </p>
+
+            <label className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-red-700 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-900/15 transition hover:bg-red-800 dark:bg-white dark:text-black dark:shadow-none">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              <span>{parsing ? "Mengunggah & Mengurai..." : "Pilih File C5"}</span>
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                disabled={parsing}
+                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                className="hidden"
+              />
+            </label>
+
+            {parsing && (
+              <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-red-600 dark:text-red-400">
+                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <span>Membaca sheet Item & mengekstrak Store ID...</span>
+              </div>
+            )}
+
+            {errorMsg && (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
+                ⚠️ {errorMsg}
+              </div>
+            )}
           </div>
-          <div className="my-auto rounded-2xl border border-dashed border-red-200 bg-red-50/40 px-6 py-14 text-center text-[15px] text-slate-500">
-            Belum ada aktivitas yang dapat ditampilkan.
+        </section>
+      )}
+
+      {/* Parse Result & Multi-Select Store ID Panel */}
+      {parseResult && (
+        <div className="space-y-6">
+          {/* Summary Cards Grid */}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="surface-card p-4">
+              <p className="text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Store ID (SID)</p>
+              <p className="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.total_stores}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">{selectedSids.length} Dipilih</p>
+            </div>
+            <div className="surface-card p-4">
+              <p className="text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Total Item C5</p>
+              <p className="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.total_items}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Dalam C5</p>
+            </div>
+            <div className="surface-card border-l-4 border-l-amber-500 p-4">
+              <p className="text-[12px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Total Perubahan</p>
+              <p className="mt-1 text-2xl font-extrabold text-amber-600 dark:text-amber-400">{parseResult.summary.total_changes}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Item Terdeteksi</p>
+            </div>
+            <div className="surface-card p-4">
+              <p className="text-[12px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Price Change</p>
+              <p className="mt-1 text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{parseResult.summary.price_changes}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">New Fake Price terisi</p>
+            </div>
+            <div className="surface-card p-4">
+              <p className="text-[12px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Nama Item</p>
+              <p className="mt-1 text-2xl font-extrabold text-blue-600 dark:text-blue-400">{parseResult.summary.name_changes}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Nama berubah</p>
+            </div>
           </div>
+
+          {/* Multi-Select Store ID Section */}
+          <section className="surface-card p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 dark:border-zinc-800">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Pilih Store ID (SID) untuk di-Push ke GoFood
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
+                  File C5 ini berisi {parseResult.stores.length} Store ID. Centang store yang ingin Anda terapkan perubahannya.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleAllSids}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                >
+                  {selectedSids.length === parseResult.stores.length ? "Batal Pilih Semua" : "Pilih Semua Store ID"}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {parseResult.stores.map((store) => {
+                const isSelected = selectedSids.includes(store.sid);
+                return (
+                  <label
+                    key={store.sid}
+                    className={`flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition ${
+                      isSelected
+                        ? "border-red-300 bg-red-50/50 shadow-xs dark:border-red-800 dark:bg-red-950/20"
+                        : "border-slate-200 bg-white hover:border-slate-300 dark:border-zinc-800 dark:bg-zinc-900"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSid(store.sid)}
+                        className="h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500 dark:border-zinc-700"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white">{store.name}</p>
+                        <p className="text-[11px] font-mono text-slate-400 dark:text-zinc-500">SID: {store.sid}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-zinc-800 dark:text-zinc-300">
+                        {store.item_count} item
+                      </span>
+                      {store.changed_count > 0 && (
+                        <p className="mt-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                          ⚡ {store.changed_count} berubah
+                        </p>
+                      )}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Action & Status Tracker Panel */}
+          <section className="surface-card p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Eksekusi Push Menu GoFood</h3>
+                  <PlatformBadge platform="gofood" size="sm" />
+                </div>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
+                  Akan mendorong perubahan pada {selectedSids.length} Store ID yang dipilih ke portal GoFood Merchant.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleTriggerPush}
+                disabled={triggering || selectedSids.length === 0}
+                className={`inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition shadow-md ${
+                  selectedSids.length > 0 && !triggering
+                    ? "bg-red-700 hover:bg-red-800 shadow-red-900/20 dark:bg-white dark:text-black"
+                    : "cursor-not-allowed bg-slate-300 text-slate-500 dark:bg-zinc-800 dark:text-zinc-600"
+                }`}
+              >
+                {triggering ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span>Mengantrekan Push...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Push Perubahan ke GoFood ({selectedSids.length} Store ID)</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Active Job Progress Tracker */}
+            {activeJob && (
+              <div className="mt-6 rounded-2xl border border-red-100 bg-red-50/40 p-5 dark:border-zinc-800 dark:bg-zinc-950/60">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-3 w-3 rounded-full bg-red-600 animate-ping" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400">
+                      Status Push: {activeJob.status}
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-600 dark:text-zinc-300">
+                    {activeJob.progress_pct}%
+                  </span>
+                </div>
+
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-red-100 dark:bg-zinc-800">
+                  <div
+                    className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-500 dark:from-red-500 dark:to-red-400"
+                    style={{ width: `${activeJob.progress_pct}%` }}
+                  />
+                </div>
+
+                <p className="mt-2 text-xs font-semibold text-slate-700 dark:text-zinc-300">
+                  📍 {activeJob.current_step}
+                </p>
+
+                {activeJob.status === "SUCCESS" && (
+                  <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-bold text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+                    🎉 Push Perubahan C5 GoFood Selesai
+                    <p className="mt-1 font-normal text-emerald-700 dark:text-emerald-400">
+                      {activeJob.result_metadata?.success_count ?? 0} item berhasil
+                      {(activeJob.result_metadata?.fail_count ?? 0) > 0
+                        ? `, ${activeJob.result_metadata.fail_count} gagal`
+                        : ""}{" "}
+                      pada {activeJob.result_metadata?.selected_sids?.length || 0} Store ID.
+                    </p>
+                  </div>
+                )}
+
+                {activeJob.status === "FAILED" && (
+                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-bold text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+                    Push Perubahan C5 GoFood Gagal
+                    <p className="mt-1 font-normal text-red-700 dark:text-red-400">
+                      {activeJob.current_step}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* Table Filters & Search */}
+          <section className="surface-card p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 dark:border-zinc-800">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  ["changed", "Item Berubah"],
+                  ["all", "Semua Item"],
+                  ["price", "Price Change"],
+                  ["name", "Nama Item"]
+                ].map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setFilterMode(mode)}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                      filterMode === mode
+                        ? "bg-slate-900 text-white dark:bg-white dark:text-black"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative min-w-[240px]">
+                <input
+                  type="text"
+                  placeholder="Cari item, category, atau SID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+                />
+                <svg className="absolute left-3 top-2 h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Change Preview Table */}
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:bg-zinc-900 dark:text-zinc-400">
+                  <tr>
+                    <th className="px-4 py-3">Store ID / Outlet</th>
+                    <th className="px-4 py-3">Kategori</th>
+                    <th className="px-4 py-3">Nama Item</th>
+                    <th className="px-4 py-3">Harga Baseline</th>
+                    <th className="px-4 py-3">New Fake Price</th>
+                    <th className="px-4 py-3 text-center">Status Perubahan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800 font-medium">
+                  {filteredItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-slate-400 dark:text-zinc-500">
+                        Tidak ada item C5 yang cocok dengan filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredItems.map((item, idx) => (
+                      <tr
+                        key={`${item.sid}-${item.item_id}-${idx}`}
+                        className={`transition ${
+                          item.is_changed
+                            ? "bg-amber-50/30 hover:bg-amber-50/60 dark:bg-amber-950/10 dark:hover:bg-amber-950/20"
+                            : "hover:bg-slate-50 dark:hover:bg-zinc-900/50"
+                        }`}
+                      >
+                        <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                          <div>{item.outlet_name}</div>
+                          <div className="text-[10px] font-mono text-slate-400">{item.sid}</div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-700 dark:text-zinc-300">{item.category || "-"}</td>
+                        <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                          {item.changes?.name_changed ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[11px] text-slate-400 line-through dark:text-zinc-500">{item.baseline_name || item.item_name}</span>
+                              <span className="text-[10px] text-slate-400 dark:text-zinc-500">→</span>
+                              <span className="font-bold text-blue-600 dark:text-blue-400">{item.item_name_new || item.item_name}</span>
+                            </div>
+                          ) : (
+                            <span>{item.item_name}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-slate-600 dark:text-zinc-400">
+                          {item.baseline_found ? fmtCurrency(item.baseline_price) : <span className="text-[11px] text-slate-400 dark:text-zinc-500">Tak ada baseline</span>}
+                        </td>
+                        <td className="px-4 py-3">
+                          {item.changes?.price_changed ? (
+                            <span className="rounded-md bg-emerald-100 px-2 py-0.5 font-extrabold text-emerald-800 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+                              {fmtCurrency(item.new_fake_price)}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 dark:text-zinc-500">
+                              {item.new_fake_price !== null && item.new_fake_price !== undefined ? fmtCurrency(item.new_fake_price) : "(Kosong)"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {item.is_changed ? (
+                            <div className="flex flex-wrap items-center justify-center gap-1">
+                              {item.changes?.price_changed && (
+                                <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                                  Price
+                                </span>
+                              )}
+                              {item.changes?.name_changed && (
+                                <span className="rounded-md bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                                  Nama
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 dark:text-zinc-600">Tidak ada perubahan</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
-      </section>
+      )}
     </main>
   );
 }

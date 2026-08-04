@@ -32,15 +32,25 @@ def normalisasi_nomor_hp(nomor_hp):
         return nomor_hp[2:]
     if nomor_hp.startswith("0"):
         return nomor_hp[1:]
-def safe_goto_with_retry(page, url, wait_until="domcontentloaded", timeout=30000, max_attempts=3):
+def safe_goto_with_retry(
+    page,
+    url,
+    wait_until="domcontentloaded",
+    timeout=30000,
+    max_attempts=3,
+    ready_selector=None,
+    ready_timeout=15000,
+):
     """
     Mekanisme navigasi aman dengan reload 2x (total 3 attempt) jika terjadi Timeout Error
     saat mengakses halaman portal GoFood.
     """
     last_err = None
     for attempt in range(1, max_attempts + 1):
+        navigated = False
         try:
-            return page.goto(url, wait_until=wait_until, timeout=timeout)
+            page.goto(url, wait_until=wait_until, timeout=timeout)
+            navigated = True
         except Exception as e:
             last_err = e
             print(f"   ⚠️ [Timeout/Error] Navigasi ke {url} gagal pada percobaan {attempt}/{max_attempts}: {e}")
@@ -50,10 +60,24 @@ def safe_goto_with_retry(page, url, wait_until="domcontentloaded", timeout=30000
                 try:
                     if page.url and page.url != "about:blank":
                         page.reload(wait_until=wait_until, timeout=timeout)
+                        navigated = True
                         print(f"   ✅ Reload berhasil untuk {url}")
-                        return True
                 except Exception as reload_err:
                     print(f"   ⚠️ Reload gagal ({reload_err}), mencoba page.goto ulang...")
+                    last_err = reload_err
+        if not navigated:
+            continue
+        if ready_selector:
+            try:
+                page.wait_for_selector(ready_selector, timeout=ready_timeout, state="visible")
+            except Exception as ready_err:
+                last_err = ready_err
+                print(f"   ⚠️ Halaman termuat tetapi elemen target belum siap pada percobaan {attempt}/{max_attempts}: {ready_err}")
+                if attempt < max_attempts:
+                    time.sleep(2.0)
+                    continue
+                raise ready_err
+        return True
     if last_err:
         raise last_err
     return False
@@ -530,10 +554,24 @@ def login_outlet(outlet_info, proxy_config=None):
                 page = context.new_page()
                 if current_email:
                     print(f"\n   ➡️ [Email: {current_email}] Membuka halaman login email langsung... (Percobaan {attempt + 1}/{max_login_attempts})")
-                    safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/auth/login/email", wait_until="domcontentloaded")
+                    safe_goto_with_retry(
+                        page,
+                        "https://portal.gofoodmerchant.co.id/auth/login/email",
+                        wait_until="domcontentloaded",
+                        timeout=45000,
+                        ready_selector='input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible',
+                        ready_timeout=25000,
+                    )
                 else:
                     print(f"\n   ➡️ Membuka halaman login... (Percobaan {attempt + 1}/{max_login_attempts})")
-                    safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/auth/login", wait_until="domcontentloaded")
+                    safe_goto_with_retry(
+                        page,
+                        "https://portal.gofoodmerchant.co.id/auth/login",
+                        wait_until="domcontentloaded",
+                        timeout=45000,
+                        ready_selector='input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible',
+                        ready_timeout=25000,
+                    )
 
                 time.sleep(1.0)
                 

@@ -1,0 +1,232 @@
+{
+    "menus": [
+        {
+            "common_id": "9ee7c423-2380-459f-b07a-09d6724b670a",
+            "name": "Makanan",
+            "weight": 1,
+            "active": true,
+            "menu_items": [
+                {
+                    "common_id": "210b6533-4191-41fe-adc3-515ffe4d2685",
+                    "menu_common_id": "9ee7c423-2380-459f-b07a-09d6724b670a",
+                    "name": "Nasi Ayam Geprek Machub",
+                    "description": "Ayam Filet Paha Goreng Tepung Nasi Sambal Bawang Machub Timun",
+                    "price": 29500,
+                    "weight": 1,
+                    "active": true,
+                    "signature": false,
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/39bc1b55-935c-41cc-81a2-6e82cfa42d31_menu-item-image_1633509791842.jpg",
+                    "variant_category_common_ids": [
+                        "e3a24231-2441-476c-8ed1-b1107f230526",
+                        "68308664-baad-4414-b464-8255125a2655"
+                    ],
+                    "catalog_availability_ids": null
+                },
+                {
+                    "common_id": "ab3a6305-5edf-42b6-b1f8-cb34256cb38e",
+                    "menu_common_id": "9ee7c423-2380-459f-b07a-09d6724b670a",
+                    "name": "Nasi Ayam Dada Geprek",
+                    "description": "Nasi + Ayam Dada Goreng Tepung + Sambal Bawang",
+                    "price": 27100,
+                    "weight": 2,
+                    "active": true,
+                    "signature": false,
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/bfe2a9d4-ecbe-4547-9f8c-2b9077af9549_menu-item-image_1633509807554.jpg",
+                    "variant_category_common_ids": [
+                        "e3a24231-2441-476c-8ed1-b1107f230526",
+                        "68308664-baad-4414-b464-8255125a2655"
+                    ],
+                    "catalog_availability_ids": null
+                },
+                {
+                    "common_id": "bf51797b-e5fc-4060-81ec-a7e50cacf468",
+                    "menu_common_id": "9ee7c423-2380-459f-b07a-09d6724b670a",
+                    "name": "Nasi Ayam Goreng Kota",
+                    "description": "",
+                    "price": 27200,
+                    "weight": 3,
+                    "active": true,
+                    "signature": false,
+                    "image": "https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/886e687c-feb5-486a-b46b-4b52b139e9af_menu-item-image_1633509815042.jpg",
+                    "variant_category_common_ids": [
+                        "287a7e5e-6bfc-457d-95d7-9adb64ba3e6c",
+                        "e3a24231-2441-476c-8ed1-b1107f230526",
+                        "68308664-baad-4414-b464-8255125a2655"
+                    ],
+                    "catalog_availability_ids": null
+                },
+                {
+                    "common_id": "7f5a3f83-8312-4b8a-bb8a-fed615b664c8",
+                    "menu_common_id": "9ee7c423-2380-459f-b07a-09d6724b670a",
+                    "name": "Nasi Ayam Kremes",
+                    "description": "Nasi + Ayam Goreng Kremes + Sambal Bawang",
+                    "price": 27100,
+                    "weight": 4,
+                    "active": true,
+                    "signature": false,
+                    "image": "",
+                    "variant_category_common_ids": [
+                        "e3a24231-2441-476c-8ed1-b1107f230526",
+                        "68308664-baad-4414-b464-8255125a2655"
+                    ],
+                    "catalog_availability_ids": null
+                }
+            ],
+            "total_menu_items": 4
+        },
+        {
+            "common_id": "5029c815-aaf0-4701-9c49-7db8bc8d91a8",
+            "name": "Alacarte",
+            "weight": 2,
+            "active": true,
+            "menu_items": [
+                {
+                    "common_id": "1a0eac0c-a2c2-4b42-8463-f995f0110209",
+                    "menu_common_id": "5029c815-aaf0-4701-9c49-7db8bc8d91a8",
+                    "name": "Nasi Putih",
+                    "description": "",
+                    "price": 11500,
+                    "weight": 1,
+                    "active": true,
+                    "signature": false,
+                    "image": "",
+                    "variant_category_common_ids": [
+                        "68308664-baad-4414-b464-8255125a2655"
+                    ],
+                    "catalog_availability_ids": null
+                },
+                {
+                    "common_id": "03577a92-6970-4f63-8d5c-f51f1619b0c5",
+                    "menu_common_id": "5029c815-aaf0-4701-9c49-7db8bc8d91a8",
+                    "name": "Ayam Geprek  Filet ( tanpa Nasi )",
+                    "description": "Ayam Filet Paha D Goreng Tepung",
+                    "price": 26000,
+                    "weight": 2,
+                    "active": true,
+                    "signature": false,
+                    "image": "",
+                    "variant_category_common_ids": [
+                        "68308664-baad-4414-b464-8255125a2655"
+                    ],
+                    "catalog_availability_ids": null
+                },
+                {
+                    "common_id": "71340e16-7962-4479-915e-cc712719488b",
+                    "menu_common_id": "5029c815-aaf0-4701-9c49-7db8bc8d91a8",
+                    "name": "Ayam Dada Geprek ( tanpa Nasi )",
+                    "description": "",
+                    "price": 23000,
+                    "weight": 3,
+                    "active": true,
+                    "signature": false,
+                    "image": "",
+                    "variant_category_common_ids": [
+                        "68308664-baad-4414-b464-8255125a2655"
+                    ],
+                    "catalog_availability_ids": null
+                },
+                {
+                    "common_id": "77ef30e9-6749-4d7e-b234-7deaf1e67cbf",
+                    "menu_common_id": "5029c815-aaf0-4701-9c49-7db8bc8d91a8",
+                    "name": "Ayam Goreng Kota ( Tanpa Nasi )",
+                    "description": "",
+                    "price": 22700,
+                    "weight": 4,
+                    "active": true,
+                    "signature": false,
+                    "image": "",
+                    "variant_category_common_ids": [
+                        "287a7e5e-6bfc-457d-95d7-9adb64ba3e6c",
+                        "68308664-baad-4414-b464-8255125a2655"
+                    ],
+                    "catalog_availability_ids": null
+                }
+            ],
+            "total_menu_items": 4
+        },
+        {
+            "common_id": "c917da13-e0ce-4521-85cd-df2d654b921c",
+            "name": "Minuman",
+            "weight": 3,
+            "active": true,
+            "menu_items": [
+                {
+                    "common_id": "89ca465b-2497-45c5-9312-1ab82c5aa495",
+                    "menu_common_id": "c917da13-e0ce-4521-85cd-df2d654b921c",
+                    "name": "Teh",
+                    "description": "",
+                    "price": 7800,
+                    "weight": 1,
+                    "active": true,
+                    "signature": false,
+                    "image": "",
+                    "variant_category_common_ids": [
+                        "35999120-ce79-497a-9dd2-3ac932c69be9"
+                    ],
+                    "catalog_availability_ids": null
+                },
+                {
+                    "common_id": "4946c3e6-0c0e-403e-a3bd-ec64eacf3299",
+                    "menu_common_id": "c917da13-e0ce-4521-85cd-df2d654b921c",
+                    "name": "Milo",
+                    "description": "",
+                    "price": 8000,
+                    "weight": 3,
+                    "active": true,
+                    "signature": false,
+                    "image": "",
+                    "variant_category_common_ids": [
+                        "35999120-ce79-497a-9dd2-3ac932c69be9"
+                    ],
+                    "catalog_availability_ids": null
+                },
+                {
+                    "common_id": "85963b78-ae3b-40bf-8cb1-d146a95ccb72",
+                    "menu_common_id": "c917da13-e0ce-4521-85cd-df2d654b921c",
+                    "name": "Nutrisari Jeruk",
+                    "description": "",
+                    "price": 8000,
+                    "weight": 5,
+                    "active": true,
+                    "signature": false,
+                    "image": "",
+                    "variant_category_common_ids": [
+                        "35999120-ce79-497a-9dd2-3ac932c69be9"
+                    ],
+                    "catalog_availability_ids": null
+                },
+                {
+                    "common_id": "da75339b-336e-4b35-ab69-9b7cb30a9855",
+                    "menu_common_id": "c917da13-e0ce-4521-85cd-df2d654b921c",
+                    "name": "Teh Tarik",
+                    "description": "",
+                    "price": 8500,
+                    "weight": 8,
+                    "active": true,
+                    "signature": false,
+                    "image": "",
+                    "variant_category_common_ids": [
+                        "35999120-ce79-497a-9dd2-3ac932c69be9"
+                    ],
+                    "catalog_availability_ids": null
+                },
+                {
+                    "common_id": "96e31986-1981-4774-8d02-6cae59a7f019",
+                    "menu_common_id": "c917da13-e0ce-4521-85cd-df2d654b921c",
+                    "name": "Lemon Tea Nutrisari",
+                    "description": "",
+                    "price": 8000,
+                    "weight": 10,
+                    "active": true,
+                    "signature": false,
+                    "image": "",
+                    "variant_category_common_ids": [
+                        "35999120-ce79-497a-9dd2-3ac932c69be9"
+                    ],
+                    "catalog_availability_ids": null
+                }
+            ],
+            "total_menu_items": 5
+        }
+    ]
+}

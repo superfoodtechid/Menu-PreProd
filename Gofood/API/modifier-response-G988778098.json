@@ -1,0 +1,131 @@
+{
+    "variant_categories": [
+        {
+            "common_id": "e3a24231-2441-476c-8ed1-b1107f230526",
+            "name": "Alat Makan",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_ONE",
+                    "required": true,
+                    "min_quantity": 1,
+                    "max_quantity": 1
+                }
+            },
+            "variants": [
+                {
+                    "common_id": "2febf3e9-1ef6-48ab-9e84-4854eaea9ce9",
+                    "name": "Sendok Plastik",
+                    "price": 0,
+                    "active": true,
+                    "weight": 1
+                },
+                {
+                    "common_id": "7b05f89f-18f7-4a8a-8c64-db6c24da0257",
+                    "name": "Sarung Tangan Plastik",
+                    "price": 0,
+                    "active": true,
+                    "weight": 2
+                }
+            ],
+            "total_menu_items": 4
+        },
+        {
+            "common_id": "35999120-ce79-497a-9dd2-3ac932c69be9",
+            "name": "Panas / Es",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_ONE",
+                    "required": true,
+                    "min_quantity": 1,
+                    "max_quantity": 1
+                }
+            },
+            "variants": [
+                {
+                    "common_id": "a01bb947-c3ad-490a-96ce-31688b7a8e42",
+                    "name": "Panas",
+                    "price": 0,
+                    "active": true,
+                    "weight": 1
+                },
+                {
+                    "common_id": "ec2ce529-9441-41f5-a6b3-21b53efac3d9",
+                    "name": "Es",
+                    "price": 0,
+                    "active": true,
+                    "weight": 2
+                }
+            ],
+            "total_menu_items": 5
+        },
+        {
+            "common_id": "68308664-baad-4414-b464-8255125a2655",
+            "name": "Tambahan",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_MANY",
+                    "required": false,
+                    "min_quantity": 0,
+                    "max_quantity": 2
+                }
+            },
+            "variants": [
+                {
+                    "common_id": "e827d2d0-df86-4cb4-994b-1f733764e381",
+                    "name": "Tumis Kangkung",
+                    "price": 5000,
+                    "active": true,
+                    "weight": 1
+                },
+                {
+                    "common_id": "269b49ec-e4bf-43fa-8ab0-eb0623286622",
+                    "name": "Dadar Telor",
+                    "price": 8950,
+                    "active": true,
+                    "weight": 2
+                },
+                {
+                    "common_id": "266f36ae-c29f-4963-a89e-07649de6db11",
+                    "name": "Ceplok Telor",
+                    "price": 8950,
+                    "active": true,
+                    "weight": 3
+                }
+            ],
+            "total_menu_items": 8
+        },
+        {
+            "common_id": "287a7e5e-6bfc-457d-95d7-9adb64ba3e6c",
+            "name": "Topping",
+            "internal_name": "",
+            "rules": {
+                "selection": {
+                    "type": "SELECT_ONE",
+                    "required": true,
+                    "min_quantity": 1,
+                    "max_quantity": 1
+                }
+            },
+            "variants": [
+                {
+                    "common_id": "6412fc9a-b44e-4fa8-bb67-5526a4f91200",
+                    "name": "Tanpa Topping",
+                    "price": 0,
+                    "active": true,
+                    "weight": 1
+                },
+                {
+                    "common_id": "59c58d06-d67a-4181-87bf-d324e9e6a162",
+                    "name": "Serundeng",
+                    "price": 0,
+                    "active": true,
+                    "weight": 2
+                }
+            ],
+            "total_menu_items": 2
+        }
+    ]
+}

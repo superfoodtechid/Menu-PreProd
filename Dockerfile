@@ -26,11 +26,14 @@ WORKDIR /app
 # 1. Copy package management files first (for Docker layer caching)
 COPY pyproject.toml uv.lock* ./
 
-# 2. Install dependencies (cached layer)
-RUN uv sync
+# 2. Install dependencies (uses host cache to only download new packages)
+RUN --mount=type=cache,target=/root/.cache/uv uv sync
 
-# 3. Install Playwright browser dependencies (cached layer)
-RUN uv run playwright install chromium
+# 3. Install Playwright browser dependencies (uses host cache to skip downloading if already cached)
+RUN --mount=type=cache,target=/var/cache/playwright \
+    PLAYWRIGHT_BROWSERS_PATH=/var/cache/playwright uv run playwright install chromium && \
+    mkdir -p /ms-playwright && \
+    cp -rp /var/cache/playwright/. /ms-playwright/
 
 # 4. Copy the rest of the application source code
 COPY . .

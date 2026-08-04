@@ -71,3 +71,4 @@ creds_testing.json
 **/creds_testing.json
 *.bak
 
+Gofood/API/*.json

@@ -11,13 +11,14 @@ const TABS = [
   {
     id: "push",
     label: "Menu Push",
-    badge: "Segera",
+    badge: "GoFood",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
       </svg>
     ),
   },
+
   {
     id: "edit-harga",
     label: "Edit Harga",
@@ -76,7 +77,7 @@ export default function NavHeader({ activeTab, onTabChange, theme, onToggleTheme
         </div>
 
         <nav className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0" aria-label="Menu utama">
-          {TABS.filter((tab) => tab.id !== "push").map((tab) => (
+          {TABS.map((tab) => (
             <button
               type="button"
               key={tab.id}

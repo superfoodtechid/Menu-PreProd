@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Query, status, Request
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Query, status, Request, File, UploadFile, Form
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
@@ -179,6 +179,26 @@ class PriceUpdateRequest(BaseModel):
 class CombineC5Request(BaseModel):
     job_ids: Optional[List[str]] = None
     outlet_name: Optional[str] = None
+
+class C5PushItemUpdate(BaseModel):
+    sid: Optional[str] = ""
+    outlet_name: Optional[str] = ""
+    item_id: str
+    category_id: Optional[str] = ""
+    category: Optional[str] = ""
+    item_name: Optional[str] = ""
+    item_name_new: Optional[str] = ""
+    photo_link: Optional[str] = ""
+    current_fake_price: Optional[float] = None
+    new_fake_price: Optional[float] = None
+    current_real_price: Optional[float] = None
+    changes: Optional[List[str]] = []
+
+class C5PushRequest(BaseModel):
+    platform: str = Field("gofood", description="Target platform (default: gofood)")
+    selected_sids: List[str]
+    updates: List[C5PushItemUpdate]
+
 
 
 
@@ -1699,6 +1719,21 @@ def trigger_pull_job(outlet_id: uuid.UUID, background_tasks: BackgroundTasks, db
     background_tasks.add_task(run_pull_job, new_job.id, outlet.id)
     return new_job
 
+@app.get("/api/jobs/download-file")
+def download_file_by_path(path: str):
+    abs_path = os.path.abspath(path)
+    base_exports = os.path.abspath(str(BASE_DIR / "data" / "exports"))
+    if not abs_path.startswith(base_exports):
+        raise HTTPException(status_code=403, detail="Akses ditolak")
+    if not os.path.exists(abs_path):
+        raise HTTPException(status_code=404, detail="File tidak ditemukan di server")
+    filename = os.path.basename(abs_path)
+    return FileResponse(
+        path=abs_path,
+        filename=filename,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
 @app.get("/api/jobs/{job_id}", response_model=JobResponse)
 def get_job_status(job_id: uuid.UUID, db: Session = Depends(get_db)):
     job = db.query(Job).filter(Job.id == job_id).first()
@@ -1709,6 +1744,7 @@ def get_job_status(job_id: uuid.UUID, db: Session = Depends(get_db)):
 @app.get("/api/jobs", response_model=List[JobResponse])
 def list_jobs(db: Session = Depends(get_db)):
     return db.query(Job).order_by(Job.created_at.desc()).limit(50).all()
+
 @app.get("/api/jobs/download/{job_id}")
 def download_job_file(job_id: uuid.UUID, db: Session = Depends(get_db)):
     job = db.query(Job).filter(Job.id == job_id).first()
@@ -1797,20 +1833,779 @@ def combine_c5_endpoint(request: CombineC5Request, db: Session = Depends(get_db)
         "outlet_name": owner_name
     }
 
-@app.get("/api/jobs/download-file")
-def download_file_by_path(path: str):
-    abs_path = os.path.abspath(path)
-    base_exports = os.path.abspath(str(BASE_DIR / "data" / "exports"))
-    if not abs_path.startswith(base_exports):
-        raise HTTPException(status_code=403, detail="Akses ditolak")
-    if not os.path.exists(abs_path):
-        raise HTTPException(status_code=404, detail="File tidak ditemukan di server")
-    filename = os.path.basename(abs_path)
-    return FileResponse(
-        path=abs_path,
-        filename=filename,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+# ─── C5 MENU PUSH & PARSER ENDPOINTS ──────────────────────────────────────────
+
+def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, updates: list, progress_cb=None):
+    """Logs into GoFood for a single merchant and applies C5 name/price changes to the real store.
+
+    Each entry in `updates` is a C5PushItemUpdate dict. Returns a list of per-item result dicts:
+    {item_id, item_name, new_name, new_price, status: SUCCESS|FAILED, error}.
+    Modelled on the working PATCH flow in run_push_price_job.
+    """
+    from playwright.sync_api import sync_playwright
+    from Gofood.GO.actions import _menu_api as go_api
+
+    if not merchant_id:
+        raise Exception("Merchant ID (store_id) tidak tersedia untuk outlet GoFood.")
+    if not merchant_id.startswith("G"):
+        merchant_id = "G" + merchant_id
+
+    results = []
+
+    with sync_playwright() as p:
+        import re
+        from login_gofood import load_gofood_session
+        from src.core.browser_factory import launch_universal_playwright_browser
+
+        sanitized_email = re.sub(r'[^a-zA-Z0-9_.-]', '_', (email or "").strip().lower())
+        session_path = os.path.join(BASE_DIR, "Gofood", f"session_gofood_{sanitized_email}.json")
+        cached_data = load_gofood_session(email) if email else None
+
+        headless_env = os.getenv("HEADLESS") or os.getenv("HEADLESS_GOFOOD")
+        is_headless = headless_env.lower() in ("true", "1", "yes") if headless_env else True
+
+        browser, proc = launch_universal_playwright_browser(p, headless=is_headless)
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
+        if cached_data and cached_data.get("cookies"):
+            try:
+                context.add_cookies(cached_data["cookies"])
+            except Exception as e:
+                logger.warning(f"Error adding cookies: {e}")
+
+        page = context.new_page()
+        api_headers = {}
+
+        if cached_data and cached_data.get("access_token"):
+            tok = cached_data["access_token"]
+            api_headers['authorization'] = tok if tok.startswith("Bearer ") else f"Bearer {tok}"
+
+        def capture_headers(request):
+            url_lower = request.url.lower()
+            if "api.gojekapi.com" in url_lower or "api.gobiz.co.id" in url_lower or "portal.gofoodmerchant.co.id" in url_lower:
+                h = request.headers
+                if 'authorization' in h:
+                    api_headers['authorization'] = h['authorization']
+                if 'x-passkey' in h:
+                    api_headers['x-passkey'] = h['x-passkey']
+            if "restaurants/" in url_lower:
+                parts = request.url.split("/")
+                for i, part in enumerate(parts):
+                    if part.lower() == "restaurants" and i + 1 < len(parts):
+                        candidate = parts[i + 1].split("?")[0]
+                        if len(candidate) == 36 and "-" in candidate:
+                            api_headers['restaurant_uuid'] = candidate
+            if "menu_groups/" in url_lower:
+                parts = request.url.split("/")
+                for i, part in enumerate(parts):
+                    if part.lower() == "menu_groups" and i + 1 < len(parts):
+                        candidate = parts[i + 1].split("?")[0]
+                        if len(candidate) == 36 and "-" in candidate:
+                            api_headers['menu_group_id'] = candidate
+
+        page.on("request", capture_headers)
+
+        def perform_fresh_login():
+            logger.info(f"🔄 Token GoFood expired/tidak ditemukan. Fresh login untuk {email}...")
+            if session_path and os.path.exists(session_path):
+                try: os.remove(session_path)
+                except Exception: pass
+            page.goto("https://portal.gofoodmerchant.co.id/auth/login/email", wait_until="domcontentloaded")
+            time.sleep(2)
+            email_input = page.locator('input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible').first
+            if email_input.count() > 0:
+                email_input.fill(email)
+                submit_btn = page.locator('button:has-text("Lanjut"), button:has-text("Masuk"), button[type="submit"]')
+                if submit_btn.count() > 0:
+                    submit_btn.first.click()
+                    time.sleep(2)
+            pass_input = page.locator('input[type="password"]:visible, input[name*="password" i]:visible').first
+            if pass_input.count() > 0:
+                pass_input.fill(password)
+                page.locator('button:has-text("Masuk"), button[type="submit"]').first.click()
+            try:
+                page.wait_for_url(lambda url: "/auth/login" not in url, timeout=45000)
+                context.storage_state(path=session_path)
+            except Exception as e:
+                logger.warning(f"Tunggu redirect login timeout: {e}")
+
+        try:
+            page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
+            time.sleep(2)
+
+            if "/auth" in page.url or "login" in page.url:
+                perform_fresh_login()
+                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
+                time.sleep(3)
+
+            # Wait dynamically (up to 20s) for the ids the app emits: restaurant_uuid,
+            # authorization, x-passkey and — needed for the V2 PATCH — menu_group_id.
+            start_wait = time.time()
+            while (time.time() - start_wait) < 20:
+                if (api_headers.get('restaurant_uuid') and api_headers.get('authorization')
+                        and api_headers.get('x-passkey') and api_headers.get('menu_group_id')):
+                    break
+                page.wait_for_timeout(500)
+
+            token = api_headers.get('authorization')
+            if not token:
+                cookies = context.cookies()
+                for c in cookies:
+                    if c['name'] in ('access_token', 'token', 'gobiz_token'):
+                        token = f"Bearer {c['value']}"
+                        break
+
+            # Resolve restaurant UUID (36-char). Header capture may miss it, so fall
+            # back to localStorage/sessionStorage and finally to the cached PULL file.
+            rest_uuid = api_headers.get('restaurant_uuid')
+            if not rest_uuid or len(rest_uuid) != 36:
+                try:
+                    uuid_eval = page.evaluate("""() => {
+                        const re = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const m = re.exec(localStorage.getItem(localStorage.key(i)) || '');
+                            if (m) return m[0];
+                        }
+                        for (let i = 0; i < sessionStorage.length; i++) {
+                            const m = re.exec(sessionStorage.getItem(sessionStorage.key(i)) || '');
+                            if (m) return m[0];
+                        }
+                        const u = re.exec(window.location.href);
+                        return u ? u[0] : null;
+                    }""")
+                    if uuid_eval:
+                        rest_uuid = uuid_eval
+                except Exception as e:
+                    logger.warning(f"Gagal ekstrak rest_uuid dari web storage: {e}")
+
+            cache_menu_path = os.path.join(BASE_DIR, "Gofood", "API", f"menu-response-{merchant_id}.json")
+            if (not rest_uuid or len(rest_uuid) != 36) and os.path.exists(cache_menu_path):
+                try:
+                    with open(cache_menu_path, "r") as f:
+                        cdata = json.load(f)
+                    for m in (cdata.get("menus") or cdata.get("categories") or []):
+                        cand = m.get("restaurant_id") or m.get("restaurant_uuid")
+                        if cand and len(cand) == 36:
+                            rest_uuid = cand
+                            break
+                except Exception as e:
+                    logger.warning(f"Gagal baca cached restaurant_id: {e}")
+
+            menu_data = None
+            if token and rest_uuid and len(rest_uuid) == 36:
+                menu_data = go_api.fetch_menus(page, token, rest_uuid)
+
+            if not token or not menu_data:
+                logger.warning("⚠️ GoFood session/menu tidak valid. Memicu fresh login ulang...")
+                perform_fresh_login()
+                page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
+                time.sleep(3)
+                start_wait = time.time()
+                while (time.time() - start_wait) < 15:
+                    if api_headers.get('authorization'):
+                        break
+                    page.wait_for_timeout(500)
+                token = api_headers.get('authorization') or token
+                if api_headers.get('restaurant_uuid') and len(api_headers['restaurant_uuid']) == 36:
+                    rest_uuid = api_headers['restaurant_uuid']
+                if token and rest_uuid and len(rest_uuid) == 36:
+                    menu_data = go_api.fetch_menus(page, token, rest_uuid)
+
+            if not token:
+                raise Exception("Gagal menangkap Authorization Token GoFood setelah fresh login.")
+
+            # Resolve menu_group_id (needed for V2 PATCH path)
+            group_id = api_headers.get('menu_group_id')
+            if not group_id and rest_uuid and token and len(rest_uuid) == 36:
+                try:
+                    mg_data = go_api.fetch_menu_groups(page, token, rest_uuid)
+                    if isinstance(mg_data, str):
+                        group_id = mg_data
+                    elif isinstance(mg_data, list) and len(mg_data) > 0:
+                        group_id = mg_data[0].get('id') or mg_data[0].get('common_id')
+                    elif isinstance(mg_data, dict):
+                        group_id = mg_data.get('menu_group_id') or mg_data.get('v2_menus_group_id') or mg_data.get('id')
+                        if not group_id:
+                            mgs = mg_data.get('menu_groups') or mg_data.get('data') or []
+                            if mgs and len(mgs) > 0:
+                                group_id = mgs[0].get('id') or mgs[0].get('common_id')
+                except Exception as e:
+                    logger.warning(f"Could not fetch menu_groups fallback: {e}")
+
+            # If the live V1 menu fetch failed but we have a group_id, use V2 menus
+            # (only needs group_id) — else fall back to the cached PULL file on disk.
+            if not menu_data and group_id and token:
+                menu_data = go_api.fetch_menus_v2(page, token, group_id)
+            if not menu_data and os.path.exists(cache_menu_path):
+                logger.warning("⚠️ Memakai cache menu PULL terakhir untuk indeks item.")
+                try:
+                    with open(cache_menu_path, "r") as f:
+                        menu_data = json.load(f)
+                except Exception as e:
+                    logger.warning(f"Gagal baca cache menu: {e}")
+
+            if not menu_data:
+                raise Exception("Gagal menarik menu GoFood untuk perbandingan.")
+
+            # Index live menu items by id/common_id
+            categories = go_api.parse_menus(menu_data)
+            go_items_by_id = {}
+            for cat in categories:
+                cat_group = cat.get("menu_common_id") or cat.get("common_id") or cat.get("id")
+                for it in cat.get("menu_items") or []:
+                    iid = it.get("common_id") or it.get("id")
+                    go_items_by_id[str(iid)] = {
+                        "item": it,
+                        "category_id": cat.get("id"),
+                        "category_common_id": cat.get("common_id") or cat_group,
+                    }
+
+            passkey = api_headers.get('x-passkey') or "1729b182-c60e-4568-849d-5eb7d794fd09"
+            headers_direct = {
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'id',
+                'Authentication-Type': 'go-id',
+                'Authorization': token,
+                'Content-Type': 'application/json',
+                'Gojek-Country-Code': 'ID',
+                'x-passkey': passkey,
+                'Origin': 'https://portal.gofoodmerchant.co.id',
+                'Referer': 'https://portal.gofoodmerchant.co.id/',
+            }
+
+            import random
+            total = len(updates)
+            for idx, upd in enumerate(updates):
+                item_id = str(upd.get("item_id") or "")
+                new_name = (upd.get("item_name_new") or "").strip()
+                raw_price = upd.get("new_fake_price")
+                change_types = upd.get("changes") or upd.get("change_types") or []
+                want_name = "NAME_CHANGE" in change_types or bool(new_name)
+                want_price = "PRICE_CHANGE" in change_types or (raw_price is not None)
+
+                if progress_cb:
+                    progress_cb(idx, total, upd)
+
+                item_info = go_items_by_id.get(item_id)
+                if not item_info:
+                    results.append({
+                        "item_id": item_id, "item_name": upd.get("item_name", item_id),
+                        "new_name": new_name or None, "new_price": raw_price,
+                        "status": "FAILED", "error": "Item ID tidak ditemukan di menu GoFood.",
+                    })
+                    continue
+
+                orig_item = item_info["item"]
+                cat_common_id = item_info["category_common_id"] or item_info["category_id"]
+
+                # Build effective values: apply name/price only when requested, else keep current.
+                final_name = new_name if (want_name and new_name) else orig_item.get('name')
+                try:
+                    final_price = int(float(raw_price)) if (want_price and raw_price is not None) else int(float(orig_item.get('price') or 0))
+                except (ValueError, TypeError):
+                    final_price = int(float(orig_item.get('price') or 0))
+
+                v2_payload = {
+                    "menu_common_id": orig_item.get('menu_common_id') or cat_common_id,
+                    "image_url": orig_item.get('image_url', orig_item.get('image', '')),
+                    "name": final_name,
+                    "description": orig_item.get('description', ''),
+                    "price": final_price,
+                    "active": orig_item.get('is_active', orig_item.get('active', True)),
+                    "signature": orig_item.get('signature', False),
+                }
+
+                patch_group_id = group_id or api_headers.get('menu_group_id') or orig_item.get('menu_common_id') or cat_common_id
+                v2_url = f'https://api.gojekapi.com/gofood/merchant/v2/menu_groups/{patch_group_id}/menu_items/{item_id}'
+
+                def send_patch_request(payload_data, max_retries=2):
+                    for attempt_idx in range(max_retries + 1):
+                        try:
+                            cr_res = context.request.fetch(
+                                v2_url, method='PATCH', headers=headers_direct, data=json.dumps(payload_data)
+                            )
+                            status_code = cr_res.status
+                            if status_code in (429, 403, 503, 504) and attempt_idx < max_retries:
+                                logger.warning(f"⚠️ Rate limit (HTTP {status_code}) item {item_id}. Tunggu 5s (attempt {attempt_idx+1})...")
+                                time.sleep(5.0)
+                                continue
+                            return {'ok': cr_res.ok, 'status': status_code, 'body': cr_res.text()}
+                        except Exception as ex:
+                            if attempt_idx < max_retries:
+                                time.sleep(3.0)
+                                continue
+                            return {'ok': False, 'error': str(ex)}
+
+                res = send_patch_request(v2_payload)
+
+                if res and res.get('status') == 429:
+                    logger.warning("⚠️ GoFood API Rate Limited (HTTP 429). Cooldown 10s...")
+                    time.sleep(10.0)
+
+                # Fallback 1: include variant_category_common_ids if present
+                if (not res or not res.get('ok')) and res.get('status') != 429:
+                    time.sleep(0.6)
+                    vars_ids = orig_item.get('variant_category_common_ids') or orig_item.get('variant_category_ids')
+                    if vars_ids and isinstance(vars_ids, list) and len(vars_ids) > 0:
+                        v2_payload_with_vars = dict(v2_payload)
+                        v2_payload_with_vars["variant_category_common_ids"] = vars_ids
+                        res_var = send_patch_request(v2_payload_with_vars, max_retries=1)
+                        if res_var and res_var.get('ok'):
+                            res = res_var
+
+                # Fallback 2: V1 PUT
+                if (not res or not res.get('ok')) and res.get('status') != 429:
+                    status_code = res.get('status', '?') if res else '?'
+                    body_err = (res.get('body') or '')[:300] if res else ''
+                    logger.warning(f"GoFood V2 PATCH gagal (HTTP {status_code}): {body_err}. Fallback V1 PUT...")
+                    time.sleep(0.6)
+                    v1_payload = {
+                        "name": final_name,
+                        "price": final_price,
+                        "active": orig_item.get('is_active', orig_item.get('active', True)),
+                        "description": orig_item.get('description', ''),
+                        "image": orig_item.get('image_url', orig_item.get('image', '')),
+                    }
+                    v1_item_id = orig_item.get('id') or orig_item.get('common_id') or item_id
+                    if v1_item_id:
+                        v1_url = f'https://api.gojekapi.com/gofood/merchant/v1/restaurants/{rest_uuid}/menu_items/{v1_item_id}'
+                        try:
+                            cr_v1 = context.request.fetch(
+                                v1_url, method='PUT', headers=headers_direct, data=json.dumps(v1_payload)
+                            )
+                            res = {'ok': cr_v1.ok, 'status': cr_v1.status, 'body': cr_v1.text()}
+                        except Exception as e:
+                            res = {'ok': False, 'error': str(e)}
+
+                if res and res.get('ok'):
+                    results.append({
+                        "item_id": item_id, "item_name": orig_item.get('name', item_id),
+                        "new_name": final_name if want_name else None,
+                        "new_price": final_price if want_price else None,
+                        "status": "SUCCESS", "error": None,
+                    })
+                else:
+                    results.append({
+                        "item_id": item_id, "item_name": orig_item.get('name', item_id),
+                        "new_name": new_name or None, "new_price": raw_price,
+                        "status": "FAILED",
+                        "error": (res.get('body') or res.get('error') or "GoFood API error.") if res else "GoFood API error.",
+                    })
+
+                # Pacing + batch breather to respect GoFood rate limits
+                time.sleep(random.uniform(1.2, 2.5))
+                if (idx + 1) % 10 == 0 and (idx + 1) < total:
+                    logger.info(f"☕ Batch pause item {idx+1}/{total}: istirahat 5s...")
+                    time.sleep(random.uniform(4.0, 6.0))
+        finally:
+            try:
+                browser.close()
+            except Exception:
+                pass
+
+    return results
+
+
+def run_push_c5_job(job_id: uuid.UUID, selected_sids: list, updates_list: list):
+    """Background task to push C5 menu changes (name + price) to the real GoFood store."""
+    from menu_core.database import SessionLocal
+    db = SessionLocal()
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        db.close()
+        return
+
+    lock = PLATFORM_LOCKS.get("gofood")
+    if lock:
+        logger.info(f"🔒 C5 job {job_id} (gofood) waiting for lock...")
+        lock.acquire()
+        logger.info(f"🔓 C5 job {job_id} (gofood) acquired lock.")
+
+    try:
+        job.status = "RUNNING"
+        job.started_at = datetime.utcnow()
+        job.progress_pct = 10
+        job.current_step = "Menginisialisasi kredensial GoFood..."
+        db.commit()
+
+        total_updates = len(updates_list)
+        success_count = 0
+        fail_count = 0
+
+        logger.info(f"🚀 run_push_c5_job starting for job {job_id}. Selected SIDs: {selected_sids}, total updates: {total_updates}")
+
+        # Group updates by Store ID — each SID is a separate GoFood merchant/login.
+        updates_by_sid = {}
+        for upd in updates_list:
+            sid = (upd.get("sid") or "").strip() or (selected_sids[0] if selected_sids else "")
+            updates_by_sid.setdefault(sid, []).append(upd)
+
+        processed = 0
+
+        def record_trail(upd, status_str, err_msg, applied=None):
+            change_str = ", ".join(upd.get("changes") or upd.get("change_types") or ["C5 Update"])
+            new_val = []
+            if applied and applied.get("new_name"):
+                new_val.append(f"Nama Item: {applied['new_name']}")
+            if applied and applied.get("new_price") is not None:
+                new_val.append(f"Harga Baru: Rp {applied['new_price']}")
+            trail = AuditTrail(
+                job_id=job.id,
+                outlet_id=job.outlet_id or uuid.uuid4(),
+                item_id=str(upd.get("item_id", "")),
+                item_name=str(upd.get("item_name", "")),
+                change_type="C5_PUSH_GOFOOD",
+                field_changed=change_str,
+                old_value=str(upd.get("item_name") or upd.get("current_fake_price") or ""),
+                new_value=" | ".join(new_val) if new_val else ("Updated" if status_str == "SUCCESS" else ""),
+                status=status_str,
+                error_message=err_msg,
+            )
+            db.add(trail)
+            db.commit()
+
+        for sid, sid_updates in updates_by_sid.items():
+            # Resolve the outlet + account credentials for this Store ID.
+            outlet = db.query(Outlet).filter(Outlet.store_id == sid).first()
+            if not outlet and sid and not sid.startswith("G"):
+                outlet = db.query(Outlet).filter(Outlet.store_id == ("G" + sid)).first()
+            account = db.query(Account).filter(Account.id == outlet.account_id).first() if outlet else None
+
+            if not outlet or not account:
+                logger.warning(f"⚠️ Outlet/akun tidak ditemukan untuk SID {sid}. Menandai {len(sid_updates)} item gagal.")
+                for upd in sid_updates:
+                    processed += 1
+                    fail_count += 1
+                    record_trail(upd, "FAILED", f"Outlet atau akun GoFood tidak ditemukan untuk Store ID {sid}.")
+                continue
+
+            job.current_step = f"Login GoFood & memproses Store {sid} ({len(sid_updates)} item)..."
+            db.commit()
+
+            def progress_cb(idx, total, upd, _sid=sid):
+                job.current_step = f"Store {_sid} ({idx+1}/{total}): {upd.get('item_name')}..."
+                job.progress_pct = int(15 + (processed / max(1, total_updates)) * 80)
+                db.commit()
+
+            try:
+                results = _push_c5_gofood_for_merchant(
+                    email=account.username,
+                    password=account.password,
+                    merchant_id=outlet.store_id,
+                    updates=sid_updates,
+                    progress_cb=progress_cb,
+                )
+            except Exception as ex:
+                logger.error(f"❌ Gagal push GoFood untuk SID {sid}: {ex}")
+                for upd in sid_updates:
+                    processed += 1
+                    fail_count += 1
+                    record_trail(upd, "FAILED", str(ex))
+                continue
+
+            # Match each result back to its source update to record an accurate trail.
+            results_by_id = {str(r.get("item_id")): r for r in results}
+            for upd in sid_updates:
+                processed += 1
+                r = results_by_id.get(str(upd.get("item_id")))
+                if r and r.get("status") == "SUCCESS":
+                    success_count += 1
+                    record_trail(upd, "SUCCESS", None, applied=r)
+                else:
+                    fail_count += 1
+                    record_trail(upd, "FAILED", (r.get("error") if r else "Item tidak diproses."))
+
+            job.progress_pct = int(15 + (processed / max(1, total_updates)) * 80)
+            db.commit()
+
+        job.status = "SUCCESS" if success_count > 0 else "FAILED"
+        job.completed_at = datetime.utcnow()
+        job.progress_pct = 100
+        if fail_count == 0:
+            job.current_step = "Selesai di-push ke GoFood!"
+        elif success_count > 0:
+            job.current_step = f"Selesai dengan sebagian gagal: {success_count} sukses, {fail_count} gagal."
+        else:
+            job.current_step = f"Gagal: tidak ada item yang berhasil di-push ({fail_count} gagal)."
+        job.result_metadata = {
+            "success_count": success_count,
+            "fail_count": fail_count,
+            "selected_sids": selected_sids,
+            "total_updates": total_updates,
+        }
+        db.commit()
+    except Exception as ex:
+        logger.error(f"Error in run_push_c5_job: {ex}")
+        import traceback
+        traceback.print_exc()
+        job.status = "FAILED"
+        job.completed_at = datetime.utcnow()
+        job.current_step = f"Gagal: {str(ex)}"
+        db.commit()
+    finally:
+        db.close()
+        if lock:
+            lock.release()
+            logger.info(f"🔓 C5 job {job_id} (gofood) released lock.")
+
+
+
+@app.post("/api/jobs/parse-c5")
+async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Parses an uploaded C5 Excel file (.xlsx) and detects Store IDs (SIDs) plus menu changes
+    for GoFood by comparing each C5 row against the last PULL baseline
+    (Gofood/API/menu-response-<SID>.json). Scope tahap 1: name + price.
+    1. Name Change  — 'Item Name Improvement' terisi & berbeda dari nama baseline.
+    2. Price Change — 'New Fake Price (Rp)' terisi (TIDAK boleh kosong) & berbeda dari harga baseline.
+    Kategori & foto belum termasuk scope tahap ini.
+    """
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="File harus berformat Excel (.xlsx / .xls)")
+
+    contents = await file.read()
+    import io
+    import openpyxl
+
+    try:
+        wb = openpyxl.load_workbook(filename=io.BytesIO(contents), data_only=True)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Gagal membaca file Excel C5: {str(e)}")
+
+    if 'Item' not in wb.sheetnames:
+        raise HTTPException(status_code=400, detail="Sheet 'Item' tidak ditemukan di file Excel C5.")
+
+    sheet = wb['Item']
+    rows = list(sheet.iter_rows(values_only=True))
+    if len(rows) <= 1:
+        return {
+            "success": True,
+            "filename": file.filename,
+            "stores": [],
+            "items": [],
+            "summary": {"total_stores": 0, "total_items": 0, "total_changes": 0}
+        }
+
+    headers = [str(h).strip() if h is not None else "" for h in rows[0]]
+    header_map = {h: i for i, h in enumerate(headers) if h}
+
+    def get_val(row, col_name, default=""):
+        if col_name in header_map:
+            idx = header_map[col_name]
+            if idx < len(row) and row[idx] is not None:
+                return str(row[idx]).strip()
+        return default
+
+    sid_col = 'SID' if 'SID' in header_map else ('Store ID' if 'Store ID' in header_map else '')
+    outlet_col = 'Outlet Name' if 'Outlet Name' in header_map else ('Outlet' if 'Outlet' in header_map else '')
+    cat_id_col = 'Category ID' if 'Category ID' in header_map else ''
+    cat_col = 'Category' if 'Category' in header_map else ''
+    item_id_col = 'Item ID' if 'Item ID' in header_map else ''
+    item_col = 'Item' if 'Item' in header_map else ('Item Name' if 'Item Name' in header_map else '')
+    photo_col = 'Photo Link' if 'Photo Link' in header_map else ('Gambar' if 'Gambar' in header_map else '')
+    item_name_imp_col = 'Item Name Improvement' if 'Item Name Improvement' in header_map else ''
+    new_fake_col = 'New Fake Price (Rp)' if 'New Fake Price (Rp)' in header_map else ('New Fake Price' if 'New Fake Price' in header_map else '')
+
+    stores_dict = {}
+    parsed_items = []
+
+    total_changes = 0
+    name_changes_count = 0
+    price_changes_count = 0
+
+    import re
+
+    def parse_price(val_str):
+        if val_str is None or str(val_str).strip() == "":
+            return None
+        try:
+            cleaned = re.sub(r'[^\d.]', '', str(val_str))
+            if cleaned:
+                return float(cleaned)
+        except Exception:
+            pass
+        return None
+
+    def norm_name(s):
+        return re.sub(r'\s+', ' ', str(s or '').strip().lower())
+
+    # ── Baseline PULL cache loader (Gofood/API/menu-response-<SID>.json) ──
+    baseline_dir = Path(__file__).parent / "Gofood" / "API"
+    _baseline_cache = {}
+
+    def load_baseline(sid):
+        """Loads the last-pulled GoFood menu for a SID and indexes items by id and normalized name."""
+        if sid in _baseline_cache:
+            return _baseline_cache[sid]
+        by_id, by_name = {}, {}
+        path = baseline_dir / f"menu-response-{sid}.json"
+        if path.exists():
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+                for menu in (data.get("menus") or []):
+                    cat_name = menu.get("name") or ""
+                    for it in (menu.get("menu_items") or []):
+                        rec = {
+                            "name": it.get("name") or "",
+                            "price": parse_price(it.get("price")),
+                            "image": it.get("image") or "",
+                            "category": cat_name,
+                        }
+                        iid = str(it.get("common_id") or it.get("id") or "").strip()
+                        if iid:
+                            by_id[iid] = rec
+                        nn = norm_name(rec["name"])
+                        if nn and nn not in by_name:
+                            by_name[nn] = rec
+            except Exception as ex:
+                logger.warning(f"Gagal membaca baseline PULL untuk SID {sid}: {ex}")
+        result = {"by_id": by_id, "by_name": by_name, "found": bool(by_id or by_name)}
+        _baseline_cache[sid] = result
+        return result
+
+    for r_idx, row in enumerate(rows[1:], start=2):
+        if not row or all(v is None for v in row):
+            continue
+
+        sid = get_val(row, sid_col) or "STORE-DEFAULT"
+        outlet_name = get_val(row, outlet_col) or "Outlet Utama"
+        cat_id = get_val(row, cat_id_col)
+        cat_name = get_val(row, cat_col)
+        item_id = get_val(row, item_id_col)
+        item_name = get_val(row, item_col)
+        photo_link = get_val(row, photo_col)
+
+        new_fake_raw = get_val(row, new_fake_col) if new_fake_col else ""
+        item_name_imp = get_val(row, item_name_imp_col) if item_name_imp_col else ""
+
+        if not item_id and not item_name:
+            continue
+
+        # Match this C5 row against the baseline PULL cache (by Item ID, else by name).
+        baseline = load_baseline(sid)
+        base_rec = None
+        if item_id and item_id in baseline["by_id"]:
+            base_rec = baseline["by_id"][item_id]
+        elif norm_name(item_name) in baseline["by_name"]:
+            base_rec = baseline["by_name"][norm_name(item_name)]
+
+        base_name = base_rec["name"] if base_rec else item_name
+        base_price = base_rec["price"] if base_rec else None
+
+        new_fake_price = parse_price(new_fake_raw)
+
+        if sid not in stores_dict:
+            stores_dict[sid] = {
+                "sid": sid,
+                "name": outlet_name,
+                "item_count": 0,
+                "changed_count": 0,
+                "baseline_found": baseline["found"],
+            }
+        stores_dict[sid]["item_count"] += 1
+
+        # 1. Name Change: detect a name change either from the explicit improvement column
+        #    or from the main item name field if it differs from the baseline name.
+        display_name = item_name_imp.strip() if item_name_imp else item_name
+        name_changed = bool(display_name and norm_name(display_name) != norm_name(base_name))
+
+        # 2. Change Price — CRITICAL RULE:
+        #    If 'New Fake Price (Rp)' is EMPTY/blank, DO NOT trigger a price change.
+        #    Otherwise trigger when it differs from the baseline price (falls back to C5
+        #    current price when no baseline is available for this store).
+        price_changed = False
+        if new_fake_raw.strip() != "" and new_fake_price is not None:
+            if base_price is not None:
+                price_changed = float(new_fake_price) != float(base_price)
+            else:
+                price_changed = True
+
+        is_changed = name_changed or price_changed
+
+        change_types = []
+        if name_changed:
+            change_types.append("NAME_CHANGE")
+            name_changes_count += 1
+        if price_changed:
+            change_types.append("PRICE_CHANGE")
+            price_changes_count += 1
+
+        if is_changed:
+            stores_dict[sid]["changed_count"] += 1
+            total_changes += 1
+
+        display_name = item_name_imp.strip() if item_name_imp else item_name
+        parsed_items.append({
+            "row_number": r_idx,
+            "sid": sid,
+            "outlet_name": outlet_name,
+            "category_id": cat_id,
+            "category": cat_name,
+            "item_id": item_id,
+            "item_name": item_name,
+            "item_name_new": display_name if is_changed and display_name else item_name_imp,
+            "photo_link": photo_link,
+            "baseline_name": base_name,
+            "baseline_price": base_price,
+            "current_fake_price": base_price,
+            "new_fake_price": new_fake_price,
+            "baseline_found": base_rec is not None,
+            "is_changed": is_changed,
+            "change_types": change_types,
+            "changes": {
+                "name_changed": name_changed,
+                "price_changed": price_changed,
+            }
+        })
+
+    return {
+        "success": True,
+        "filename": file.filename,
+        "stores": list(stores_dict.values()),
+        "items": parsed_items,
+        "summary": {
+            "total_stores": len(stores_dict),
+            "total_items": len(parsed_items),
+            "total_changes": total_changes,
+            "name_changes": name_changes_count,
+            "price_changes": price_changes_count,
+        }
+    }
+
+
+@app.post("/api/jobs/push-c5", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED)
+def trigger_push_c5_job(request: C5PushRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Triggers background job to push C5 menu updates (GoFood) for selected Store IDs (SIDs)."""
+    outlet = None
+    if request.selected_sids:
+        target_sid = request.selected_sids[0]
+        outlet = db.query(Outlet).filter(Outlet.store_id == target_sid).first()
+
+    if not outlet:
+        outlet = db.query(Outlet).join(Account).filter(Account.platform == "gofood").first()
+
+    outlet_id = outlet.id if outlet else uuid.uuid4()
+    updates_payload = [item.dict() for item in request.updates]
+
+    new_job = Job(
+        outlet_id=outlet_id,
+        job_type="PUSH_UPDATE",
+        platform="gofood",
+        status="PENDING",
+        progress_pct=0,
+        current_step="Mengantrekan C5 push GoFood...",
+        payload={
+            "selected_sids": request.selected_sids,
+            "updates_count": len(updates_payload),
+            "platform": "gofood"
+        }
     )
+    db.add(new_job)
+    db.commit()
+    db.refresh(new_job)
+
+    background_tasks.add_task(run_push_c5_job, new_job.id, request.selected_sids, updates_payload)
+    return new_job
 
 
 

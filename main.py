@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -219,6 +219,16 @@ def sync_sheets(db: Session = Depends(get_db)):
     # Filter only Live status
     df_live = df[df["Status"].str.contains("Live", na=False, case=False)]
 
+    # Pre-fetch all accounts and outlets to prevent N+1 queries in the loop
+    all_accounts = db.query(Account).all()
+    accounts_by_key = {(a.username, a.platform): a for a in all_accounts}
+
+    all_outlets = db.query(Outlet).all()
+    outlets_by_store_id = {o.store_id: o for o in all_outlets if o.store_id}
+    outlets_by_fallback = {
+        (o.account_id, o.merchant_name, o.nama_outlet, o.cabang): o for o in all_outlets
+    }
+
     for _, row in df_live.iterrows():
         app_val = str(row.get("Aplikasi", "")).strip().lower()
         if app_val == "shopeefood":
@@ -277,7 +287,7 @@ def sync_sheets(db: Session = Depends(get_db)):
             password = "Master@123" # Default fallback password
 
         # 1. Upsert Account
-        db_account = db.query(Account).filter(Account.username == username, Account.platform == platform).first()
+        db_account = accounts_by_key.get((username, platform))
         if not db_account:
             db_account = Account(
                 platform=platform,
@@ -286,13 +296,13 @@ def sync_sheets(db: Session = Depends(get_db)):
                 portal="shopee_partner" if platform == "shopee" else "merchant_portal"
             )
             db.add(db_account)
-            db.commit()
-            db.refresh(db_account)
+            db.flush()  # Generate primary key ID without committing
+            accounts_by_key[(username, platform)] = db_account
             added_accounts += 1
         else:
             if db_account.password != password:
                 db_account.password = password
-                db.commit()
+                db.flush()
 
         # 2. Extract Outlet Info
         store_id_raw = row.get("Store ID")
@@ -312,16 +322,11 @@ def sync_sheets(db: Session = Depends(get_db)):
         # 3. Upsert Outlet
         db_outlet = None
         if store_id:
-            db_outlet = db.query(Outlet).filter(Outlet.store_id == store_id).first()
+            db_outlet = outlets_by_store_id.get(store_id)
 
         if not db_outlet:
             # Fallback query if store_id was not provided
-            db_outlet = db.query(Outlet).filter(
-                Outlet.account_id == db_account.id,
-                Outlet.merchant_name == merchant_name,
-                Outlet.nama_outlet == nama_outlet,
-                Outlet.cabang == cabang
-            ).first()
+            db_outlet = outlets_by_fallback.get((db_account.id, merchant_name, nama_outlet, cabang))
 
         if not db_outlet:
             db_outlet = Outlet(
@@ -337,6 +342,9 @@ def sync_sheets(db: Session = Depends(get_db)):
             )
             db.add(db_outlet)
             db.flush()
+            if store_id:
+                outlets_by_store_id[store_id] = db_outlet
+            outlets_by_fallback[(db_account.id, merchant_name, nama_outlet, cabang)] = db_outlet
             added_outlets += 1
         else:
             db_outlet.store_id = store_id
@@ -345,6 +353,8 @@ def sync_sheets(db: Session = Depends(get_db)):
             db_outlet.brand = brand
             db_outlet.is_active = True
             db.flush()
+            if store_id and store_id not in outlets_by_store_id:
+                outlets_by_store_id[store_id] = db_outlet
             updated_outlets += 1
 
     db.commit()
@@ -443,7 +453,7 @@ def list_outlets(
     db: Session = Depends(get_db),
 ):
     platforms = normalize_platform_filters(platform)
-    query = db.query(Outlet)
+    query = db.query(Outlet).options(joinedload(Outlet.account))
     if platforms:
         query = query.join(Outlet.account).filter(Account.platform.in_(platforms))
     return query.all()
@@ -1949,6 +1959,81 @@ def get_menu_cache_status(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
         "human_age": human_age
     }
 
+MENU_ITEMS_CACHE = {}  # excel_path -> (mtime, raw_items)
+
+def get_parsed_menu_items(excel_path: str) -> list:
+    path = Path(excel_path)
+    if not path.exists():
+        return []
+    try:
+        mtime = path.stat().st_mtime
+        cached = MENU_ITEMS_CACHE.get(excel_path)
+        if cached and cached[0] == mtime:
+            return cached[1]
+            
+        import openpyxl
+        wb = openpyxl.load_workbook(excel_path, data_only=True, read_only=True)
+        if 'Item' not in wb.sheetnames:
+            return []
+        sheet = wb['Item']
+        rows = list(sheet.iter_rows(values_only=True))
+        if len(rows) <= 1:
+            return []
+            
+        headers = rows[0]
+        header_map = {str(h).strip(): i for i, h in enumerate(headers) if h is not None}
+        
+        required_cols = ['Item ID', 'Category', 'Item', 'Current Real Price (Rp)']
+        for col in required_cols:
+            if col not in header_map:
+                logger.warning(f"Missing column '{col}' in Excel sheet mapping: {list(header_map.keys())}")
+                return []
+                
+        raw_items = []
+        for row in rows[1:]:
+            if not row or all(v is None for v in row):
+                continue
+                
+            item_id = str(row[header_map['Item ID']]).strip() if row[header_map['Item ID']] is not None else ""
+            category_id = str(row[header_map['Category ID']]).strip() if 'Category ID' in header_map and row[header_map['Category ID']] is not None else ""
+            category_name = str(row[header_map['Category']]).strip() if row[header_map['Category']] is not None else ""
+            item_name = str(row[header_map['Item']]).strip() if row[header_map['Item']] is not None else ""
+            desc = str(row[header_map['Description']]).strip() if 'Description' in header_map and row[header_map['Description']] is not None else ""
+            
+            p_val = row[header_map['Current Real Price (Rp)']]
+            fake_p_val = row[header_map['Current Fake Price (Rp)']] if 'Current Fake Price (Rp)' in header_map else None
+            try:
+                price_val = int(float(p_val)) if p_val is not None else 0
+            except:
+                price_val = 0
+
+            try:
+                fake_price_val = int(float(fake_p_val)) if fake_p_val is not None else 0
+            except:
+                fake_price_val = 0
+                
+            avail_val = str(row[header_map['Availability']]).strip() if 'Availability' in header_map and row[header_map['Availability']] is not None else "Available"
+            
+            is_promo_col = str(row[header_map['Sedang promo']]).strip().lower() if 'Sedang promo' in header_map and row[header_map['Sedang promo']] is not None else ""
+            
+            raw_items.append({
+                "id": item_id,
+                "category_id": category_id,
+                "category": category_name,
+                "name": item_name,
+                "description": desc,
+                "price": price_val,
+                "original_price": fake_price_val,
+                "availability": avail_val,
+                "is_promo_col": is_promo_col
+            })
+            
+        MENU_ITEMS_CACHE[excel_path] = (mtime, raw_items)
+        return raw_items
+    except Exception as e:
+        logger.error(f"Error parsing excel menu file at {excel_path}: {e}")
+        return []
+
 @app.get("/api/outlets/{outlet_id}/menu-items")
 def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
     """Retrieve the menu items list of an outlet from the latest pulled Excel sheet catalog."""
@@ -2002,70 +2087,75 @@ def get_outlet_menu_items(outlet_id: uuid.UUID, db: Session = Depends(get_db)):
     except Exception as ex:
         logger.warning(f"Error querying promo audit trails: {ex}")
 
+    raw_items = get_parsed_menu_items(excel_path)
+    
+    items = []
+    for ri in raw_items:
+        is_in_promo = (ri["is_promo_col"] in ("ya", "yes", "true", "1")) or (ri["original_price"] > ri["price"] and ri["original_price"] > 0) or (ri["id"] in promo_item_ids)
+        items.append({
+            "id": ri["id"],
+            "category_id": ri["category_id"],
+            "category": ri["category"],
+            "name": ri["name"],
+            "description": ri["description"],
+            "price": ri["price"],
+            "original_price": ri["original_price"],
+            "availability": ri["availability"],
+            "is_in_promo": is_in_promo
+        })
+    return items
+
+SESSION_METADATA_CACHE = {}  # filename -> (mtime, last_active_ts)
+PHONE_MAP_CACHE = {"mtime": 0.0, "data": {}}
+
+def get_cached_session_last_active(session_path: Path) -> Optional[str]:
     try:
-        import openpyxl
-        wb = openpyxl.load_workbook(excel_path, data_only=True, read_only=True)
-        if 'Item' not in wb.sheetnames:
-            return []
-        sheet = wb['Item']
-        rows = list(sheet.iter_rows(values_only=True))
-        if len(rows) <= 1:
-            return []
-            
-        headers = rows[0]
-        header_map = {str(h).strip(): i for i, h in enumerate(headers) if h is not None}
+        if not session_path.exists():
+            return None
+        mtime = session_path.stat().st_mtime
+        filename = session_path.name
         
-        required_cols = ['Item ID', 'Category', 'Item', 'Current Real Price (Rp)']
-        for col in required_cols:
-            if col not in header_map:
-                logger.warning(f"Missing column '{col}' in Excel sheet mapping: {list(header_map.keys())}")
-                return []
-                
-        items = []
-        for row in rows[1:]:
-            # Skip empty rows
-            if not row or all(v is None for v in row):
-                continue
-                
-            item_id = str(row[header_map['Item ID']]).strip() if row[header_map['Item ID']] is not None else ""
-            category_id = str(row[header_map['Category ID']]).strip() if 'Category ID' in header_map and row[header_map['Category ID']] is not None else ""
-            category_name = str(row[header_map['Category']]).strip() if row[header_map['Category']] is not None else ""
-            item_name = str(row[header_map['Item']]).strip() if row[header_map['Item']] is not None else ""
-            desc = str(row[header_map['Description']]).strip() if 'Description' in header_map and row[header_map['Description']] is not None else ""
+        cached = SESSION_METADATA_CACHE.get(filename)
+        if cached and cached[0] == mtime:
+            return cached[1]
             
-            p_val = row[header_map['Current Real Price (Rp)']]
-            fake_p_val = row[header_map['Current Fake Price (Rp)']] if 'Current Fake Price (Rp)' in header_map else None
-            try:
-                price_val = int(float(p_val)) if p_val is not None else 0
-            except:
-                price_val = 0
-
-            try:
-                fake_price_val = int(float(fake_p_val)) if fake_p_val is not None else 0
-            except:
-                fake_price_val = 0
-                
-            avail_val = str(row[header_map['Availability']]).strip() if 'Availability' in header_map and row[header_map['Availability']] is not None else "Available"
+        with open(session_path, "r") as f:
+            data = json.load(f)
+            ts = data.get("timestamp") or data.get("saved_at")
             
-            is_promo_col = str(row[header_map['Sedang promo']]).strip().lower() if 'Sedang promo' in header_map and row[header_map['Sedang promo']] is not None else ""
-            is_in_promo = (is_promo_col in ("ya", "yes", "true", "1")) or (fake_price_val > price_val and fake_price_val > 0) or (item_id in promo_item_ids)
+        SESSION_METADATA_CACHE[filename] = (mtime, ts)
+        return ts
+    except Exception:
+        return None
 
-            if item_id and item_name:
-                items.append({
-                    "id": item_id,
-                    "category_id": category_id,
-                    "category": category_name,
-                    "name": item_name,
-                    "description": desc,
-                    "price": price_val,
-                    "original_price": fake_price_val,
-                    "availability": avail_val,
-                    "is_in_promo": is_in_promo
-                })
-        return items
+def get_cached_phone_map(cache_path: Path) -> dict:
+    if not cache_path.exists():
+        return {}
+    try:
+        mtime = cache_path.stat().st_mtime
+        if PHONE_MAP_CACHE["mtime"] == mtime:
+            return PHONE_MAP_CACHE["data"]
+            
+        import pandas as pd
+        df = pd.read_csv(cache_path)
+        phone_cols = [col for col in df.columns if 'nomor hp' in str(col).lower()]
+        col_phone = phone_cols[1] if len(phone_cols) > 1 else (phone_cols[0] if phone_cols else None)
+        phone_map = {}
+        if col_phone:
+            for _, row in df.iterrows():
+                sid = str(row.get('Store ID', '')).strip().split('.')[0]
+                if not sid or sid == '-' or sid.lower() == 'nan':
+                    sid = str(row.get('Merchant ID', '')).strip().split('.')[0]
+                p_val = str(row.get(col_phone, '')).strip()
+                if sid and p_val and p_val not in ('-', 'nan', ''):
+                    phone_map[sid] = p_val
+                    
+        PHONE_MAP_CACHE["mtime"] = mtime
+        PHONE_MAP_CACHE["data"] = phone_map
+        return phone_map
     except Exception as e:
-        logger.error(f"Error parsing excel menu file at {excel_path}: {e}")
-        return []
+        logger.error(f"Error loading phone mapping: {e}")
+        return PHONE_MAP_CACHE["data"]
 
 @app.get("/api/sessions")
 def get_sessions_status(db: Session = Depends(get_db)):
@@ -2075,29 +2165,13 @@ def get_sessions_status(db: Session = Depends(get_db)):
     import os
     import json
     import re
-    import pandas as pd
     from pathlib import Path
     
-    # Load phone mapping from sheets cache
-    phone_map = {}
-    try:
-        cache_path = BASE_DIR / "master_merchants_cache.csv"
-        if cache_path.exists():
-            df = pd.read_csv(cache_path)
-            phone_cols = [col for col in df.columns if 'nomor hp' in str(col).lower()]
-            col_phone = phone_cols[1] if len(phone_cols) > 1 else (phone_cols[0] if phone_cols else None)
-            if col_phone:
-                for _, row in df.iterrows():
-                    sid = str(row.get('Store ID', '')).strip().split('.')[0]
-                    if not sid or sid == '-' or sid.lower() == 'nan':
-                        sid = str(row.get('Merchant ID', '')).strip().split('.')[0]
-                    p_val = str(row.get(col_phone, '')).strip()
-                    if sid and p_val and p_val not in ('-', 'nan', ''):
-                        phone_map[sid] = p_val
-    except Exception as e:
-        logger.error(f"Error loading phone mapping in /api/sessions: {e}")
+    cache_path = BASE_DIR / "master_merchants_cache.csv"
+    phone_map = get_cached_phone_map(cache_path)
 
-    outlets = db.query(Outlet).all()
+    # Use eager loading with joinedload to solve N+1 queries
+    outlets = db.query(Outlet).options(joinedload(Outlet.account)).all()
     
     result = []
     for o in outlets:
@@ -2131,31 +2205,21 @@ def get_sessions_status(db: Session = Depends(get_db)):
             profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
             
             session_file = BASE_DIR / "shopee" / "data" / f"session_{profile_name}.json"
-            if session_file.exists():
+            ts = get_cached_session_last_active(session_file)
+            if ts is not None:
                 status_info["has_session"] = True
                 status_info["session_file"] = f"session_{profile_name}.json"
-                try:
-                    with open(session_file, "r") as f:
-                        data = json.load(f)
-                        ts = data.get("timestamp") or data.get("saved_at")
-                        if ts:
-                            status_info["last_active"] = ts
-                except: pass
+                status_info["last_active"] = ts
                 
         elif platform == "gofood" and o.account:
             ident_str = str(o.account.username).strip().lower()
             sanitized = re.sub(r'[^a-zA-Z0-9_.-]', '_', ident_str)
             session_file = BASE_DIR / "Gofood" / f"session_gofood_{sanitized}.json"
-            if session_file.exists():
+            ts = get_cached_session_last_active(session_file)
+            if ts is not None:
                 status_info["has_session"] = True
                 status_info["session_file"] = f"session_gofood_{sanitized}.json"
-                try:
-                    with open(session_file, "r") as f:
-                        data = json.load(f)
-                        ts = data.get("timestamp") or data.get("saved_at")
-                        if ts:
-                            status_info["last_active"] = ts
-                except: pass
+                status_info["last_active"] = ts
                 
         result.append(status_info)
         

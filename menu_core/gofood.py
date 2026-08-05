@@ -33,6 +33,25 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
         # Playwright Sync API tidak boleh dipanggil dari thread yang sedang menjalankan
         # event loop asyncio (mis. saat dijalankan dalam konteks FastAPI/uvicorn).
         # Deteksi loop dulu (terpisah dari eksekusi), lalu offload ke thread terpisah bila perlu.
+        def _run_login_outlet_in_clean_thread(meta):
+            import threading
+            res = [None]
+            err = [None]
+            def _worker():
+                try:
+                    import asyncio
+                    asyncio.set_event_loop(asyncio.new_event_loop())
+                    from login_gofood import login_outlet
+                    res[0] = login_outlet(meta)
+                except Exception as e:
+                    err[0] = e
+            t = threading.Thread(target=_worker)
+            t.start()
+            t.join()
+            if err[0]:
+                raise err[0]
+            return res[0]
+
         try:
             asyncio.get_running_loop()
             in_event_loop = True
@@ -40,8 +59,7 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
             in_event_loop = False
 
         if in_event_loop:
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                login_result = executor.submit(login_outlet, store_metadata).result()
+            login_result = _run_login_outlet_in_clean_thread(store_metadata)
         else:
             login_result = login_outlet(store_metadata)
         if not login_result or not login_result.get('access_token'):

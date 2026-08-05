@@ -45,17 +45,18 @@ function doPost(e) {
       parentFolder = DriveApp.getRootFolder();
     }
     
-    // 2. Dapatkan atau buat folder outlet/owner di dalam parent folder (bebas duplikat berkat LockService)
-    var folders = parentFolder.getFoldersByName(folderName);
-    var folder;
+    // 2. Dapatkan atau buat subfolder (Nama Owner / Outlet) di dalam parent folder
+    var targetSubFolderName = (folderName && folderName.trim() !== "") ? folderName.trim() : "FoodMaster Exports";
+    var folders = parentFolder.getFoldersByName(targetSubFolderName);
+    var subFolder;
     if (folders.hasNext()) {
-      folder = folders.next();
+      subFolder = folders.next();
     } else {
-      folder = parentFolder.createFolder(folderName);
+      subFolder = parentFolder.createFolder(targetSubFolderName);
     }
     
-    // 3. Simpan file Excel asli (.xlsx) ke Google Drive
-    var file = folder.createFile(blob);
+    // 3. Simpan file Excel asli (.xlsx) ke dalam subfolder target
+    var file = subFolder.createFile(blob);
     var fileUrl = file.getUrl();
     var spreadsheetUrl = "";
     
@@ -67,7 +68,7 @@ function doPost(e) {
         sheetFile = Drive.Files.insert({
           title: fileName.replace(/\.xlsx$/i, ''),
           mimeType: MimeType.GOOGLE_SHEETS,
-          parents: [{id: folder.getId()}]
+          parents: [{id: subFolder.getId()}]
         }, blob);
         spreadsheetUrl = sheetFile.alternateLink;
       } else {
@@ -75,7 +76,7 @@ function doPost(e) {
         sheetFile = Drive.Files.create({
           name: fileName.replace(/\.xlsx$/i, ''),
           mimeType: MimeType.GOOGLE_SHEETS,
-          parents: [folder.getId()]
+          parents: [subFolder.getId()]
         }, blob);
         spreadsheetUrl = sheetFile.webViewLink;
       }

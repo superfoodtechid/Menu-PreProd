@@ -4,6 +4,8 @@ import re
 import sys
 import pandas as pd
 import base64
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 def extract_gofood_menu(store_metadata: dict, output_dir: str):
     """
@@ -28,7 +30,20 @@ def extract_gofood_menu(store_metadata: dict, output_dir: str):
         is_headless = headless_env.lower() in ("true", "1", "yes") if headless_env else False
         headless_str = "secara headless" if is_headless else "secara non-headless (GUI)"
         print(f"[*] Meluncurkan browser GoFood {headless_str} untuk login & pengalihan ke halaman menu...")
-        login_result = login_outlet(store_metadata)
+        # Playwright Sync API tidak boleh dipanggil dari thread yang sedang menjalankan
+        # event loop asyncio (mis. saat dijalankan dalam konteks FastAPI/uvicorn).
+        # Deteksi loop dulu (terpisah dari eksekusi), lalu offload ke thread terpisah bila perlu.
+        try:
+            asyncio.get_running_loop()
+            in_event_loop = True
+        except RuntimeError:
+            in_event_loop = False
+
+        if in_event_loop:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                login_result = executor.submit(login_outlet, store_metadata).result()
+        else:
+            login_result = login_outlet(store_metadata)
         if not login_result or not login_result.get('access_token'):
             print(f"[!] Login atau penarikan menu dibatalkan/gagal.")
             return False, "Proses login/intersepsi menu via browser gagal atau dibatalkan."

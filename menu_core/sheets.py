@@ -114,6 +114,7 @@ def get_outlets_for_applicator(applicator_choice: str):
             
         outlets.append({
             'store_id': store_id,
+            'owner': str(row.get('Owner', '')).strip(),
             'nama_resto_final': str(row.get('Nama Resto Final', '')).strip(),
             'nama_pendek': str(row.get('Nama Pendek Outlet (Shopee) Final', '')).strip(),
             'nama_outlet': str(row.get('Nama Outlet', '')).strip(),

@@ -798,10 +798,22 @@ def _init_driver(headless: bool):
 
 # ── Login Logic ────────────────────────────────────────────────────────────────
 
-def _perform_login(driver, wait, username: str = None, password: str = None, phone: str = None, is_retry: bool = False) -> bool:
+def _perform_login(driver, wait, username: str = None, password: str = None, phone: str = None, is_retry: bool = False, allow_otp: bool = False) -> bool:
     log.info("➡️  [AUTH] Starting login sequence...")
     if not phone and (not username or not password):
-        raise Exception("Shopee credentials are not configured! Please configure them in 'credentials.json' at the project root directory.")
+        if allow_otp:
+            log.info("🔔 [AUTH] Kredensial tidak diisi otomatis. Silakan lakukan login manual di jendela browser Chrome yang terbuka...")
+            print("  [*] Silakan masukkan kredensial / OTP dan lakukan login di jendela browser Chrome yang terbuka...")
+            start_manual = time.time()
+            while time.time() - start_manual < 300:
+                c_url = driver.current_url.lower()
+                if "onboarding" in c_url or "merchant-selector" in c_url or "dashboard" in c_url:
+                    log.info("✅ [AUTH] User berhasil login manual!")
+                    return True
+                time.sleep(2)
+            return False
+        else:
+            raise Exception("Shopee credentials are not configured! Please configure them in 'credentials.json' at the project root directory.")
     
     use_phone = phone and not (username and password)
     if use_phone:
@@ -923,8 +935,19 @@ def _perform_login(driver, wait, username: str = None, password: str = None, pho
             """)
 
             if otp_input or is_verification_page:
-                log.error(f"❌ [AUTH] OTP or verification is required for '{username or phone}'. Aborting to prevent triggering OTP.")
-                return False
+                if not allow_otp:
+                    log.error(f"❌ [AUTH] OTP or verification is required for '{username or phone}'. Aborting to prevent triggering OTP.")
+                    return False
+                else:
+                    log.info("🔔 [AUTH] Manual OTP/Verifikasi dibutuhkan! Silakan lakukan verifikasi di browser Chrome...")
+                    print("  [*] Silakan masukkan kode OTP / Verifikasi pada jendela browser Chrome yang terbuka...")
+                    otp_start = time.time()
+                    while time.time() - otp_start < 180:
+                        c_url = driver.current_url.lower()
+                        if "onboarding" in c_url or "merchant-selector" in c_url or "dashboard" in c_url:
+                            log.info("✅ [AUTH] User berhasil verifikasi manual!")
+                            break
+                        time.sleep(2)
         except Exception:
             pass
 
@@ -1451,7 +1474,7 @@ def return_to_selector(driver) -> bool:
             pass
         return True
 
-def get_session(username=None, password=None, phone=None, headless=True, close_browser=True, target_name=None, interactive=True) -> dict | None:
+def get_session(username=None, password=None, phone=None, headless=True, close_browser=True, target_name=None, interactive=True, allow_otp=False, profile_name=None, **kwargs) -> dict | None:
     for attempt in range(3):
         log.info(f"🌐 [BROWSER] Launching (headless={headless}, attempt={attempt+1}/3)...")
         driver = _init_driver(headless=headless)
@@ -1527,7 +1550,7 @@ def get_session(username=None, password=None, phone=None, headless=True, close_b
                 
                 current_url = driver.current_url.lower()
                 if "login" in current_url or "authenticate" in current_url or "about:blank" in current_url:
-                    success = _perform_login(driver, wait, username, password, phone, is_retry=(attempt == 2))
+                    success = _perform_login(driver, wait, username, password, phone, is_retry=(attempt == 2), allow_otp=allow_otp)
                     if not success:
                         log.error("❌ [AUTH] _perform_login failed.")
                         driver.quit()

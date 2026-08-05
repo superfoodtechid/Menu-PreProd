@@ -109,37 +109,63 @@ def interactive_menu():
                 sys.exit(0)
             elif choice == "6":
                 print(f"\n  {CYAN}=== PERBAIKI LOGIN SHOPEE ==={RESET}")
-                phone = input(f"  {BOLD}Nomor HP Shopee:{RESET} ").strip()
-                merchant_name = input(f"  {BOLD}Nama Merchant (untuk nama profile):{RESET} ").strip()
-                if phone:
-                    print(f"  [*] Membuka browser Chrome (headless=False) untuk login manual...")
-                    # Set up session file path for shopee
-                    automation_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "shopee-omzet-automation")
-                    if automation_dir not in sys.path:
-                        sys.path.insert(0, automation_dir)
-                    from core import browser as shopee_browser
-                    
-                    import re
-                    profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name or "custom_merchant")
-                    profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
-
-                    session_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shopee", "data", f"session_{profile_name}.json")
-                    shopee_browser.set_session_file(session_file)
-                    
-                    session_data = shopee_browser.get_session(
-                        phone=phone, 
-                        headless=False, 
-                        close_browser=True, 
-                        interactive=True,
-                        allow_otp=True,
-                        profile_name=profile_name
-                    )
-                    if session_data and "shopee_tob_token" in session_data:
-                        print(f"  {GREEN}✔ Login berhasil diperbaiki dan session tersimpan!{RESET}\n")
-                    else:
-                        print(f"  {RED}✘ Gagal memperbaiki login.{RESET}\n")
+                print(f"  {DIM}Pilih metode login yang ingin digunakan:{RESET}")
+                print(f"    {YELLOW}[1]{RESET} Login via Nomor HP (OTP)")
+                print(f"    {YELLOW}[2]{RESET} Login via Username & Password")
+                print(f"    {YELLOW}[3]{RESET} Full Manual (Buka Chrome & Ketik Langsung)")
+                
+                login_method = input(f"  {BOLD}Pilihan Metode (1/2/3) [Default 1]:{RESET} ").strip() or "1"
+                
+                username = None
+                phone = None
+                password = None
+                
+                if login_method == "2":
+                    username = input(f"  {BOLD}Username Shopee:{RESET} ").strip()
+                    password = input(f"  {BOLD}Password Shopee:{RESET} ").strip()
+                    if not username or not password:
+                        print(f"  {RED}✘ Username & Password tidak boleh kosong!{RESET}\n")
+                        state = "applicator"
+                        continue
+                elif login_method == "3":
+                    print(f"  {DIM}[*] Jendela Chrome akan terbuka, silakan lakukan login secara manual di browser.{RESET}")
                 else:
-                    print(f"  {RED}✘ Nomor HP tidak boleh kosong!{RESET}\n")
+                    phone = input(f"  {BOLD}Nomor HP Shopee:{RESET} ").strip()
+                    if not phone:
+                        print(f"  {RED}✘ Nomor HP tidak boleh kosong!{RESET}\n")
+                        state = "applicator"
+                        continue
+
+                merchant_name = input(f"  {BOLD}Nama Merchant (untuk nama profile):{RESET} ").strip()
+                print(f"  [*] Membuka browser Chrome (headless=False) untuk login...")
+                
+                # Set up session file path for shopee
+                automation_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "shopee-omzet-automation")
+                if automation_dir not in sys.path:
+                    sys.path.insert(0, automation_dir)
+                from core import browser as shopee_browser
+                
+                import re
+                profile_name = re.sub(r'[^a-zA-Z0-9_]', '_', merchant_name or "custom_merchant")
+                profile_name = re.sub(r'_+', '_', profile_name).strip('_').lower()
+
+                session_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shopee", "data", f"session_{profile_name}.json")
+                shopee_browser.set_session_file(session_file)
+                
+                session_data = shopee_browser.get_session(
+                    username=username,
+                    password=password,
+                    phone=phone, 
+                    headless=False, 
+                    close_browser=True, 
+                    interactive=True,
+                    allow_otp=True,
+                    profile_name=profile_name
+                )
+                if session_data and "shopee_tob_token" in session_data:
+                    print(f"  {GREEN}✔ Login berhasil diperbaiki dan session tersimpan!{RESET}\n")
+                else:
+                    print(f"  {RED}✘ Gagal memperbaiki login.{RESET}\n")
                 state = "applicator"
             elif choice == "5":
                 clear_all_caches()
@@ -510,11 +536,15 @@ def main():
                     success_count += 1
                     print(f"  {GREEN}✔ Berhasil menggabungkan semua platform!{RESET}")
                     
-                    # Upload ke Google Drive
+                    # Upload ke Google Drive (menggunakan Nama Owner untuk nama folder & file)
+                    raw_owner = o.get('owner') or o.get('merchant_name') or raw_outlet
+                    clean_owner = "".join(c for c in raw_owner if c.isalnum() or c in (' ', '_', '-')).strip()
+                    clean_owner = re.sub(r'\s+', ' ', clean_owner)
+                    
                     from datetime import datetime
                     timestamp_version = datetime.now().strftime("%Y-%m-%d %H:%M")
-                    drive_filename = f"C5. {timestamp_version} {clean_outlet_filename}.xlsx"
-                    upload_combined_to_drive(combined_path, clean_outlet_filename, custom_filename=drive_filename)
+                    drive_filename = f"C5. {timestamp_version} {clean_owner}.xlsx"
+                    upload_combined_to_drive(combined_path, clean_owner, custom_filename=drive_filename)
                 else:
                     fail_count += 1
                     print(f"  {RED}✘ Gagal menggabungkan C5.{RESET}")

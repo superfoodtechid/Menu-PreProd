@@ -292,49 +292,49 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
       {/* Parse Result & Multi-Select Store ID Panel */}
       {parseResult && (
         <div className="space-y-6">
-          {/* Summary Cards Grid */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-8">
-            <div className="surface-card p-4">
-              <p className="text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Store ID (SID)</p>
-              <p className="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.total_stores}</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">{selectedSids.length} Dipilih</p>
+          {/* Minimalist Summary Cards Bar */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+            <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/80">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Store ID (SID)</p>
+              <p className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.total_stores}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">{selectedSids.length} Dipilih</p>
             </div>
-            <div className="surface-card p-4">
-              <p className="text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Total Item C5</p>
-              <p className="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.total_items}</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">Dalam C5</p>
+            <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/80">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Total Item</p>
+              <p className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.total_items}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">Dalam C5</p>
             </div>
-            <div className="surface-card border-l-4 border-l-amber-500 p-4">
-              <p className="text-[12px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Total Perubahan</p>
-              <p className="mt-1 text-2xl font-extrabold text-amber-600 dark:text-amber-400">{parseResult.summary.total_changes}</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">Item Terdeteksi</p>
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3.5 shadow-xs dark:border-amber-500/30 dark:bg-amber-500/10">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Total Perubahan</p>
+              <p className="mt-1 text-xl font-extrabold text-amber-600 dark:text-amber-400">{parseResult.summary.total_changes}</p>
+              <p className="mt-0.5 text-[11px] text-amber-600/70 dark:text-amber-400/70">Terdeteksi</p>
             </div>
-            <div className="surface-card p-4">
-              <p className="text-[12px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">✨ Item Baru</p>
-              <p className="mt-1 text-2xl font-extrabold text-teal-600 dark:text-teal-400">{parseResult.summary.new_items_count || 0}</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">Tambah Item</p>
+            <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/80">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Item Baru</p>
+              <p className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.new_items_count || 0}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">Tambah Item</p>
             </div>
-            <div className="surface-card p-4">
-              <p className="text-[12px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">📂 Kat Baru</p>
-              <p className="mt-1 text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{parseResult.summary.new_categories_count || 0}</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">Kategori Baru</p>
+            <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/80">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Kategori Baru</p>
+              <p className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.new_categories_count || 0}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">Buat Kategori</p>
             </div>
-            <div className="surface-card p-4">
-              <p className="text-[12px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Harga (Price)</p>
-              <p className="mt-1 text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{parseResult.summary.price_changes || 0}</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">Harga Berubah</p>
+            <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/80">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Harga</p>
+              <p className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.price_changes || 0}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">Harga Berubah</p>
             </div>
-            <div className="surface-card p-4">
-              <p className="text-[12px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Nama Item</p>
-              <p className="mt-1 text-2xl font-extrabold text-blue-600 dark:text-blue-400">{parseResult.summary.name_changes || 0}</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">Nama Berubah</p>
+            <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/80">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Nama Item</p>
+              <p className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.name_changes || 0}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">Nama Berubah</p>
             </div>
-            <div className="surface-card p-4">
-              <p className="text-[12px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Kat / Foto / Desc</p>
-              <p className="mt-1 text-2xl font-extrabold text-purple-600 dark:text-purple-400">
+            <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/80">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Atribut</p>
+              <p className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">
                 {(parseResult.summary.category_changes || 0) + (parseResult.summary.photo_changes || 0) + (parseResult.summary.description_changes || 0)}
               </p>
-              <p className="mt-0.5 text-[11px] text-slate-500">Atribut Berubah</p>
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">Kat / Foto / Desc</p>
             </div>
           </div>
 
@@ -524,9 +524,9 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                 {[
                   ["changed", "Item Berubah"],
                   ["all", "Semua Item"],
-                  ["new_item", "✨ Item Baru"],
-                  ["new_category", "📂 Kategori Baru"],
-                  ["invalid", "⚠️ Tidak Valid"],
+                  ["new_item", "Item Baru"],
+                  ["new_category", "Kategori Baru"],
+                  ["invalid", "Tidak Valid"],
                   ["price", "Price Change"],
                   ["name", "Nama Item"],
                   ["category", "Kategori"],
@@ -605,11 +605,11 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                         </td>
                         <td className="px-4 py-3 text-slate-700 dark:text-zinc-300">
                           {item.is_new_category ? (
-                            <span className="font-bold text-indigo-600 dark:text-indigo-400">📂 {item.category} (Baru)</span>
+                            <span className="font-semibold text-slate-900 dark:text-white">{item.category}</span>
                           ) : item.changes?.category_changed ? (
                             <div className="flex flex-col gap-0.5">
                               <span className="text-[10px] text-slate-400 line-through dark:text-zinc-500">{item.baseline_category || "-"}</span>
-                              <span className="font-bold text-purple-600 dark:text-purple-400">{item.category}</span>
+                              <span className="font-semibold text-slate-900 dark:text-white">{item.category}</span>
                             </div>
                           ) : (
                             <span>{item.category || "-"}</span>
@@ -617,12 +617,12 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                         </td>
                         <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
                           {item.is_new_item ? (
-                            <span className="font-bold text-teal-600 dark:text-teal-400">✨ {item.item_name_new || item.item_name} (Baru)</span>
+                            <span className="font-semibold text-slate-900 dark:text-white">{item.item_name_new || item.item_name}</span>
                           ) : item.changes?.name_changed ? (
                             <div className="flex items-center gap-1.5">
                               <span className="text-[11px] text-slate-400 line-through dark:text-zinc-500">{item.baseline_name || item.item_name}</span>
                               <span className="text-[10px] text-slate-400 dark:text-zinc-500">→</span>
-                              <span className="font-bold text-blue-600 dark:text-blue-400">{item.item_name_new || item.item_name}</span>
+                              <span className="font-semibold text-slate-900 dark:text-white">{item.item_name_new || item.item_name}</span>
                             </div>
                           ) : (
                             <span>{item.item_name}</span>
@@ -662,28 +662,28 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                         </td>
                         <td className="px-4 py-3 text-center">
                           {item.is_valid === false ? (
-                            <span title={item.validation_error} className="cursor-help rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-xs">
-                              ❌ TIDAK VALID
+                            <span title={item.validation_error} className="cursor-help rounded-md bg-red-500/10 border border-red-500/30 px-2 py-0.5 text-[10px] font-bold text-red-600 dark:text-red-400">
+                              Tidak Valid
                             </span>
                           ) : item.is_changed ? (
                             <div className="flex flex-wrap items-center justify-center gap-1">
                               {item.is_new_item && (
-                                <span className="rounded-md bg-teal-100 px-1.5 py-0.5 text-[10px] font-bold text-teal-700 dark:bg-teal-900/50 dark:text-teal-300">
-                                  ✨ Item Baru
+                                <span className="rounded-md bg-teal-500/10 border border-teal-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-teal-700 dark:text-teal-300">
+                                  Item Baru
                                 </span>
                               )}
                               {item.is_new_category && (
-                                <span className="rounded-md bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
-                                  📂 Kat Baru
+                                <span className="rounded-md bg-indigo-500/10 border border-indigo-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300">
+                                  Kat Baru
                                 </span>
                               )}
                               {item.changes?.price_changed && !item.is_new_item && (
-                                <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                                <span className="rounded-md bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
                                   Price
                                 </span>
                               )}
                               {item.changes?.name_changed && !item.is_new_item && (
-                                <span className="rounded-md bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                                <span className="rounded-md bg-blue-500/10 border border-blue-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
                                   Nama
                                 </span>
                               )}

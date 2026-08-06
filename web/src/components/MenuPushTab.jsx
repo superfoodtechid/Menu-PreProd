@@ -173,6 +173,7 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
     if (filterMode === "changed" && !item.is_changed) return false;
     if (filterMode === "new_item" && !item.is_new_item) return false;
     if (filterMode === "new_category" && !item.is_new_category) return false;
+    if (filterMode === "delete_item" && !item.is_deleted_item) return false;
     if (filterMode === "price" && !item.changes?.price_changed) return false;
     if (filterMode === "name" && !item.changes?.name_changed) return false;
     if (filterMode === "category" && !item.changes?.category_changed) return false;
@@ -293,7 +294,7 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
       {parseResult && (
         <div className="space-y-6">
           {/* Minimalist Summary Cards Bar */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-9">
             <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/80">
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Store ID (SID)</p>
               <p className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.total_stores}</p>
@@ -318,6 +319,11 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Kategori Baru</p>
               <p className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.new_categories_count || 0}</p>
               <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">Buat Kategori</p>
+            </div>
+            <div className="rounded-xl border border-rose-500/40 bg-rose-500/5 p-3.5 shadow-xs dark:border-rose-500/30 dark:bg-rose-500/10">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Hapus Item</p>
+              <p className="mt-1 text-xl font-extrabold text-rose-600 dark:text-rose-400">{parseResult.summary.deleted_items_count || 0}</p>
+              <p className="mt-0.5 text-[11px] text-rose-600/70 dark:text-rose-400/70">Tidak Ada di C5</p>
             </div>
             <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/80">
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Harga</p>
@@ -526,6 +532,7 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                   ["all", "Semua Item"],
                   ["new_item", "Item Baru"],
                   ["new_category", "Kategori Baru"],
+                  ["delete_item", "Hapus Item"],
                   ["invalid", "Tidak Valid"],
                   ["price", "Price Change"],
                   ["name", "Nama Item"],
@@ -675,6 +682,11 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                               {item.is_new_category && (
                                 <span className="rounded-md bg-indigo-500/10 border border-indigo-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300">
                                   Kat Baru
+                                </span>
+                              )}
+                              {item.is_deleted_item && (
+                                <span className="rounded-md bg-rose-500/10 border border-rose-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:text-rose-300">
+                                  Hapus Item
                                 </span>
                               )}
                               {item.changes?.price_changed && !item.is_new_item && (

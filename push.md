@@ -31,6 +31,7 @@ Sistem secara otomatis:
 | 💰 **Harga Item** | New Fake Price (Rp) | Mengubah harga item menu berdasarkan kolom `New Fake Price (Rp)` / `Current Fake Price (Rp)`. |
 | 📄 **Deskripsi Item** | Description Update | Memperbarui deskripsi item menu jika terdapat perbedaan pada kolom `Description`. |
 | 🏪 **Multi-Store ID** | Push Banyak Store Sekaligus | Mendukung satu file C5 yang berisi beberapa Store ID (SID). Pengguna dapat memilih SID mana saja yang ingin di-push. |
+| 🗑️ **Hapus Item (`delete_item`)** | Deletion of Missing Items | Jika item menu ada pada data baseline PULL GoFood tetapi **tidak ditemukan** (hilang `Item ID` dan `Item Name`) pada file C5 yang diunggah, sistem otomatis mendeteksi item tersebut untuk **dihapus** (`DELETE_ITEM`) via GoFood V2 API (`DELETE /v2/menu_groups/{group_id}/menu_items/{item_id}`). |
 | 📊 **Audit Trail** | Record Log Eksekusi | Mencatat detail lengkap perubahan yang berhasil maupun gagal ke database `AuditTrail`. |
 
 ---

@@ -2199,6 +2199,22 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
                 except (ValueError, TypeError):
                     final_price = int(float(orig_item.get('price') or 0))
 
+                is_deleted_item = ("DELETE_ITEM" in change_types) or (is_dict_changes and upd["changes"].get("is_deleted_item"))
+                if is_deleted_item and item_id and not item_id.startswith("NEW_"):
+                    logger.info(f"🗑️ Deleting item on GoFood merchant: '{item_id}' ({upd.get('item_name')})...")
+                    del_res = go_api.delete_v2_menu_item(page, token, patch_group_id, item_id, passkey=passkey)
+                    if not (del_res and del_res.get("ok")):
+                        del_res = go_api.delete_menu_item(page, token, patch_group_id, item_id, passkey=passkey)
+                    if del_res and del_res.get("ok"):
+                        logger.info(f"✅ Item '{item_id}' deleted successfully!")
+                        results.append({
+                            "item_id": item_id, "item_name": upd.get("item_name"),
+                            "status": "SUCCESS", "error": None, "action": "DELETED"
+                        })
+                        continue
+                    else:
+                        logger.warning(f"⚠️ Failed deleting item '{item_id}': {del_res}")
+
                 # ── Handle New Item Creation (tambah_item) ──
                 if is_new_item:
                     logger.info(f"✨ Adding New Item (tambah_item) to GoFood: '{final_name}'...")
@@ -2667,6 +2683,9 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
         _baseline_cache[sid] = result
         return result
 
+    c5_parsed_ids_by_sid = {}
+    c5_parsed_names_by_sid = {}
+
     for r_idx, row in enumerate(rows[1:], start=2):
         if not row or all(v is None for v in row):
             continue
@@ -2698,6 +2717,17 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
         display_name = item_name_imp.strip() if item_name_imp else item_name
         if not item_id and not display_name:
             continue
+
+        if sid not in c5_parsed_ids_by_sid:
+            c5_parsed_ids_by_sid[sid] = set()
+            c5_parsed_names_by_sid[sid] = set()
+
+        if item_id:
+            c5_parsed_ids_by_sid[sid].add(str(item_id).strip())
+        if display_name:
+            c5_parsed_names_by_sid[sid].add(norm_str(display_name))
+        if item_name:
+            c5_parsed_names_by_sid[sid].add(norm_str(item_name))
 
         # Match this C5 row against the baseline PULL cache (by Item ID, else by name).
         baseline = load_baseline(sid)
@@ -2878,6 +2908,67 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
             }
         })
 
+    # ── Detect Deleted Items (Items in baseline PULL missing from C5 spreadsheet) ──
+    deleted_items_count = 0
+    for sid, sinfo in stores_dict.items():
+        baseline = load_baseline(sid)
+        parsed_ids = c5_parsed_ids_by_sid.get(sid, set())
+        parsed_names = c5_parsed_names_by_sid.get(sid, set())
+
+        for base_iid, base_rec in baseline["by_id"].items():
+            norm_bname = norm_str(base_rec.get("name"))
+            if base_iid not in parsed_ids and norm_bname not in parsed_names:
+                deleted_items_count += 1
+                total_changes += 1
+                sinfo["changed_count"] += 1
+                parsed_items.append({
+                    "row_number": 0,
+                    "sid": sid,
+                    "outlet_name": sinfo["name"],
+                    "category_id": None,
+                    "category": base_rec.get("category"),
+                    "item_id": base_iid,
+                    "item_name": base_rec.get("name"),
+                    "item_name_new": None,
+                    "photo_link": base_rec.get("image"),
+                    "description": base_rec.get("description"),
+                    "availability": "",
+                    "visibility": "",
+                    "notes": "Item tidak ada di C5 (Hapus Item)",
+                    "baseline_name": base_rec.get("name"),
+                    "baseline_price": base_rec.get("price"),
+                    "baseline_category": base_rec.get("category"),
+                    "baseline_photo": base_rec.get("image"),
+                    "baseline_description": base_rec.get("description"),
+                    "current_fake_price": base_rec.get("price"),
+                    "new_fake_price": None,
+                    "baseline_found": True,
+                    "is_valid": True,
+                    "validation_error": None,
+                    "is_changed": True,
+                    "is_new_item": False,
+                    "is_new_category": False,
+                    "is_deleted_item": True,
+                    "change_types": ["DELETE_ITEM"],
+                    "diff_details": [{
+                        "column": "Item Status",
+                        "old_val": base_rec.get("name"),
+                        "new_val": "(Hapus Item)"
+                    }],
+                    "changes": {
+                        "name_changed": False,
+                        "category_changed": False,
+                        "photo_changed": False,
+                        "description_changed": False,
+                        "price_changed": False,
+                        "other_changed": False,
+                        "is_new_item": False,
+                        "is_new_category": False,
+                        "is_deleted_item": True,
+                        "invalid": False,
+                    }
+                })
+
     return {
         "success": True,
         "filename": file.filename,
@@ -2895,6 +2986,7 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
             "other_changes": other_changes_count,
             "new_items_count": new_items_count,
             "new_categories_count": new_categories_count,
+            "deleted_items_count": deleted_items_count,
             "validation_errors_count": validation_errors_count,
             "has_validation_errors": len(validation_error_messages) > 0,
             "validation_error_messages": validation_error_messages,

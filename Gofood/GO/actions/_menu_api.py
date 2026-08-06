@@ -214,6 +214,14 @@ def update_v2_menu_item(page, token, group_id, item_id, payload, passkey=None):
     return _patch(page, token, f"{BASE_V2}/menu_groups/{group_id}/menu_items/{item_id}", payload, passkey=passkey)
 
 
+def delete_v2_menu_item(page, token, group_id, item_id, passkey=None):
+    """
+    Hapus menu item per V2 API.
+    Endpoint: DELETE /v2/menu_groups/{group_id}/menu_items/{item_id}
+    """
+    return _delete(page, token, f"{BASE_V2}/menu_groups/{group_id}/menu_items/{item_id}", passkey=passkey)
+
+
 def fetch_variant_categories(page, token, group_id, passkey=None):
     """Ambil variasi (variant_categories) untuk satu menu group."""
     return _fetch(page, token, f"{BASE_V2}/menu_groups/{group_id}/variant_categories", passkey=passkey)

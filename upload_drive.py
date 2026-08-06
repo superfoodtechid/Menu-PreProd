@@ -2,17 +2,10 @@ import os
 import base64
 import requests
 from typing import Optional
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 
-# Ensure fresh environment variables from .env on every execution
-load_dotenv(override=True)
-
-# URL Web App Google Apps Script & Target Folder ID dari environment variable
-URL_WEB_APP = os.getenv(
-    "GDRIVE_APPSCRIPT_URL",
-    "https://script.google.com/macros/s/AKfycbww-dv6C_vQAfsulCfrduMKNz6RuodcOOtQnprWcZ3mMZ0k2sfZagywVYNkRrhqPoM9pg/exec"
-)
-TARGET_FOLDER_ID = os.getenv("GDRIVE_PARENT_FOLDER_ID") or os.getenv("GDRIVE_FOLDER_ID") or "14EFVOjND6brFT6BKdXu5dWJBErbSMqie"
+DEFAULT_APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbww-dv6C_vQAfsulCfrduMKNz6RuodcOOtQnprWcZ3mMZ0k2sfZagywVYNkRrhqPoM9pg/exec"
+DEFAULT_FOLDER_ID = "14EFVOjND6brFT6BKdXu5dWJBErbSMqie"
 
 def upload_combined_to_drive(file_path: str, outlet_name: str, custom_filename: Optional[str] = None) -> Optional[str]:
     """
@@ -20,12 +13,16 @@ def upload_combined_to_drive(file_path: str, outlet_name: str, custom_filename: 
     File akan ditempatkan pada folder spesifik sesuai nama owner/outlet di dalam folder target.
     Mengembalikan URL spreadsheet/file jika sukses, atau None jika gagal.
     """
-    load_dotenv(override=True)
     if not os.path.exists(file_path):
         print(f"File tidak ditemukan: {file_path}")
         return None
         
     try:
+        # Read fresh values directly from .env file to guarantee no stale cached environment variables
+        env_vals = dotenv_values()
+        target_url = env_vals.get("GDRIVE_APPSCRIPT_URL") or os.getenv("GDRIVE_APPSCRIPT_URL") or DEFAULT_APPSCRIPT_URL
+        target_folder = env_vals.get("GDRIVE_PARENT_FOLDER_ID") or env_vals.get("GDRIVE_FOLDER_ID") or os.getenv("GDRIVE_FOLDER_ID") or DEFAULT_FOLDER_ID
+
         # Membaca file dan encode ke base64
         with open(file_path, "rb") as f:
             file_bytes = f.read()
@@ -35,9 +32,6 @@ def upload_combined_to_drive(file_path: str, outlet_name: str, custom_filename: 
         
         # Bersihkan nama folder dari spasi dan karakter aneh jika perlu
         clean_folder_name = "".join(c for c in outlet_name if c.isalnum() or c in (' ', '_', '-')).strip()
-        
-        target_url = os.getenv("GDRIVE_APPSCRIPT_URL", URL_WEB_APP)
-        target_folder = os.getenv("GDRIVE_PARENT_FOLDER_ID") or os.getenv("GDRIVE_FOLDER_ID") or TARGET_FOLDER_ID
 
         payload = {
             "folderName": clean_folder_name,

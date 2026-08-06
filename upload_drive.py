@@ -2,11 +2,15 @@ import os
 import base64
 import requests
 from typing import Optional
+from dotenv import load_dotenv
+
+# Ensure fresh environment variables from .env on every execution
+load_dotenv(override=True)
 
 # URL Web App Google Apps Script & Target Folder ID dari environment variable
 URL_WEB_APP = os.getenv(
     "GDRIVE_APPSCRIPT_URL",
-    "https://script.google.com/macros/s/AKfycbyXPeeXIvFljxyiaYROIXa5enmUxX_fP6wxMcdb6Gz33ImPd2mqS0_9B1G9VEqA4s1f1Q/exec"
+    "https://script.google.com/macros/s/AKfycbww-dv6C_vQAfsulCfrduMKNz6RuodcOOtQnprWcZ3mMZ0k2sfZagywVYNkRrhqPoM9pg/exec"
 )
 TARGET_FOLDER_ID = os.getenv("GDRIVE_PARENT_FOLDER_ID") or os.getenv("GDRIVE_FOLDER_ID") or "14EFVOjND6brFT6BKdXu5dWJBErbSMqie"
 
@@ -16,6 +20,7 @@ def upload_combined_to_drive(file_path: str, outlet_name: str, custom_filename: 
     File akan ditempatkan pada folder spesifik sesuai nama owner/outlet di dalam folder target.
     Mengembalikan URL spreadsheet/file jika sukses, atau None jika gagal.
     """
+    load_dotenv(override=True)
     if not os.path.exists(file_path):
         print(f"File tidak ditemukan: {file_path}")
         return None

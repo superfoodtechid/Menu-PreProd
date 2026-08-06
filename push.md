@@ -23,7 +23,7 @@ Sistem secara otomatis:
 | Komponen | Fitur | Keterangan & Alur Eksekusi |
 |---|---|---|
 | ✨ **Item Baru (`tambah_item`)** | Creation of New Items | Jika pada C5 terdapat nama item baru tanpa `Item ID` (atau belum ada di baseline GoFood), sistem otomatis membuat item baru via V2 API (`POST /v2/menu_groups/{group_id}/menu_items`). |
-| 📂 **Kategori Baru (`new_categories`)** | Creation of New Categories | Jika nama kategori pada C5 belum ada di daftar kategori merchant, sistem otomatis membuat kategori baru terlebih dahulu via V2 API (`POST /v2/menu_groups/{group_id}/menus`) sebelum menambahkan item ke kategori tersebut. |
+| 📂 **Kategori Baru (`new_categories`)** | Creation of New Categories | Jika nama kategori pada C5 terisi namun `Category ID` kosong, atau nama kategori belum ada di daftar kategori merchant, sistem otomatis membuat kategori baru via V2 API (`POST /v2/menu_groups/{group_id}/menus`) sebelum menautkan item (baru/lama) ke kategori tersebut. |
 | 🛑 **Validasi Category ID** | Single Category Name per ID | Seluruh baris item yang memiliki `Category ID` sama **wajib** menggunakan nama kategori yang identik. Jika tidak, parser menandai file **TIDAK VALID**, menampilkan peringatan merah, dan memblokir eksekusi push. |
 | 🏷️ **Nama Kategori** | Category Rename | Jika nama kategori diubah pada C5, sistem mengeksekusi V2 API GoFood (`PATCH /v2/menu_groups/{group_id}/menus/{category_id}`) untuk merename nama kategori pada merchant. |
 | 📷 **Foto Link / Gambar** | Photo Link & Google Drive | Mendukung link gambar dari kolom `Photo Link` maupun link Google Drive dari kolom `Design Improvement`. URL foto baru dikirimkan ke payload `image_url` GoFood V2 PATCH / V1 PUT. |

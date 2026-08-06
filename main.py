@@ -2724,7 +2724,7 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
         if not item_id or (base_rec is None and norm_str(display_name) not in baseline["by_name"]):
             is_new_item = True
 
-        if cat_name and norm_str(cat_name) not in baseline["categories"]:
+        if cat_name and (not cat_id or norm_str(cat_name) not in baseline["categories"]):
             is_new_category = True
 
         if sid not in stores_dict:

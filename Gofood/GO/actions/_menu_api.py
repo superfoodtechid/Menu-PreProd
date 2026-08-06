@@ -159,6 +159,31 @@ def update_category(page, token, group_id, payload, passkey=None):
     return _patch(page, token, f"{BASE_V2}/menu_groups/{group_id}", payload, passkey=passkey)
 
 
+def create_category(page, token, group_id, payload, passkey=None):
+    """
+    Buat kategori menu baru via V2 API.
+    Endpoint: POST /v2/menu_groups/{group_id}/menus
+    Payload: {"name": "Nama Kategori Baru", "active": true}
+    """
+    return _post(page, token, f"{BASE_V2}/menu_groups/{group_id}/menus", payload, passkey=passkey)
+
+
+def create_menu_item(page, token, group_id, payload, passkey=None):
+    """
+    Buat item menu baru via V2 API.
+    Endpoint: POST /v2/menu_groups/{group_id}/menu_items
+    Payload: {
+        "menu_common_id": "<category_id>",
+        "name": "Nama Item Baru",
+        "price": 15000,
+        "description": "...",
+        "image_url": "...",
+        "active": true
+    }
+    """
+    return _post(page, token, f"{BASE_V2}/menu_groups/{group_id}/menu_items", payload, passkey=passkey)
+
+
 def update_menu_item(page, token, group_id, menu_id, payload, passkey=None):
     """
     Update/rename item atau kategori di dalam satu menu_group.

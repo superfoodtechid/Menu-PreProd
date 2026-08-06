@@ -2097,14 +2097,33 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
 
             patch_group_id = group_id or api_headers.get('menu_group_id')
 
-            # ── 1. Execute Category Renames (GoFood V2 API) ──
+            # ── 1. Execute New Categories Creation & Category Renames (GoFood V2 API) ──
+            created_cat_ids = {}
             category_renames = {}
             for upd in updates:
                 cat_id = upd.get("category_id")
                 cat_name = upd.get("category")
                 change_types = upd.get("changes") or upd.get("change_types") or []
-                if cat_id and cat_name:
-                    is_cat_changed = ("CATEGORY_CHANGE" in change_types) or (isinstance(upd.get("changes"), dict) and upd["changes"].get("category_changed"))
+                is_dict_changes = isinstance(upd.get("changes"), dict)
+                is_new_cat = ("NEW_CATEGORY" in change_types) or (is_dict_changes and upd["changes"].get("is_new_category"))
+
+                if cat_name and is_new_cat and norm_str(cat_name) not in created_cat_ids and patch_group_id:
+                    try:
+                        logger.info(f"📂 Creating New Category '{cat_name}' on GoFood merchant...")
+                        cat_res = go_api.create_category(page, token, patch_group_id, {"name": cat_name, "active": True}, passkey=passkey)
+                        if cat_res and cat_res.get("ok"):
+                            res_data = cat_res.get("data") or cat_res
+                            new_c_id = res_data.get("id") or res_data.get("common_id") or res_data.get("menu_common_id")
+                            if new_c_id:
+                                created_cat_ids[norm_str(cat_name)] = new_c_id
+                            logger.info(f"✅ Category '{cat_name}' created successfully (ID: {new_c_id})")
+                        else:
+                            logger.warning(f"⚠️ Category creation warning for '{cat_name}': {cat_res}")
+                    except Exception as cat_ex:
+                        logger.warning(f"⚠️ Exception creating category '{cat_name}': {cat_ex}")
+
+                if cat_id and cat_name and not is_new_cat:
+                    is_cat_changed = ("CATEGORY_CHANGE" in change_types) or (is_dict_changes and upd["changes"].get("category_changed"))
                     if is_cat_changed:
                         category_renames[cat_id] = cat_name
 
@@ -2120,7 +2139,7 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
                     except Exception as cat_ex:
                         logger.warning(f"⚠️ Exception renaming category '{cat_id}': {cat_ex}")
 
-            # ── 2. Execute Item Updates (Name, Price, Photo Link, Description) ──
+            # ── 2. Execute Item Updates & New Item Creation (tambah_item) ──
             import random
             total = len(updates)
             for idx, upd in enumerate(updates):
@@ -2134,6 +2153,7 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
                 change_types = upd.get("changes") or upd.get("change_types") or []
                 is_dict_changes = isinstance(upd.get("changes"), dict)
 
+                is_new_item = ("NEW_ITEM" in change_types) or (is_dict_changes and upd["changes"].get("is_new_item")) or (not item_id)
                 want_name = ("NAME_CHANGE" in change_types) or (is_dict_changes and upd["changes"].get("name_changed")) or bool(new_name)
                 want_price = ("PRICE_CHANGE" in change_types) or (is_dict_changes and upd["changes"].get("price_changed")) or (raw_price is not None)
                 want_photo = ("PHOTO_CHANGE" in change_types) or (is_dict_changes and upd["changes"].get("photo_changed")) or bool(new_photo and new_photo.startswith("http"))
@@ -2143,6 +2163,51 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
                     progress_cb(idx, total, upd)
 
                 item_info = go_items_by_id.get(item_id)
+                orig_item = item_info["item"] if item_info else {}
+                cat_common_id = item_info["category_common_id"] if item_info else (created_cat_ids.get(norm_str(new_cat)) or patch_group_id)
+
+                final_name = new_name if (want_name and new_name) else (orig_item.get('name') or upd.get('item_name') or "Item Baru")
+                final_photo = new_photo if (want_photo and new_photo) else orig_item.get('image_url', orig_item.get('image', ''))
+                final_desc = new_desc if (want_desc and new_desc) else orig_item.get('description', '')
+
+                try:
+                    final_price = int(float(raw_price)) if (want_price and raw_price is not None) else int(float(orig_item.get('price') or 0))
+                except (ValueError, TypeError):
+                    final_price = int(float(orig_item.get('price') or 0))
+
+                # ── Handle New Item Creation (tambah_item) ──
+                if is_new_item:
+                    logger.info(f"✨ Adding New Item (tambah_item) to GoFood: '{final_name}'...")
+                    target_cat_id = cat_common_id or patch_group_id
+                    create_payload = {
+                        "menu_common_id": target_cat_id,
+                        "name": final_name,
+                        "price": final_price,
+                        "description": final_desc,
+                        "image_url": final_photo,
+                        "active": True,
+                        "signature": False
+                    }
+                    create_res = go_api.create_menu_item(page, token, patch_group_id, create_payload, passkey=passkey)
+                    if create_res and create_res.get("ok"):
+                        logger.info(f"✅ New item '{final_name}' created successfully!")
+                        results.append({
+                            "item_id": "NEW_ITEM", "item_name": final_name,
+                            "new_name": final_name, "new_price": final_price,
+                            "new_photo": final_photo, "new_desc": final_desc,
+                            "new_category": new_cat, "status": "SUCCESS", "error": None,
+                        })
+                    else:
+                        logger.warning(f"⚠️ Failed to create new item '{final_name}': {create_res}")
+                        results.append({
+                            "item_id": "NEW_ITEM", "item_name": final_name,
+                            "new_name": final_name, "new_price": final_price,
+                            "status": "FAILED",
+                            "error": (create_res.get('body') or create_res.get('error') or "Gagal membuat item baru.") if create_res else "Gagal membuat item baru.",
+                        })
+                    time.sleep(random.uniform(1.2, 2.5))
+                    continue
+
                 if not item_info:
                     results.append({
                         "item_id": item_id, "item_name": upd.get("item_name", item_id),
@@ -2150,14 +2215,6 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
                         "status": "FAILED", "error": "Item ID tidak ditemukan di menu GoFood.",
                     })
                     continue
-
-                orig_item = item_info["item"]
-                cat_common_id = item_info["category_common_id"] or item_info["category_id"]
-
-                # Build effective final values: apply new fields when requested, else retain current.
-                final_name = new_name if (want_name and new_name) else orig_item.get('name')
-                final_photo = new_photo if (want_photo and new_photo) else orig_item.get('image_url', orig_item.get('image', ''))
-                final_desc = new_desc if (want_desc and new_desc) else orig_item.get('description', '')
 
                 try:
                     final_price = int(float(raw_price)) if (want_price and raw_price is not None) else int(float(orig_item.get('price') or 0))
@@ -2530,6 +2587,9 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
     other_changes_count = 0
     validation_errors_count = 0
 
+    new_items_count = 0
+    new_categories_count = 0
+
     import re
 
     def parse_price(val_str):
@@ -2551,16 +2611,18 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
     _baseline_cache = {}
 
     def load_baseline(sid):
-        """Loads the last-pulled GoFood menu for a SID and indexes items by id and normalized name."""
+        """Loads the last-pulled GoFood menu for a SID and indexes items by id/name and categories."""
         if sid in _baseline_cache:
             return _baseline_cache[sid]
-        by_id, by_name = {}, {}
+        by_id, by_name, categories = {}, {}, set()
         path = baseline_dir / f"menu-response-{sid}.json"
         if path.exists():
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))
                 for menu in (data.get("menus") or []):
                     cat_name = menu.get("name") or ""
+                    if cat_name:
+                        categories.add(norm_str(cat_name))
                     for it in (menu.get("menu_items") or []):
                         rec = {
                             "name": it.get("name") or "",
@@ -2577,7 +2639,7 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
                             by_name[nn] = rec
             except Exception as ex:
                 logger.warning(f"Gagal membaca baseline PULL untuk SID {sid}: {ex}")
-        result = {"by_id": by_id, "by_name": by_name, "found": bool(by_id or by_name)}
+        result = {"by_id": by_id, "by_name": by_name, "categories": categories, "found": bool(by_id or by_name)}
         _baseline_cache[sid] = result
         return result
 
@@ -2609,7 +2671,8 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
         curr_fake_raw = get_val(row, curr_fake_col) if curr_fake_col else ""
         item_name_imp = get_val(row, item_name_imp_col) if item_name_imp_col else ""
 
-        if not item_id and not item_name:
+        display_name = item_name_imp.strip() if item_name_imp else item_name
+        if not item_id and not display_name:
             continue
 
         # Match this C5 row against the baseline PULL cache (by Item ID, else by name).
@@ -2617,7 +2680,9 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
         base_rec = None
         if item_id and item_id in baseline["by_id"]:
             base_rec = baseline["by_id"][item_id]
-        elif norm_str(item_name) in baseline["by_name"]:
+        elif display_name and norm_str(display_name) in baseline["by_name"]:
+            base_rec = baseline["by_name"][norm_str(display_name)]
+        elif item_name and norm_str(item_name) in baseline["by_name"]:
             base_rec = baseline["by_name"][norm_str(item_name)]
 
         base_name = base_rec["name"] if base_rec else item_name
@@ -2627,6 +2692,16 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
         base_desc = base_rec["description"] if base_rec else ""
 
         new_fake_price = parse_price(new_fake_raw) or parse_price(curr_fake_raw)
+
+        # ── Detect New Item (tambah_item) & New Category (new_categories) ──
+        is_new_item = False
+        is_new_category = False
+
+        if not item_id or (base_rec is None and norm_str(display_name) not in baseline["by_name"]):
+            is_new_item = True
+
+        if cat_name and norm_str(cat_name) not in baseline["categories"]:
+            is_new_category = True
 
         if sid not in stores_dict:
             stores_dict[sid] = {
@@ -2654,16 +2729,22 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
                 "new_val": f"Gunakan nama yang sama untuk Category ID '{cat_id}'"
             })
 
-        # 1. Item Name Change
-        display_name = item_name_imp.strip() if item_name_imp else item_name
-        name_changed = bool(display_name and norm_str(display_name) != norm_str(base_name))
-        if name_changed:
+        # 1. New Item & New Category Indications
+        if is_new_item:
+            diff_details.append({"column": "Item Status", "old_val": "(Item Baru)", "new_val": f"Tambah Item Baru: {display_name}"})
+        elif display_name and norm_str(display_name) != norm_str(base_name):
+            name_changed = True
             diff_details.append({"column": "Item Name", "old_val": base_name, "new_val": display_name})
+        else:
+            name_changed = False
 
-        # 2. Category Change
-        category_changed = bool(cat_name and base_cat and norm_str(cat_name) != norm_str(base_cat))
-        if category_changed:
-            diff_details.append({"column": "Category", "old_val": base_cat, "new_val": cat_name})
+        if is_new_category:
+            diff_details.append({"column": "Category Status", "old_val": "(Kategori Baru)", "new_val": f"Kategori Baru: {cat_name}"})
+            category_changed = True
+        else:
+            category_changed = bool(cat_name and base_cat and norm_str(cat_name) != norm_str(base_cat))
+            if category_changed:
+                diff_details.append({"column": "Category", "old_val": base_cat, "new_val": cat_name})
 
         # 3. Photo Link Change
         photo_changed = bool(photo_link and photo_link != base_img and not (not base_img and not photo_link))
@@ -2697,11 +2778,17 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
                         other_changed = True
                         diff_details.append({"column": col_k, "old_val": "", "new_val": v_str})
 
-        is_changed = name_changed or category_changed or photo_changed or description_changed or price_changed or other_changed or (not is_valid)
+        is_changed = is_new_item or is_new_category or name_changed or category_changed or photo_changed or description_changed or price_changed or other_changed or (not is_valid)
 
         change_types = []
         if not is_valid:
             change_types.append("INVALID_CATEGORY_CONSISTENCY")
+        if is_new_item:
+            change_types.append("NEW_ITEM")
+            new_items_count += 1
+        if is_new_category:
+            change_types.append("NEW_CATEGORY")
+            new_categories_count += 1
         if name_changed:
             change_types.append("NAME_CHANGE")
             name_changes_count += 1
@@ -2750,6 +2837,8 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
             "is_valid": is_valid,
             "validation_error": validation_error,
             "is_changed": is_changed,
+            "is_new_item": is_new_item,
+            "is_new_category": is_new_category,
             "change_types": change_types,
             "diff_details": diff_details,
             "changes": {
@@ -2759,6 +2848,8 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
                 "description_changed": description_changed,
                 "price_changed": price_changed,
                 "other_changed": other_changed,
+                "is_new_item": is_new_item,
+                "is_new_category": is_new_category,
                 "invalid": not is_valid,
             }
         })
@@ -2778,6 +2869,8 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
             "description_changes": description_changes_count,
             "price_changes": price_changes_count,
             "other_changes": other_changes_count,
+            "new_items_count": new_items_count,
+            "new_categories_count": new_categories_count,
             "validation_errors_count": validation_errors_count,
             "has_validation_errors": len(validation_error_messages) > 0,
             "validation_error_messages": validation_error_messages,

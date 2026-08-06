@@ -171,6 +171,8 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
     if (selectedSids.length > 0 && !selectedSids.includes(item.sid)) return false;
 
     if (filterMode === "changed" && !item.is_changed) return false;
+    if (filterMode === "new_item" && !item.is_new_item) return false;
+    if (filterMode === "new_category" && !item.is_new_category) return false;
     if (filterMode === "price" && !item.changes?.price_changed) return false;
     if (filterMode === "name" && !item.changes?.name_changed) return false;
     if (filterMode === "category" && !item.changes?.category_changed) return false;
@@ -291,7 +293,7 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
       {parseResult && (
         <div className="space-y-6">
           {/* Summary Cards Grid */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-8">
             <div className="surface-card p-4">
               <p className="text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Store ID (SID)</p>
               <p className="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">{parseResult.summary.total_stores}</p>
@@ -306,6 +308,16 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
               <p className="text-[12px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Total Perubahan</p>
               <p className="mt-1 text-2xl font-extrabold text-amber-600 dark:text-amber-400">{parseResult.summary.total_changes}</p>
               <p className="mt-0.5 text-[11px] text-slate-500">Item Terdeteksi</p>
+            </div>
+            <div className="surface-card p-4">
+              <p className="text-[12px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">✨ Item Baru</p>
+              <p className="mt-1 text-2xl font-extrabold text-teal-600 dark:text-teal-400">{parseResult.summary.new_items_count || 0}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Tambah Item</p>
+            </div>
+            <div className="surface-card p-4">
+              <p className="text-[12px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">📂 Kat Baru</p>
+              <p className="mt-1 text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{parseResult.summary.new_categories_count || 0}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Kategori Baru</p>
             </div>
             <div className="surface-card p-4">
               <p className="text-[12px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Harga (Price)</p>
@@ -512,6 +524,8 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                 {[
                   ["changed", "Item Berubah"],
                   ["all", "Semua Item"],
+                  ["new_item", "✨ Item Baru"],
+                  ["new_category", "📂 Kategori Baru"],
                   ["invalid", "⚠️ Tidak Valid"],
                   ["price", "Price Change"],
                   ["name", "Nama Item"],
@@ -578,6 +592,8 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                         className={`transition ${
                           item.is_valid === false
                             ? "bg-red-50/70 hover:bg-red-100/60 dark:bg-red-950/20 dark:hover:bg-red-950/40"
+                            : item.is_new_item
+                            ? "bg-teal-50/40 hover:bg-teal-50/70 dark:bg-teal-950/20 dark:hover:bg-teal-950/40"
                             : item.is_changed
                             ? "bg-amber-50/30 hover:bg-amber-50/60 dark:bg-amber-950/10 dark:hover:bg-amber-950/20"
                             : "hover:bg-slate-50 dark:hover:bg-zinc-900/50"
@@ -588,7 +604,9 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                           <div className="text-[10px] font-mono text-slate-400">{item.sid}</div>
                         </td>
                         <td className="px-4 py-3 text-slate-700 dark:text-zinc-300">
-                          {item.changes?.category_changed ? (
+                          {item.is_new_category ? (
+                            <span className="font-bold text-indigo-600 dark:text-indigo-400">📂 {item.category} (Baru)</span>
+                          ) : item.changes?.category_changed ? (
                             <div className="flex flex-col gap-0.5">
                               <span className="text-[10px] text-slate-400 line-through dark:text-zinc-500">{item.baseline_category || "-"}</span>
                               <span className="font-bold text-purple-600 dark:text-purple-400">{item.category}</span>
@@ -598,7 +616,9 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                           )}
                         </td>
                         <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
-                          {item.changes?.name_changed ? (
+                          {item.is_new_item ? (
+                            <span className="font-bold text-teal-600 dark:text-teal-400">✨ {item.item_name_new || item.item_name} (Baru)</span>
+                          ) : item.changes?.name_changed ? (
                             <div className="flex items-center gap-1.5">
                               <span className="text-[11px] text-slate-400 line-through dark:text-zinc-500">{item.baseline_name || item.item_name}</span>
                               <span className="text-[10px] text-slate-400 dark:text-zinc-500">→</span>
@@ -622,15 +642,15 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                             </div>
                           ) : (
                             <span className="text-slate-500 truncate max-w-[140px] block" title={item.photo_link || "-"}>
-                              {item.photo_link ? (item.photo_link.startsWith("http") ? "📷 Ada Link Foto" : item.photo_link) : "-"}
+                              {item.photo_link ? (typeof item.photo_link === "string" && item.photo_link.startsWith("http") ? "📷 Ada Link Foto" : item.photo_link) : "-"}
                             </span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-slate-600 dark:text-zinc-400">
-                          {item.baseline_found ? fmtCurrency(item.baseline_price) : <span className="text-[11px] text-slate-400 dark:text-zinc-500">Tak ada baseline</span>}
+                          {item.baseline_found && !item.is_new_item ? fmtCurrency(item.baseline_price) : <span className="text-[11px] text-slate-400 dark:text-zinc-500">Item Baru</span>}
                         </td>
                         <td className="px-4 py-3">
-                          {item.changes?.price_changed ? (
+                          {item.changes?.price_changed || item.is_new_item ? (
                             <span className="rounded-md bg-emerald-100 px-2 py-0.5 font-extrabold text-emerald-800 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
                               {fmtCurrency(item.new_fake_price)}
                             </span>
@@ -647,12 +667,22 @@ export default function MenuPushTab({ API_BASE_URL, API_SECRET_KEY }) {
                             </span>
                           ) : item.is_changed ? (
                             <div className="flex flex-wrap items-center justify-center gap-1">
-                              {item.changes?.price_changed && (
+                              {item.is_new_item && (
+                                <span className="rounded-md bg-teal-100 px-1.5 py-0.5 text-[10px] font-bold text-teal-700 dark:bg-teal-900/50 dark:text-teal-300">
+                                  ✨ Item Baru
+                                </span>
+                              )}
+                              {item.is_new_category && (
+                                <span className="rounded-md bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+                                  📂 Kat Baru
+                                </span>
+                              )}
+                              {item.changes?.price_changed && !item.is_new_item && (
                                 <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
                                   Price
                                 </span>
                               )}
-                              {item.changes?.name_changed && (
+                              {item.changes?.name_changed && !item.is_new_item && (
                                 <span className="rounded-md bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
                                   Nama
                                 </span>

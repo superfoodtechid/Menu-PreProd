@@ -1907,37 +1907,57 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
         page.on("request", capture_headers)
 
         def perform_fresh_login():
-            logger.info(f"🔄 Token GoFood expired/tidak ditemukan. Fresh login untuk {email}...")
-            if session_path and os.path.exists(session_path):
-                try: os.remove(session_path)
-                except Exception: pass
-            page.goto("https://portal.gofoodmerchant.co.id/auth/login/email", wait_until="domcontentloaded")
-            time.sleep(2)
-            email_input = page.locator('input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible').first
-            if email_input.count() > 0:
-                email_input.fill(email)
-                submit_btn = page.locator('button:has-text("Lanjut"), button:has-text("Masuk"), button[type="submit"]')
-                if submit_btn.count() > 0:
-                    submit_btn.first.click()
-                    time.sleep(2)
-            pass_input = page.locator('input[type="password"]:visible, input[name*="password" i]:visible').first
-            if pass_input.count() > 0:
-                pass_input.fill(password)
-                page.locator('button:has-text("Masuk"), button[type="submit"]').first.click()
+            logger.info(f"🔄 Token GoFood expired/tidak ditemukan. Menjalankan login_outlet untuk {email} (store: {merchant_id})...")
             try:
-                page.wait_for_url(lambda url: "/auth/login" not in url, timeout=45000)
-                context.storage_state(path=session_path)
+                import threading, asyncio
+                res_box = [None]
+                err_box = [None]
+                
+                outlet_meta = {
+                    'store_id': merchant_id,
+                    'email': email,
+                    'emails': [email] if email else [],
+                }
+
+                def _worker():
+                    try:
+                        asyncio.set_event_loop(asyncio.new_event_loop())
+                        from login_gofood import login_outlet
+                        res_box[0] = login_outlet(outlet_meta)
+                    except Exception as ex:
+                        err_box[0] = ex
+
+                t = threading.Thread(target=_worker)
+                t.start()
+                t.join()
+
+                if err_box[0]:
+                    raise err_box[0]
+
+                res = res_box[0]
+                if res and res.get('access_token'):
+                    tok = res['access_token']
+                    api_headers['authorization'] = tok if tok.startswith("Bearer ") else f"Bearer {tok}"
+                    if res.get('restaurant_uuid'):
+                        api_headers['restaurant_uuid'] = res['restaurant_uuid']
+                    if res.get('cookies'):
+                        try: context.add_cookies(res['cookies'])
+                        except Exception: pass
+                    return True
             except Exception as e:
-                logger.warning(f"Tunggu redirect login timeout: {e}")
+                logger.warning(f"Terjadi kesalahan saat login_outlet: {e}")
+            return False
 
         try:
             page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
             time.sleep(2)
 
-            if "/auth" in page.url or "login" in page.url:
+            if "/auth" in page.url or "login" in page.url or not api_headers.get('authorization'):
                 perform_fresh_login()
                 page.goto(f"https://portal.gofoodmerchant.co.id/gofood/{merchant_id}/menu-items", wait_until="domcontentloaded")
                 time.sleep(3)
+                if "/auth" in page.url or "login" in page.url:
+                    raise Exception(f"Gagal login ke GoFood portal untuk {email}. Sesi telah kadaluarsa dan membutuhkan login/OTP ulang via 'python login_gofood.py'.")
 
             # Wait dynamically (up to 20s) for the ids the app emits: restaurant_uuid,
             # authorization, x-passkey and — needed for the V2 PATCH — menu_group_id.
@@ -2289,13 +2309,16 @@ def run_push_c5_job(job_id: uuid.UUID, selected_sids: list, updates_list: list):
                 db.commit()
 
             try:
-                results = _push_c5_gofood_for_merchant(
-                    email=account.username,
-                    password=account.password,
-                    merchant_id=outlet.store_id,
-                    updates=sid_updates,
-                    progress_cb=progress_cb,
-                )
+                from concurrent.futures import ThreadPoolExecutor
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    results = executor.submit(
+                        _push_c5_gofood_for_merchant,
+                        email=account.username,
+                        password=account.password,
+                        merchant_id=outlet.store_id,
+                        updates=sid_updates,
+                        progress_cb=progress_cb,
+                    ).result()
             except Exception as ex:
                 logger.error(f"❌ Gagal push GoFood untuk SID {sid}: {ex}")
                 for upd in sid_updates:

@@ -8,7 +8,7 @@ URL_WEB_APP = os.getenv(
     "GDRIVE_APPSCRIPT_URL",
     "https://script.google.com/macros/s/AKfycbyXPeeXIvFljxyiaYROIXa5enmUxX_fP6wxMcdb6Gz33ImPd2mqS0_9B1G9VEqA4s1f1Q/exec"
 )
-TARGET_FOLDER_ID = os.getenv("GDRIVE_PARENT_FOLDER_ID", "14EFVOjND6brFT6BKdXu5dWJBErbSMqie")
+TARGET_FOLDER_ID = os.getenv("GDRIVE_PARENT_FOLDER_ID") or os.getenv("GDRIVE_FOLDER_ID") or "14EFVOjND6brFT6BKdXu5dWJBErbSMqie"
 
 def upload_combined_to_drive(file_path: str, outlet_name: str, custom_filename: Optional[str] = None) -> Optional[str]:
     """
@@ -32,7 +32,7 @@ def upload_combined_to_drive(file_path: str, outlet_name: str, custom_filename: 
         clean_folder_name = "".join(c for c in outlet_name if c.isalnum() or c in (' ', '_', '-')).strip()
         
         target_url = os.getenv("GDRIVE_APPSCRIPT_URL", URL_WEB_APP)
-        target_folder = os.getenv("GDRIVE_PARENT_FOLDER_ID", TARGET_FOLDER_ID)
+        target_folder = os.getenv("GDRIVE_PARENT_FOLDER_ID") or os.getenv("GDRIVE_FOLDER_ID") or TARGET_FOLDER_ID
 
         payload = {
             "folderName": clean_folder_name,

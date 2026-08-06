@@ -517,16 +517,7 @@ def login_outlet(outlet_info, proxy_config=None):
                 page = context.new_page()
                 safe_goto_with_retry(page, "https://portal.gofoodmerchant.co.id/dashboard", wait_until="domcontentloaded")
                 time.sleep(2.0)
-                if store_id:
-                    store_id_cached = str(store_id).strip()
-                    safe_goto_with_retry(
-                        page,
-                        f"https://portal.gofoodmerchant.co.id/gofood/{store_id_cached}/menu-items",
-                        wait_until="domcontentloaded",
-                        timeout=45000,
-                    )
-                    time.sleep(2.0)
-                
+
                 # Check if we are logged in (i.e. URL does not contain /auth or /login)
                 current_url = page.url
                 if "/auth" not in current_url and "login" not in current_url:
@@ -571,6 +562,16 @@ def login_outlet(outlet_info, proxy_config=None):
                         access_token = token_candidate
                         session_loaded_successfully = True
                         logged_in_email = cached_identifier if "@" in str(cached_identifier) else None
+                        # Sesi sudah terkonfirmasi valid — baru navigasi ke halaman menu items
+                        if store_id:
+                            store_id_cached = str(store_id).strip()
+                            safe_goto_with_retry(
+                                page,
+                                f"https://portal.gofoodmerchant.co.id/gofood/{store_id_cached}/menu-items",
+                                wait_until="domcontentloaded",
+                                timeout=45000,
+                            )
+                            time.sleep(2.0)
                     else:
                         print(f"   ⚠️ Sesi terlihat login tetapi token tidak ditemukan untuk {cached_identifier}. Memaksa login ulang...")
                         context.clear_cookies()
@@ -606,6 +607,7 @@ def login_outlet(outlet_info, proxy_config=None):
                 
             max_login_attempts = 2
             attempts_made = 0
+            email_input_selector = 'input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible'
             
             while attempts_made < max_login_attempts:
                 attempt = attempts_made
@@ -617,14 +619,50 @@ def login_outlet(outlet_info, proxy_config=None):
                 page = context.new_page()
                 if current_email:
                     print(f"\n   ➡️ [Email: {current_email}] Membuka halaman login email langsung... (Percobaan {attempt + 1}/{max_login_attempts})")
-                    safe_goto_with_retry(
-                        page,
-                        "https://portal.gofoodmerchant.co.id/auth/login/email",
-                        wait_until="domcontentloaded",
-                        timeout=45000,
-                        ready_selector='input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible',
-                        ready_timeout=25000,
-                    )
+                    try:
+                        safe_goto_with_retry(
+                            page,
+                            "https://portal.gofoodmerchant.co.id/auth/login/email",
+                            wait_until="domcontentloaded",
+                            timeout=45000,
+                            ready_selector=email_input_selector,
+                            ready_timeout=25000,
+                        )
+                    except Exception as email_nav_err:
+                        print(f"   ⚠️ Halaman /auth/login/email gagal ({email_nav_err}). Mencoba buka /auth/login lalu pindah ke login Email...")
+                        safe_goto_with_retry(
+                            page,
+                            "https://portal.gofoodmerchant.co.id/auth/login",
+                            wait_until="domcontentloaded",
+                            timeout=45000,
+                        )
+                        switched_to_email = False
+                        for sel in [
+                            'a[href*="/auth/login/email"]',
+                            'button:has-text("Email")',
+                            'a:has-text("Email")',
+                            'button:has-text("Masuk dengan Email")',
+                            'a:has-text("Masuk dengan Email")',
+                        ]:
+                            try:
+                                loc = page.locator(sel).first
+                                if loc.count() > 0 and loc.is_visible():
+                                    loc.click()
+                                    switched_to_email = True
+                                    break
+                            except Exception:
+                                pass
+                        if not switched_to_email:
+                            try:
+                                safe_goto_with_retry(
+                                    page,
+                                    "https://portal.gofoodmerchant.co.id/auth/login/email",
+                                    wait_until="domcontentloaded",
+                                    timeout=45000,
+                                )
+                            except Exception:
+                                pass
+                        page.wait_for_selector(email_input_selector, timeout=25000, state="visible")
                 else:
                     print(f"\n   ➡️ Membuka halaman login... (Percobaan {attempt + 1}/{max_login_attempts})")
                     safe_goto_with_retry(
@@ -632,7 +670,7 @@ def login_outlet(outlet_info, proxy_config=None):
                         "https://portal.gofoodmerchant.co.id/auth/login",
                         wait_until="domcontentloaded",
                         timeout=45000,
-                        ready_selector='input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible',
+                        ready_selector=email_input_selector,
                         ready_timeout=25000,
                     )
 
@@ -650,7 +688,7 @@ def login_outlet(outlet_info, proxy_config=None):
                 if current_email:
                     try:
                         email_input = page.wait_for_selector(
-                            'input[type="email"]:visible, input[name="email"]:visible, input[placeholder*="email" i]:visible, input[type="text"]:visible',
+                            email_input_selector,
                             timeout=15000
                         )
                         if email_input:

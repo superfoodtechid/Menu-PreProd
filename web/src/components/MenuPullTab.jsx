@@ -32,9 +32,9 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
   const [openOwnerDropdown, setOpenOwnerDropdown] = useState(false);
   const [ownerSearchQuery, setOwnerSearchQuery] = useState("");
 
-  // Parent name selection (Single-Select)
+  // Parent name selection (Multi-Select)
   const [uniqueParentNames, setUniqueParentNames] = useState([]);
-  const [selectedParent, setSelectedParent] = useState("");
+  const [selectedParents, setSelectedParents] = useState([]);
 
   // Branch list and check state (Multi-Select)
   const [availableBranches, setAvailableBranches] = useState([]);
@@ -57,8 +57,14 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     activeJobsRef.current = activeJobs;
   }, [activeJobs]);
 
+  const getOutletDisplayName = () => {
+    if (selectedParents.length === 0) return "Combined Outlets";
+    if (selectedParents.length === 1) return selectedParents[0];
+    return `${selectedParents[0]} dan ${selectedParents.length - 1} lainnya`;
+  };
+
   // Trigger C5 combination for current outlet
-  const triggerCombineC5 = async (jobList = activeJobs, outletName = selectedParent) => {
+  const triggerCombineC5 = async (jobList = activeJobs, outletName = getOutletDisplayName()) => {
     const successJobs = jobList.filter((j) => j.status === "SUCCESS" && j.id && !String(j.id).startsWith("err-"));
     const successJobIds = successJobs.map((j) => j.id);
     if (successJobIds.length === 0) return;
@@ -97,7 +103,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       setAllOutlets([]);
       setSelectedOwner("");
       setUniqueParentNames([]);
-      setSelectedParent("");
+      setSelectedParents([]);
       setAvailableBranches([]);
       setCheckedBranchIds([]);
       setSearchQuery("");
@@ -112,7 +118,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     setAllOutlets([]);
     setSelectedOwner("");
     setUniqueParentNames([]);
-    setSelectedParent("");
+    setSelectedParents([]);
     setAvailableBranches([]);
     setCheckedBranchIds([]);
     setSearchQuery("");
@@ -135,7 +141,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       .then((data) => {
         setAllOutlets(data);
         setSelectedOwner("");
-        setSelectedParent("");
+        setSelectedParents([]);
       })
       .catch((err) => {
         if (err.name === "AbortError") return;
@@ -161,30 +167,28 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
       : allOutlets;
     const parents = Array.from(new Set(filteredByOwner.map((o) => o.nama_outlet).filter(Boolean))).sort();
     setUniqueParentNames(parents);
-    if (selectedParent && !parents.includes(selectedParent)) {
-      setSelectedParent("");
-    }
+    setSelectedParents((current) => current.filter((p) => parents.includes(p)));
   }, [allOutlets, selectedOwner]);
 
-  // Update available branches when selectedParent, selectedOwner, or allOutlets changes
+  // Update available branches when selectedParents, selectedOwner, or allOutlets changes
   useEffect(() => {
-    if (selectedPlatforms.length === 0 || !selectedParent) {
+    if (selectedPlatforms.length === 0 || selectedParents.length === 0) {
       setAvailableBranches([]);
       setCheckedBranchIds([]);
       return;
     }
 
-    // Filter branches whose parent name is selectedParent and owner matches if selectedOwner exists
+    // Filter branches whose parent name is in selectedParents list and owner matches if selectedOwner exists
     const filtered = allOutlets.filter((o) => {
-      const matchParent = o.nama_outlet === selectedParent;
+      const matchParent = selectedParents.includes(o.nama_outlet);
       const matchOwner = selectedOwner ? o.owner === selectedOwner : true;
       return matchParent && matchOwner;
     });
     setAvailableBranches(filtered);
     
-    // Automatically check all branches of the selected parent outlet
+    // Automatically check all branches of the selected parent outlets
     setCheckedBranchIds(filtered.map((b) => b.id));
-  }, [selectedParent, selectedOwner, allOutlets, selectedPlatforms]);
+  }, [selectedParents, selectedOwner, allOutlets, selectedPlatforms]);
 
   // Clean up all polling intervals on unmount
   useEffect(() => {
@@ -214,10 +218,22 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
     setSelectedPlatforms((current) => current.length === PLATFORM_OPTIONS.length ? [] : [...PLATFORM_OPTIONS]);
   };
 
-  // Select single parent name
-  const handleSelectParent = (parentName) => {
-    setSelectedParent(parentName);
-    setOpenOutletDropdown(false);
+  // Toggle multiple parents checkbox
+  const handleParentCheck = (parentName) => {
+    setSelectedParents((current) =>
+      current.includes(parentName)
+        ? current.filter((p) => p !== parentName)
+        : [...current, parentName]
+    );
+    setActiveJobs([]);
+    setCombinedResult(null);
+  };
+
+  // Toggle select all parent outlets
+  const handleSelectAllParents = () => {
+    setSelectedParents((current) =>
+      current.length === uniqueParentNames.length ? [] : [...uniqueParentNames]
+    );
     setActiveJobs([]);
     setCombinedResult(null);
   };
@@ -275,7 +291,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
             if (allDone && !hasTriggeredCombineRef.current) {
               hasTriggeredCombineRef.current = true;
               setTriggering(false);
-              triggerCombineC5(nextJobs, selectedParent);
+              triggerCombineC5(nextJobs);
             }
 
             return nextJobs;
@@ -537,7 +553,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
 
           {/* 3: OUTLET */}
           <div className="relative">
-            <StepLabel number={3} label={selectedParent ? "Outlet (1)" : "Outlet"} active={selectedPlatforms.length > 0 && !selectedParent} done={!!selectedParent} />
+            <StepLabel number={3} label={selectedParents.length ? `Outlet (${selectedParents.length})` : "Outlet"} active={selectedPlatforms.length > 0 && selectedParents.length === 0} done={selectedParents.length > 0} />
             <button
               type="button"
               disabled={selectedPlatforms.length === 0 || loadingOutlets || triggering}
@@ -550,10 +566,10 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
               className="field-control flex items-center justify-between text-left font-medium"
               aria-expanded={openOutletDropdown}
             >
-              <span className={`truncate ${selectedParent ? "font-semibold text-zinc-800 dark:text-white" : "text-zinc-400 dark:text-zinc-500"}`}>
+              <span className={`truncate ${selectedParents.length ? "font-semibold text-zinc-800 dark:text-white" : "text-zinc-400 dark:text-zinc-500"}`}>
                 {loadingOutlets ? "Memuat..."
                   : selectedPlatforms.length === 0 ? "Pilih Aplikator dulu"
-                    : selectedParent || "Pilih Outlet..."}
+                    : selectedParents.length > 0 ? selectedParents.join(", ") : "Pilih Outlet..."}
               </span>
               <svg className={`h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform ${openOutletDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -564,24 +580,44 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setOpenOutletDropdown(false)} />
                 <div className="absolute left-0 right-0 top-full z-30 mt-1 min-w-[260px] space-y-2 rounded-xl border border-red-100 dark:border-zinc-800 bg-white dark:bg-black p-2.5 shadow-xl animate-scale-up">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-1 pb-2">
+                    <span className="text-[13px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Terpilih ({selectedParents.length}/{uniqueParentNames.length})</span>
+                    <button type="button" onClick={handleSelectAllParents} className="text-[13px] font-bold text-red-700 dark:text-red-400 hover:underline">
+                      {selectedParents.length === uniqueParentNames.length ? "Batal Semua" : "Pilih Semua"}
+                    </button>
+                  </div>
                   <input type="text" placeholder="Cari outlet..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && e.preventDefault()} className="field-control py-2" autoFocus />
                   <div className="max-h-52 space-y-0.5 overflow-y-auto pr-1">
+                    {filteredParents.length > 0 && !searchQuery && (
+                      <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-[15px] font-bold text-red-700 dark:text-red-400 hover:bg-red-50/40 dark:hover:bg-zinc-900 transition-colors border-b border-slate-100 dark:border-zinc-800 pb-2 mb-1 shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={selectedParents.length === uniqueParentNames.length && uniqueParentNames.length > 0}
+                          onChange={handleSelectAllParents}
+                          className="h-4 w-4 accent-red-700 cursor-pointer shrink-0"
+                        />
+                        <span>Pilih Semua Outlet</span>
+                      </label>
+                    )}
                     {filteredParents.length === 0 ? (
                       <p className="py-3 text-center text-[15px] text-zinc-400 dark:text-zinc-500">Tidak ada outlet cocok</p>
                     ) : filteredParents.map((name) => {
-                      const isSelected = selectedParent === name;
+                      const isSelected = selectedParents.includes(name);
                       return (
-                        <button
+                        <label
                           key={name}
-                          type="button"
-                          onClick={() => handleSelectParent(name)}
-                          className={`w-full text-left cursor-pointer flex items-center justify-between rounded-lg px-2.5 py-2 text-[15px] transition-colors ${
+                          className={`flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-[15px] transition-colors ${
                             isSelected ? "bg-red-50 text-red-700 font-bold dark:bg-zinc-900 dark:text-white" : "text-slate-700 hover:bg-slate-50 dark:text-white dark:hover:bg-zinc-900"
                           }`}
                         >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleParentCheck(name)}
+                            className="h-4 w-4 accent-red-700 cursor-pointer shrink-0"
+                          />
                           <span className="truncate">{name}</span>
-                          {isSelected && <span className="text-red-700 dark:text-white font-bold">✓</span>}
-                        </button>
+                        </label>
                       );
                     })}
                   </div>
@@ -592,7 +628,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
 
           {/* 4: CABANG */}
           <div className="relative">
-            <StepLabel number={4} label={`Cabang ${availableBranches.length ? `(${checkedBranchIds.length})` : ""}`} active={!!selectedParent && checkedBranchIds.length === 0} done={checkedBranchIds.length > 0} />
+            <StepLabel number={4} label={`Cabang ${availableBranches.length ? `(${checkedBranchIds.length})` : ""}`} active={selectedParents.length > 0 && checkedBranchIds.length === 0} done={checkedBranchIds.length > 0} />
             <button
               type="button"
               disabled={availableBranches.length === 0 || triggering}
@@ -606,7 +642,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
               aria-expanded={openBranchDropdown}
             >
               <span className={`truncate ${checkedBranchIds.length ? "font-semibold text-zinc-800 dark:text-white" : "text-zinc-400 dark:text-zinc-500"}`}>
-                {!selectedParent ? "Pilih Outlet dulu"
+                {selectedParents.length === 0 ? "Pilih Outlet dulu"
                   : checkedBranchIds.length === availableBranches.length ? `Semua Cabang (${availableBranches.length})`
                     : `${checkedBranchIds.length} dari ${availableBranches.length} Cabang`}
               </span>
@@ -669,7 +705,7 @@ export default function MenuPullTab({ API_BASE_URL, API_SECRET_KEY }) {
               <button
                 type="button"
                 disabled={combining || triggering}
-                onClick={() => triggerCombineC5(activeJobs, selectedParent)}
+                onClick={() => triggerCombineC5(activeJobs)}
                 className="secondary-action text-[13px] px-3 py-1.5 gap-1.5"
               >
                 <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">

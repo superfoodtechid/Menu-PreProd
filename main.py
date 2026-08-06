@@ -2082,6 +2082,7 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
                     }
 
             passkey = api_headers.get('x-passkey') or "1729b182-c60e-4568-849d-5eb7d794fd09"
+            passkey = api_headers.get('x-passkey') or "1729b182-c60e-4568-849d-5eb7d794fd09"
             headers_direct = {
                 'Accept': 'application/json, text/plain, */*',
                 'Accept-Language': 'id',
@@ -2094,15 +2095,49 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
                 'Referer': 'https://portal.gofoodmerchant.co.id/',
             }
 
+            patch_group_id = group_id or api_headers.get('menu_group_id')
+
+            # ── 1. Execute Category Renames (GoFood V2 API) ──
+            category_renames = {}
+            for upd in updates:
+                cat_id = upd.get("category_id")
+                cat_name = upd.get("category")
+                change_types = upd.get("changes") or upd.get("change_types") or []
+                if cat_id and cat_name:
+                    is_cat_changed = ("CATEGORY_CHANGE" in change_types) or (isinstance(upd.get("changes"), dict) and upd["changes"].get("category_changed"))
+                    if is_cat_changed:
+                        category_renames[cat_id] = cat_name
+
+            if category_renames and patch_group_id:
+                for cat_id, new_cat_name in category_renames.items():
+                    try:
+                        logger.info(f"🏷️ Pushing Category Rename for Category ID '{cat_id}' -> '{new_cat_name}'...")
+                        cat_res = go_api.update_menu_item(page, token, patch_group_id, cat_id, {"name": new_cat_name, "active": True}, passkey=passkey)
+                        if cat_res and cat_res.get("ok"):
+                            logger.info(f"✅ Category '{cat_id}' successfully renamed to '{new_cat_name}'")
+                        else:
+                            logger.warning(f"⚠️ Category rename warning for '{cat_id}': {cat_res}")
+                    except Exception as cat_ex:
+                        logger.warning(f"⚠️ Exception renaming category '{cat_id}': {cat_ex}")
+
+            # ── 2. Execute Item Updates (Name, Price, Photo Link, Description) ──
             import random
             total = len(updates)
             for idx, upd in enumerate(updates):
                 item_id = str(upd.get("item_id") or "")
                 new_name = (upd.get("item_name_new") or "").strip()
                 raw_price = upd.get("new_fake_price")
+                new_photo = (upd.get("photo_link") or "").strip()
+                new_desc = (upd.get("description") or "").strip()
+                new_cat = (upd.get("category") or "").strip()
+
                 change_types = upd.get("changes") or upd.get("change_types") or []
-                want_name = "NAME_CHANGE" in change_types or bool(new_name)
-                want_price = "PRICE_CHANGE" in change_types or (raw_price is not None)
+                is_dict_changes = isinstance(upd.get("changes"), dict)
+
+                want_name = ("NAME_CHANGE" in change_types) or (is_dict_changes and upd["changes"].get("name_changed")) or bool(new_name)
+                want_price = ("PRICE_CHANGE" in change_types) or (is_dict_changes and upd["changes"].get("price_changed")) or (raw_price is not None)
+                want_photo = ("PHOTO_CHANGE" in change_types) or (is_dict_changes and upd["changes"].get("photo_changed")) or bool(new_photo and new_photo.startswith("http"))
+                want_desc = ("DESCRIPTION_CHANGE" in change_types) or (is_dict_changes and upd["changes"].get("description_changed")) or bool(new_desc)
 
                 if progress_cb:
                     progress_cb(idx, total, upd)
@@ -2119,8 +2154,11 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
                 orig_item = item_info["item"]
                 cat_common_id = item_info["category_common_id"] or item_info["category_id"]
 
-                # Build effective values: apply name/price only when requested, else keep current.
+                # Build effective final values: apply new fields when requested, else retain current.
                 final_name = new_name if (want_name and new_name) else orig_item.get('name')
+                final_photo = new_photo if (want_photo and new_photo) else orig_item.get('image_url', orig_item.get('image', ''))
+                final_desc = new_desc if (want_desc and new_desc) else orig_item.get('description', '')
+
                 try:
                     final_price = int(float(raw_price)) if (want_price and raw_price is not None) else int(float(orig_item.get('price') or 0))
                 except (ValueError, TypeError):
@@ -2128,16 +2166,16 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
 
                 v2_payload = {
                     "menu_common_id": orig_item.get('menu_common_id') or cat_common_id,
-                    "image_url": orig_item.get('image_url', orig_item.get('image', '')),
+                    "image_url": final_photo,
                     "name": final_name,
-                    "description": orig_item.get('description', ''),
+                    "description": final_desc,
                     "price": final_price,
                     "active": orig_item.get('is_active', orig_item.get('active', True)),
                     "signature": orig_item.get('signature', False),
                 }
 
-                patch_group_id = group_id or api_headers.get('menu_group_id') or orig_item.get('menu_common_id') or cat_common_id
-                v2_url = f'https://api.gojekapi.com/gofood/merchant/v2/menu_groups/{patch_group_id}/menu_items/{item_id}'
+                target_group_id = patch_group_id or orig_item.get('menu_common_id') or cat_common_id
+                v2_url = f'https://api.gojekapi.com/gofood/merchant/v2/menu_groups/{target_group_id}/menu_items/{item_id}'
 
                 def send_patch_request(payload_data, max_retries=2):
                     for attempt_idx in range(max_retries + 1):
@@ -2184,8 +2222,8 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
                         "name": final_name,
                         "price": final_price,
                         "active": orig_item.get('is_active', orig_item.get('active', True)),
-                        "description": orig_item.get('description', ''),
-                        "image": orig_item.get('image_url', orig_item.get('image', '')),
+                        "description": final_desc,
+                        "image": final_photo,
                     }
                     v1_item_id = orig_item.get('id') or orig_item.get('common_id') or item_id
                     if v1_item_id:
@@ -2203,6 +2241,9 @@ def _push_c5_gofood_for_merchant(email: str, password: str, merchant_id: str, up
                         "item_id": item_id, "item_name": orig_item.get('name', item_id),
                         "new_name": final_name if want_name else None,
                         "new_price": final_price if want_price else None,
+                        "new_photo": final_photo if want_photo else None,
+                        "new_desc": final_desc if want_desc else None,
+                        "new_category": new_cat if upd.get("category_id") in category_renames else None,
                         "status": "SUCCESS", "error": None,
                     })
                 else:
@@ -2270,6 +2311,12 @@ def run_push_c5_job(job_id: uuid.UUID, selected_sids: list, updates_list: list):
                 new_val.append(f"Nama Item: {applied['new_name']}")
             if applied and applied.get("new_price") is not None:
                 new_val.append(f"Harga Baru: Rp {applied['new_price']}")
+            if applied and applied.get("new_photo"):
+                new_val.append(f"Foto Link: {applied['new_photo']}")
+            if applied and applied.get("new_desc"):
+                new_val.append(f"Deskripsi: {applied['new_desc']}")
+            if applied and applied.get("new_category"):
+                new_val.append(f"Nama Kategori: {applied['new_category']}")
             trail = AuditTrail(
                 job_id=job.id,
                 outlet_id=job.outlet_id or uuid.uuid4(),
@@ -2416,18 +2463,60 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
         if col_name in header_map:
             idx = header_map[col_name]
             if idx < len(row) and row[idx] is not None:
-                return str(row[idx]).strip()
+                val = str(row[idx]).strip()
+                if val and val not in ("#N/A", "nan", "None"):
+                    return val
         return default
 
-    sid_col = 'SID' if 'SID' in header_map else ('Store ID' if 'Store ID' in header_map else '')
-    outlet_col = 'Outlet Name' if 'Outlet Name' in header_map else ('Outlet' if 'Outlet' in header_map else '')
-    cat_id_col = 'Category ID' if 'Category ID' in header_map else ''
-    cat_col = 'Category' if 'Category' in header_map else ''
-    item_id_col = 'Item ID' if 'Item ID' in header_map else ''
-    item_col = 'Item' if 'Item' in header_map else ('Item Name' if 'Item Name' in header_map else '')
-    photo_col = 'Photo Link' if 'Photo Link' in header_map else ('Gambar' if 'Gambar' in header_map else '')
-    item_name_imp_col = 'Item Name Improvement' if 'Item Name Improvement' in header_map else ''
-    new_fake_col = 'New Fake Price (Rp)' if 'New Fake Price (Rp)' in header_map else ('New Fake Price' if 'New Fake Price' in header_map else '')
+    # Flexible column resolution for standard C5 headers
+    def resolve_col(candidates):
+        for c in candidates:
+            if c in header_map:
+                return c
+        return ""
+
+    sid_col = resolve_col(['SID', 'Store ID'])
+    outlet_col = resolve_col(['Outlet Name', 'Outlet'])
+    cat_id_col = resolve_col(['Category ID'])
+    cat_col = resolve_col(['Category', 'Nama Kategori', 'Kategori'])
+    item_id_col = resolve_col(['Item ID'])
+    item_col = resolve_col(['Item', 'Item Name', 'Nama Item'])
+    photo_col = resolve_col(['Photo Link', 'Gambar', 'Link Foto', 'Photo'])
+    desc_col = resolve_col(['Description', 'Deskripsi'])
+    avail_col = resolve_col(['Availability', 'Ketersediaan'])
+    vis_col = resolve_col(['Visibility'])
+    item_name_imp_col = resolve_col(['Item Name Improvement'])
+    new_fake_col = resolve_col(['New Fake Price (Rp)', 'New Fake Price'])
+    curr_fake_col = resolve_col(['Current Fake Price (Rp)', 'Current Fake Price', 'Harga Fake'])
+    notes_col = resolve_col(['Notes', 'Catatan'])
+
+    # ── Category ID Consistency Pass ──
+    # All rows sharing the same (SID, Category ID) in C5 MUST have the exact same Category Name.
+    cat_id_name_map = {}
+    for row in rows[1:]:
+        if not row or all(v is None for v in row):
+            continue
+        s_id = get_val(row, sid_col) or "STORE-DEFAULT"
+        c_id = get_val(row, cat_id_col)
+        c_name = get_val(row, cat_col)
+        if c_id and c_name:
+            key = (s_id, c_id)
+            if key not in cat_id_name_map:
+                cat_id_name_map[key] = set()
+            cat_id_name_map[key].add(c_name)
+
+    inconsistent_cat_ids = {}
+    validation_error_messages = []
+
+    for (s_id, c_id), names in cat_id_name_map.items():
+        if len(names) > 1:
+            names_str = ", ".join([f"'{n}'" for n in sorted(names)])
+            msg = f"Nama kategori tidak konsisten untuk Category ID '{c_id}' (Store ID: {s_id}). Ditemukan {len(names)} nama berbeda: {names_str}. Semua item dengan Category ID yang sama harus memiliki nama kategori yang sama."
+            inconsistent_cat_ids[(s_id, c_id)] = {
+                "names": list(names),
+                "error": msg
+            }
+            validation_error_messages.append(msg)
 
     stores_dict = {}
     parsed_items = []
@@ -2435,6 +2524,11 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
     total_changes = 0
     name_changes_count = 0
     price_changes_count = 0
+    category_changes_count = 0
+    photo_changes_count = 0
+    description_changes_count = 0
+    other_changes_count = 0
+    validation_errors_count = 0
 
     import re
 
@@ -2449,7 +2543,7 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
             pass
         return None
 
-    def norm_name(s):
+    def norm_str(s):
         return re.sub(r'\s+', ' ', str(s or '').strip().lower())
 
     # ── Baseline PULL cache loader (Gofood/API/menu-response-<SID>.json) ──
@@ -2473,11 +2567,12 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
                             "price": parse_price(it.get("price")),
                             "image": it.get("image") or "",
                             "category": cat_name,
+                            "description": it.get("description") or "",
                         }
                         iid = str(it.get("common_id") or it.get("id") or "").strip()
                         if iid:
                             by_id[iid] = rec
-                        nn = norm_name(rec["name"])
+                        nn = norm_str(rec["name"])
                         if nn and nn not in by_name:
                             by_name[nn] = rec
             except Exception as ex:
@@ -2496,9 +2591,22 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
         cat_name = get_val(row, cat_col)
         item_id = get_val(row, item_id_col)
         item_name = get_val(row, item_col)
-        photo_link = get_val(row, photo_col)
+        photo_link_raw = get_val(row, photo_col)
+        design_imp = get_val(row, resolve_col(['Design Improvement', 'Photo Improvement'])) if resolve_col(['Design Improvement', 'Photo Improvement']) else ""
+        
+        # Check if Design Improvement contains a new photo link / Google Drive URL
+        if design_imp and (design_imp.startswith("http://") or design_imp.startswith("https://") or "drive.google.com" in design_imp):
+            photo_link = design_imp
+        else:
+            photo_link = photo_link_raw
+
+        description = get_val(row, desc_col) if desc_col else ""
+        availability = get_val(row, avail_col) if avail_col else ""
+        visibility = get_val(row, vis_col) if vis_col else ""
+        notes = get_val(row, notes_col) if notes_col else ""
 
         new_fake_raw = get_val(row, new_fake_col) if new_fake_col else ""
+        curr_fake_raw = get_val(row, curr_fake_col) if curr_fake_col else ""
         item_name_imp = get_val(row, item_name_imp_col) if item_name_imp_col else ""
 
         if not item_id and not item_name:
@@ -2509,13 +2617,16 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
         base_rec = None
         if item_id and item_id in baseline["by_id"]:
             base_rec = baseline["by_id"][item_id]
-        elif norm_name(item_name) in baseline["by_name"]:
-            base_rec = baseline["by_name"][norm_name(item_name)]
+        elif norm_str(item_name) in baseline["by_name"]:
+            base_rec = baseline["by_name"][norm_str(item_name)]
 
         base_name = base_rec["name"] if base_rec else item_name
         base_price = base_rec["price"] if base_rec else None
+        base_cat = base_rec["category"] if base_rec else ""
+        base_img = base_rec["image"] if base_rec else ""
+        base_desc = base_rec["description"] if base_rec else ""
 
-        new_fake_price = parse_price(new_fake_raw)
+        new_fake_price = parse_price(new_fake_raw) or parse_price(curr_fake_raw)
 
         if sid not in stores_dict:
             stores_dict[sid] = {
@@ -2527,37 +2638,93 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
             }
         stores_dict[sid]["item_count"] += 1
 
-        # 1. Name Change: detect a name change either from the explicit improvement column
-        #    or from the main item name field if it differs from the baseline name.
-        display_name = item_name_imp.strip() if item_name_imp else item_name
-        name_changed = bool(display_name and norm_name(display_name) != norm_name(base_name))
+        # ── Comprehensive All-Column Change Detection & Validation ──
+        diff_details = []
+        is_valid = True
+        validation_error = None
 
-        # 2. Change Price — CRITICAL RULE:
-        #    If 'New Fake Price (Rp)' is EMPTY/blank, DO NOT trigger a price change.
-        #    Otherwise trigger when it differs from the baseline price (falls back to C5
-        #    current price when no baseline is available for this store).
+        # Check Category ID consistency error for this row
+        if (sid, cat_id) in inconsistent_cat_ids:
+            is_valid = False
+            validation_errors_count += 1
+            validation_error = inconsistent_cat_ids[(sid, cat_id)]["error"]
+            diff_details.append({
+                "column": "Category ID",
+                "old_val": "Konflik Nama Kategori",
+                "new_val": f"Gunakan nama yang sama untuk Category ID '{cat_id}'"
+            })
+
+        # 1. Item Name Change
+        display_name = item_name_imp.strip() if item_name_imp else item_name
+        name_changed = bool(display_name and norm_str(display_name) != norm_str(base_name))
+        if name_changed:
+            diff_details.append({"column": "Item Name", "old_val": base_name, "new_val": display_name})
+
+        # 2. Category Change
+        category_changed = bool(cat_name and base_cat and norm_str(cat_name) != norm_str(base_cat))
+        if category_changed:
+            diff_details.append({"column": "Category", "old_val": base_cat, "new_val": cat_name})
+
+        # 3. Photo Link Change
+        photo_changed = bool(photo_link and photo_link != base_img and not (not base_img and not photo_link))
+        if photo_changed:
+            diff_details.append({"column": "Photo Link", "old_val": base_img or "(Kosong)", "new_val": photo_link})
+
+        # 4. Description Change
+        description_changed = bool(description and norm_str(description) != norm_str(base_desc))
+        if description_changed:
+            diff_details.append({"column": "Description", "old_val": base_desc or "(Kosong)", "new_val": description})
+
+        # 5. Price Change
         price_changed = False
-        if new_fake_raw.strip() != "" and new_fake_price is not None:
+        if new_fake_price is not None:
             if base_price is not None:
                 price_changed = float(new_fake_price) != float(base_price)
             else:
                 price_changed = True
+        if price_changed:
+            diff_details.append({"column": "Price", "old_val": base_price, "new_val": new_fake_price})
 
-        is_changed = name_changed or price_changed
+        # 6. Check all other columns in row for any explicit edits
+        other_changed = False
+        for col_k, col_idx in header_map.items():
+            if col_k in (sid_col, outlet_col, cat_id_col, cat_col, item_id_col, item_col, photo_col, desc_col, item_name_imp_col, new_fake_col, curr_fake_col):
+                continue
+            if col_idx < len(row) and row[col_idx] is not None:
+                v_str = str(row[col_idx]).strip()
+                if v_str and v_str not in ("#N/A", "nan", "None"):
+                    if col_k in ('Design Improvement', 'Keyword', 'Notes', 'Offline Price (Rp)', 'Offline Adjustment (Rp)'):
+                        other_changed = True
+                        diff_details.append({"column": col_k, "old_val": "", "new_val": v_str})
+
+        is_changed = name_changed or category_changed or photo_changed or description_changed or price_changed or other_changed or (not is_valid)
 
         change_types = []
+        if not is_valid:
+            change_types.append("INVALID_CATEGORY_CONSISTENCY")
         if name_changed:
             change_types.append("NAME_CHANGE")
             name_changes_count += 1
+        if category_changed:
+            change_types.append("CATEGORY_CHANGE")
+            category_changes_count += 1
+        if photo_changed:
+            change_types.append("PHOTO_CHANGE")
+            photo_changes_count += 1
+        if description_changed:
+            change_types.append("DESCRIPTION_CHANGE")
+            description_changes_count += 1
         if price_changed:
             change_types.append("PRICE_CHANGE")
             price_changes_count += 1
+        if other_changed:
+            change_types.append("OTHER_CHANGE")
+            other_changes_count += 1
 
         if is_changed:
             stores_dict[sid]["changed_count"] += 1
             total_changes += 1
 
-        display_name = item_name_imp.strip() if item_name_imp else item_name
         parsed_items.append({
             "row_number": r_idx,
             "sid": sid,
@@ -2568,16 +2735,31 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
             "item_name": item_name,
             "item_name_new": display_name if is_changed and display_name else item_name_imp,
             "photo_link": photo_link,
+            "description": description,
+            "availability": availability,
+            "visibility": visibility,
+            "notes": notes,
             "baseline_name": base_name,
             "baseline_price": base_price,
+            "baseline_category": base_cat,
+            "baseline_photo": base_img,
+            "baseline_description": base_desc,
             "current_fake_price": base_price,
             "new_fake_price": new_fake_price,
             "baseline_found": base_rec is not None,
+            "is_valid": is_valid,
+            "validation_error": validation_error,
             "is_changed": is_changed,
             "change_types": change_types,
+            "diff_details": diff_details,
             "changes": {
                 "name_changed": name_changed,
+                "category_changed": category_changed,
+                "photo_changed": photo_changed,
+                "description_changed": description_changed,
                 "price_changed": price_changed,
+                "other_changed": other_changed,
+                "invalid": not is_valid,
             }
         })
 
@@ -2591,7 +2773,14 @@ async def parse_c5_endpoint(file: UploadFile = File(...), db: Session = Depends(
             "total_items": len(parsed_items),
             "total_changes": total_changes,
             "name_changes": name_changes_count,
+            "category_changes": category_changes_count,
+            "photo_changes": photo_changes_count,
+            "description_changes": description_changes_count,
             "price_changes": price_changes_count,
+            "other_changes": other_changes_count,
+            "validation_errors_count": validation_errors_count,
+            "has_validation_errors": len(validation_error_messages) > 0,
+            "validation_error_messages": validation_error_messages,
         }
     }
 

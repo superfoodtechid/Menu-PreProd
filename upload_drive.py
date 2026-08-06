@@ -45,25 +45,43 @@ def upload_combined_to_drive(file_path: str, outlet_name: str, custom_filename: 
         }
         
         print(f"Mengirim {file_name} ke folder '{clean_folder_name}' (Target ID: {target_folder}) di Google Drive...")
-        response = requests.post(target_url, json=payload, timeout=60)
-        
-        if response.status_code == 200:
-            try:
-                result = response.json()
-            except Exception as json_err:
-                print(f"❌ Response bukan JSON valid: {response.text[:200]}")
-                return None
 
-            if result.get("status") == "success":
-                url = result.get("url") or result.get("spreadsheetUrl") or result.get("fileUrl")
-                print(f"✅ Berhasil diupload! URL: {url}")
-                return url
-            else:
-                print(f"❌ Gagal upload dari sisi server: {result.get('message')}")
+        # Retry loop hingga 3 kali untuk mengantisipasi jaringan atau hiccup temporary dari Google Apps Script CDN
+        import time
+        max_attempts = 3
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = requests.post(target_url, json=payload, timeout=60)
+                if response.status_code == 200:
+                    try:
+                        result = response.json()
+                    except Exception as json_err:
+                        print(f"⚠️ Response (percobaan {attempt}) bukan JSON valid: {response.text[:150]}")
+                        if attempt < max_attempts:
+                            time.sleep(2)
+                            continue
+                        return None
+
+                    if result.get("status") == "success":
+                        url = result.get("url") or result.get("spreadsheetUrl") or result.get("fileUrl")
+                        print(f"✅ Berhasil diupload! URL: {url}")
+                        return url
+                    else:
+                        print(f"❌ Gagal upload dari sisi server: {result.get('message')}")
+                        return None
+                else:
+                    print(f"⚠️ HTTP {response.status_code} (percobaan {attempt}/{max_attempts})")
+                    if attempt < max_attempts:
+                        time.sleep(2.5)
+                        continue
+                    print(f"❌ Error request HTTP: {response.status_code} - {response.text[:200]}")
+                    return None
+            except Exception as req_ex:
+                print(f"⚠️ Request exception (percobaan {attempt}/{max_attempts}): {req_ex}")
+                if attempt < max_attempts:
+                    time.sleep(2.5)
+                    continue
                 return None
-        else:
-            print(f"❌ Error request HTTP: {response.status_code} - {response.text}")
-            return None
             
     except Exception as e:
         print(f"❌ Exception saat upload: {e}")

@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: foodmaster-backend
     restart: unless-stopped
+    init: true
     ports:
       - "8000:8000"
       - "18800:8000"
@@ -15,6 +16,7 @@ services:
       - ./shopee:/app/shopee
       - ./grab:/app/grab
       - ./menu_core:/app/menu_core
+      - ./src/shopee-omzet-automation/data:/app/src/shopee-omzet-automation/data
     networks:
       - foodmaster-network
 
